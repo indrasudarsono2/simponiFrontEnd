@@ -1,0 +1,20 @@
+[
+  {
+    "id": "1",
+    "user": { "id": "3458", "name": "INDRA" },
+    "note": "License 2025 SMT 1",
+    "path": "/public/license/indra2025smt1.pdf"
+  },
+  {
+    "id": "2",
+    "user": { "id": "3458", "name": "INDRA" },
+    "note": "License 2025 SMT 2",
+    "path": "/public/license/indra2025smt2.pdf"
+  },
+  {
+    "id": "3",
+    "user": { "id": "3458", "name": "INDRA" },
+    "note": "License 2026 SMT 1",
+    "path": "/public/license/indra2025smt1.pdf"
+  }
+]

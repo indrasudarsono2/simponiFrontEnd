@@ -1,0 +1,282 @@
+[
+  {
+    "id": "1",
+    "sector": { "id": "1", "sector": "WEST" },
+    "multipleChoice": {
+      "id": "1",
+      "question": "Which is the adjacent unit of Upper Natuna ACC on Natuna vertically?",
+      "a": "Matak CTR",
+      "b": "Tanjung Pinang North TMA",
+      "c": "Natuna CTR",
+      "d": "Tanjung Pinang South TMA",
+      "image": "",
+      "key": "B"
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "STRUKTUR RUANG UDARA",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "2",
+    "sector": { "id": "2", "sector": "EAST" },
+    "multipleChoice": {
+      "id": "1",
+      "question": "Which is the adjacent unit of Upper Natuna ACC on Natuna vertically?",
+      "a": "Matak CTR",
+      "b": "Tanjung Pinang North TMA",
+      "c": "Natuna CTR",
+      "d": "Tanjung Pinang South TMA",
+      "image": "",
+      "key": "B"
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "STRUKTUR RUANG UDARA",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "3",
+    "sector": { "id": "3", "sector": "NORTH" },
+    "multipleChoice": {
+      "id": "1",
+      "question": "Which is the adjacent unit of Upper Natuna ACC on Natuna vertically?",
+      "a": "Matak CTR",
+      "b": "Tanjung Pinang North TMA",
+      "c": "Natuna CTR",
+      "d": "Tanjung Pinang South TMA",
+      "image": "",
+      "key": "B"
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "STRUKTUR RUANG UDARA",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "4",
+    "sector": { "id": "4", "sector": "NORTH WEST" },
+    "multipleChoice": {
+      "id": "1",
+      "question": "Which is the adjacent unit of Upper Natuna ACC on Natuna vertically?",
+      "a": "Matak CTR",
+      "b": "Tanjung Pinang North TMA",
+      "c": "Natuna CTR",
+      "d": "Tanjung Pinang South TMA",
+      "image": "",
+      "key": "B"
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "STRUKTUR RUANG UDARA",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "5",
+    "sector": { "id": "5", "sector": "NORTH EAST" },
+    "multipleChoice": {
+      "id": "1",
+      "question": "Which is the adjacent unit of Upper Natuna ACC on Natuna vertically?",
+      "a": "Matak CTR",
+      "b": "Tanjung Pinang North TMA",
+      "c": "Natuna CTR",
+      "d": "Tanjung Pinang South TMA",
+      "image": "",
+      "key": "B"
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "STRUKTUR RUANG UDARA",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "6",
+    "sector": { "id": "1", "sector": "WEST" },
+    "multipleChoice": {
+      "id": "2",
+      "question": "Which is the adjacent unit of Upper Tanjungpinang horizontally to the east?",
+      "a": "Singapore Sector 5",
+      "b": "Singapore Sector 4",
+      "c": "Kuching ACC Sector 1",
+      "d": "A and C correct",
+      "image": "",
+      "key": "C"
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "SOP, LOCA DAN INFO",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "7",
+    "sector": { "id": "2", "sector": "EAST" },
+    "multipleChoice": {
+      "id": "2",
+      "question": "Which is the adjacent unit of Upper Tanjungpinang horizontally to the east?",
+      "a": "Singapore Sector 5",
+      "b": "Singapore Sector 4",
+      "c": "Kuching ACC Sector 1",
+      "d": "A and C correct",
+      "image": "",
+      "key": "C"
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "SOP, LOCA DAN INFO",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "8",
+    "sector": { "id": "3", "sector": "NORTH" },
+    "multipleChoice": {
+      "id": "2",
+      "question": "Which is the adjacent unit of Upper Tanjungpinang horizontally to the east?",
+      "a": "Singapore Sector 5",
+      "b": "Singapore Sector 4",
+      "c": "Kuching ACC Sector 1",
+      "d": "A and C correct",
+      "image": "",
+      "key": "C"
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "SOP, LOCA DAN INFO",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "9",
+    "sector": { "id": "1", "sector": "WEST" },
+    "multipleChoice": {
+      "id": "3",
+      "question": "Which adjacent unit is not the adjacent unit of Upper Tanjungpinang horizontally to the west?",
+      "a": "Singapore Sector 1",
+      "b": "Singapore Sector 6",
+      "c": "Singapore Sector 4",
+      "d": "Kuching ACC Sector 1",
+      "image": "",
+      "key": "D"
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "FAS PEMANDUAN LLP",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "10",
+    "sector": { "id": "2", "sector": "EAST" },
+    "multipleChoice": {
+      "id": "3",
+      "question": "Which adjacent unit is not the adjacent unit of Upper Tanjungpinang horizontally to the west?",
+      "a": "Singapore Sector 1",
+      "b": "Singapore Sector 6",
+      "c": "Singapore Sector 4",
+      "d": "Kuching ACC Sector 1",
+      "image": "",
+      "key": "D"
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "FAS PEMANDUAN LLP",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "11",
+    "sector": { "id": "3", "sector": "NORTH" },
+    "multipleChoice": {
+      "id": "3",
+      "question": "Which adjacent unit is not the adjacent unit of Upper Tanjungpinang horizontally to the west?",
+      "a": "Singapore Sector 1",
+      "b": "Singapore Sector 6",
+      "c": "Singapore Sector 4",
+      "d": "Kuching ACC Sector 1",
+      "image": "",
+      "key": "D"
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "FAS PEMANDUAN LLP",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "12",
+    "sector": { "id": "1", "sector": "WEST" },
+    "multipleChoice": {
+      "id": "4",
+      "question": "Which is the adjacent unit of Upper Tanjungpinang horizontally to the south?",
+      "a": "Ujung Pandang",
+      "b": "Upper Pangkalpinang",
+      "c": "Singapore Sector 4",
+      "d": "A and B correct",
+      "image": "",
+      "key": "D"
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "TERRAIN, PROMINENT LANMARK",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "13",
+    "sector": { "id": "3", "sector": "NORTH" },
+    "multipleChoice": {
+      "id": "4",
+      "question": "Which is the adjacent unit of Upper Tanjungpinang horizontally to the south?",
+      "a": "Ujung Pandang",
+      "b": "Upper Pangkalpinang",
+      "c": "Singapore Sector 4",
+      "d": "A and B correct",
+      "image": "",
+      "key": "D"
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "TERRAIN, PROMINENT LANMARK",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "14",
+    "sector": { "id": "4", "sector": "NORTH WEST" },
+    "multipleChoice": {
+      "id": "5",
+      "question": "Which is the adjacent unit of Upper Tanjungpinang horizontally to the north?",
+      "a": "Singapore Sector 4",
+      "b": "Kuching ACC Sector 1",
+      "c": "Upper Natuna",
+      "d": "Singapore Sector 6",
+      "image": "",
+      "key": "C"
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+      "group": "KARAKTERISTIK LLP",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  }
+]

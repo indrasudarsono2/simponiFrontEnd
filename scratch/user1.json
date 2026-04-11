@@ -1,0 +1,14 @@
+[
+  {
+    "role": "superAdmin",
+    "modules": ["dashboard", "userManagement", "systemSettings"]
+  },
+  { "role": "branchAdmin", "modules": ["dashboard", "branchReports"] },
+  { "role": "branchUnitAdmin", "modules": ["dashboard", "unitReports"] },
+  { "role": "checkerAdmin", "modules": ["dashboard", "checkReports"] },
+  { "role": "inmc", "modules": ["dashboard", "inmcReports"] },
+  { "role": "manops", "modules": ["dashboard", "operationsManagement"] },
+  { "role": "supervisor", "modules": ["dashboard", "teamOverview"] },
+  { "role": "operational", "modules": ["dashboard", "taskList"] },
+  { "role": "doctor", "modules": ["dashboard", "patientRecords"] }
+]

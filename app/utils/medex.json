@@ -1,0 +1,56 @@
+[
+  {
+    "id": "1",
+    "isConfirm": true,
+    "userId": { "id": "123", "name": "INDRA SUDARSONO" },
+    "released": "2023-02-28",
+    "expired": "2026-02-28",
+    "examiner": "SUSI",
+    "institution": "PPIC CURUG"
+  },
+  {
+    "id": "2",
+    "isConfirm": true,
+    "userId": { "id": "124", "name": "FENNY APRILIANI PUTRI" },
+    "released": "2023-04-28",
+    "expired": "2026-04-28",
+    "examiner": "SUSI",
+    "institution": "PPIC CURUG"
+  },
+  {
+    "id": "3",
+    "isConfirm": true,
+    "userId": { "id": "125", "name": "ANATA CELOSIA" },
+    "released": "2023-06-28",
+    "expired": "2026-06-28",
+    "examiner": "SUSI",
+    "institution": "PPIC CURUG"
+  },
+  {
+    "id": "4",
+    "isConfirm": true,
+    "userId": { "id": "126", "name": "GYANO" },
+    "released": "2023-08-28",
+    "expired": "2026-08-28",
+    "examiner": "SUSI",
+    "institution": "PPIC CURUG"
+  },
+  {
+    "id": "5",
+    "isConfirm": true,
+    "userId": { "id": "127", "name": "SHAIMA" },
+    "released": "2023-07-28",
+    "expired": "2026-07-28",
+    "examiner": "SUSI",
+    "institution": "PPIC CURUG"
+  },
+  {
+    "id": "6",
+    "isConfirm": true,
+    "userId": { "id": "128", "name": "ANATA CELOSIA" },
+    "released": "2023-11-28",
+    "expired": "2026-11-28",
+    "examiner": "SUSI",
+    "institution": "PPIC CURUG"
+  }
+]

@@ -1,0 +1,56 @@
+{
+  "room": [],
+  "event": [
+    {
+      "id": 1,
+      "branchUnit": {
+        "id": 5,
+        "branchId": 1,
+        "unit": "ACC",
+        "createdAt": "2026-03-02T01:55:53.887Z",
+        "updatedAt": "2026-03-02T01:55:53.887Z",
+        "deletedAt": null
+      },
+      "events": [
+        {
+          "id": 1,
+          "event": "WEST SMT 2 2026",
+          "eventUsers": [
+            {
+              "id": 12,
+              "attendaces": {
+                "id": 9,
+                "eventUserId": 12,
+                "roomId": 3,
+                "createdAt": "2026-04-11T07:59:25.132Z",
+                "updatedAt": "2026-04-11T07:59:25.132Z",
+                "deletedAt": null
+              },
+              "applicationDocs": {
+                "id": 30,
+                "userNik": "10011520",
+                "user": {
+                  "name": "INDRA SUDARSONO"
+                },
+                "appRatings": [
+                  {
+                    "id": 36,
+                    "rating": {
+                      "rating": "ACP"
+                    }
+                  },
+                  {
+                    "id": 37,
+                    "rating": {
+                      "rating": "ACS"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

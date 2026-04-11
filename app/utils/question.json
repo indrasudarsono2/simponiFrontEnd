@@ -1,0 +1,38 @@
+[
+  {
+    "id": "1",
+    "kindOfQuestion": { "id": "1", "question": "Essay" },
+    "branchUnit": { "id": "1", "unit": "ACC" },
+    "group": "PENDEK"
+  },
+  {
+    "id": "2",
+    "kindOfQuestion": { "id": "1", "question": "Essay" },
+    "branchUnit": { "id": "1", "unit": "ACC" },
+    "group": "PANJANG"
+  },
+  {
+    "id": "3",
+    "kindOfQuestion": { "id": "2", "question": "Multiple Choice" },
+    "branchUnit": { "id": "1", "unit": "ACC" },
+    "group": "STRUKTUR RUANG UDARA"
+  },
+  {
+    "id": "4",
+    "kindOfQuestion": { "id": "2", "question": "Multiple Choice" },
+    "branchUnit": { "id": "1", "unit": "ACC" },
+    "group": "SOP, LOCA DAN INFO"
+  },
+  {
+    "id": "5",
+    "kindOfQuestion": { "id": "2", "question": "Multiple Choice" },
+    "branchUnit": { "id": "1", "unit": "ACC" },
+    "group": "FAS NAV PNB"
+  },
+  {
+    "id": "6",
+    "kindOfQuestion": { "id": "2", "question": "Multiple Choice" },
+    "branchUnit": { "id": "1", "unit": "ACC" },
+    "group": "FAS NAV PNB"
+  }
+]

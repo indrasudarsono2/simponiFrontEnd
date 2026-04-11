@@ -1,0 +1,1491 @@
+[
+  {
+    "id": "1",
+    "region": "WEST REGION",
+    "branch": [
+      {
+        "id": "1",
+        "branch": "JAKARTA",
+        "branchUnit": [
+          {
+            "id": "1",
+            "unit": "ACC",
+            "sector": [
+              {
+                "id": "1",
+                "sector": "WEST",
+                "sectorCwp": [
+                  {
+                    "id": "1",
+                    "cwp": {
+                      "id": "1",
+                      "cwp": "UMDN",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "2",
+                    "cwp": {
+                      "id": "2",
+                      "cwp": "UPLB",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "3",
+                    "cwp": {
+                      "id": "3",
+                      "cwp": "UMDNA",
+                      "rating": { "id": "4", "rating": "ACP" }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "2",
+                "sector": "EAST",
+                "sectorCwp": [
+                  {
+                    "id": "4",
+                    "cwp": {
+                      "id": "4",
+                      "cwp": "UTPN",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "5",
+                    "cwp": {
+                      "id": "5",
+                      "cwp": "USMG",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "6",
+                    "cwp": {
+                      "id": "6",
+                      "cwp": "UJOGA",
+                      "rating": { "id": "4", "rating": "ACP" }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "3",
+                "sector": "NORTH",
+                "sectorCwp": [
+                  {
+                    "id": "7",
+                    "cwp": {
+                      "id": "7",
+                      "cwp": "UNTA",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "8",
+                    "cwp": {
+                      "id": "8",
+                      "cwp": "TPG",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "9",
+                    "cwp": {
+                      "id": "9",
+                      "cwp": "UNTAA",
+                      "rating": { "id": "4", "rating": "ACP" }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "4",
+                "sector": "NORTH WEST",
+                "sectorCwp": [
+                  {
+                    "id": "10",
+                    "cwp": {
+                      "id": "1",
+                      "cwp": "UMDN",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "11",
+                    "cwp": {
+                      "id": "2",
+                      "cwp": "UPLB",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "12",
+                    "cwp": {
+                      "id": "3",
+                      "cwp": "UMDNA",
+                      "rating": { "id": "4", "rating": "ACP" }
+                    }
+                  },
+                  {
+                    "id": "13",
+                    "cwp": {
+                      "id": "7",
+                      "cwp": "UNTA",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "14",
+                    "cwp": {
+                      "id": "8",
+                      "cwp": "TPG",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "15",
+                    "cwp": {
+                      "id": "9",
+                      "cwp": "UNTAA",
+                      "rating": { "id": "4", "rating": "ACP" }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "5",
+                "sector": "NORTH EAST",
+                "sectorCwp": [
+                  {
+                    "id": "16",
+                    "cwp": {
+                      "id": "4",
+                      "cwp": "UTPN",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "17",
+                    "cwp": {
+                      "id": "",
+                      "cwp": "USMG",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "18",
+                    "cwp": {
+                      "id": "6",
+                      "cwp": "UJOGA",
+                      "rating": { "id": "4", "rating": "ACP" }
+                    }
+                  },
+                  {
+                    "id": "19",
+                    "cwp": {
+                      "id": "7",
+                      "cwp": "UNTA",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "20",
+                    "cwp": {
+                      "id": "8",
+                      "cwp": "TPG",
+                      "rating": { "id": "5", "rating": "ACS" }
+                    }
+                  },
+                  {
+                    "id": "21",
+                    "cwp": {
+                      "id": "9",
+                      "cwp": "UNTAA",
+                      "rating": { "id": "4", "rating": "ACP" }
+                    }
+                  }
+                ]
+              }
+            ],
+            "session": [
+              {
+                "id": "1",
+                "session": "2026 Semester 1",
+                "event": [
+                  {
+                    "id": "1",
+                    "sector": { "id": "1", "sector": "WEST" },
+                    "event": "Performance Check 1",
+                    "start": "2026-01-01T00:00:00",
+                    "finish": "2026-01-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75,
+                    "group": [
+                      {
+                        "id": "1",
+                        "pic": "INDRA SUDARSONO",
+                        "group": "PENERBITAN FENNY",
+                        "checkerGroup": [
+                          { "id": "1", "checker": "INDRA SUDARSONO" },
+                          { "id": "2", "checker": "GYANO" },
+                          { "id": "3", "checker": "CELOSIA" }
+                        ],
+                        "groupMember": [
+                          {
+                            "id": "1",
+                            "member": {
+                              "nik": "10011555",
+                              "licenseUserId": "3455",
+                              "dateOfBirth": "1992-05-04",
+                              "placeOfBirth": "JAKARTA",
+                              "personalAddress": "KOMPLEK GRAND CITY THE EXTENTION",
+                              "nationality": "INDONESIA",
+                              "phoneNumber": "081213518268",
+                              "gender": { "id": "2", "gender": "PEREMPUAN" },
+                              "email": "fenny.apriliani@airnavindonesia.co.id",
+                              "name": "FENNY APRILIANI PUTRI",
+                              "license": [
+                                {
+                                  "id": "4",
+                                  "user": { "id": "3455", "name": "FENNY" },
+                                  "note": "License 2025 SMT 1",
+                                  "path": "/public/license/fenny2025smt1.pdf"
+                                },
+                                {
+                                  "id": "5",
+                                  "user": { "id": "3455", "name": "FENNY" },
+                                  "note": "License 2025 SMT 2",
+                                  "path": "/public/license/fenny2025smt2.pdf"
+                                },
+                                {
+                                  "id": "6",
+                                  "user": { "id": "3455", "name": "FENNY" },
+                                  "note": "License 2026 SMT 1",
+                                  "path": "/public/license/fenny2025smt1.pdf"
+                                }
+                              ],
+                              "logbook": [
+                                {
+                                  "id": "4",
+                                  "user": { "id": "3455", "name": "FENNY" },
+                                  "note": "Logbook 2025 SMT 1",
+                                  "path": "/public/logbook/fenny2025smt1.pdf"
+                                },
+                                {
+                                  "id": "5",
+                                  "user": { "id": "3455", "name": "FENNY" },
+                                  "note": "Logbook 2025 SMT 2",
+                                  "path": "/public/logbook/fenny2025smt2.pdf"
+                                },
+                                {
+                                  "id": "6",
+                                  "user": { "id": "3455", "name": "FENNY" },
+                                  "note": "Logbook 2026 SMT 1",
+                                  "path": "/public/logbook/fenny2025smt1.pdf"
+                                }
+                              ],
+                              "ielp": [
+                                {
+                                  "id": "4",
+                                  "isConfirm": true,
+                                  "released": "2015-02-28",
+                                  "expired": "2018-02-28",
+                                  "rater": "SUSI",
+                                  "institution": "PPIC CURUG",
+                                  "level": "4",
+                                  "file": "/public/logbook/fennyIelp1.pdf"
+                                },
+                                {
+                                  "id": "5",
+                                  "isConfirm": true,
+                                  "released": "2018-02-28",
+                                  "expired": "2024-02-28",
+                                  "rater": "SUSI",
+                                  "institution": "PPIC CURUG",
+                                  "level": "5",
+                                  "file": "/public/logbook/fennyIelp2.pdf"
+                                },
+                                {
+                                  "id": "6",
+                                  "isConfirm": true,
+                                  "released": "2024-02-28",
+                                  "expired": "2030-02-28",
+                                  "rater": "SUSI",
+                                  "institution": "PPIC CURUG",
+                                  "level": "5",
+                                  "file": ""
+                                }
+                              ],
+                              "medex": [
+                                {
+                                  "id": "4",
+                                  "isConfirm": true,
+                                  "released": "2020-02-28",
+                                  "expired": "2022-02-28",
+                                  "examiner": "DR. DINAR",
+                                  "institution": "HATPEN",
+                                  "file": "/public/logbook/fennyMedex1.pdf"
+                                },
+                                {
+                                  "id": "5",
+                                  "isConfirm": true,
+                                  "released": "2022-02-28",
+                                  "expired": "2024-02-28",
+                                  "examiner": "DR. DINAR",
+                                  "institution": "HATPEN",
+                                  "file": ""
+                                },
+                                {
+                                  "id": "6",
+                                  "isConfirm": true,
+                                  "released": "2024-02-28",
+                                  "expired": "2026-02-28",
+                                  "examiner": "DR. DINAR",
+                                  "institution": "HATPEN",
+                                  "file": "/public/logbook/fennyMedex3.pdf"
+                                }
+                              ],
+                              "competence": [
+                                {
+                                  "id": "6",
+                                  "competenceItem": [
+                                    { "id": "1", "competence": "TWR" }
+                                  ],
+                                  "institution": "STPI CURUG",
+                                  "released": "2013-02-28",
+                                  "file": "/public/twrFenny.pdf"
+                                },
+                                {
+                                  "id": "7",
+                                  "competenceItem": [
+                                    { "id": "2", "competence": "APP" }
+                                  ],
+                                  "institution": "STPI CURUG",
+                                  "released": "2016-02-28",
+                                  "file": "/public/appFenny.pdf"
+                                },
+                                {
+                                  "id": "8",
+                                  "competenceItem": [
+                                    { "id": "3", "competence": "APS" }
+                                  ],
+                                  "institution": "ATKP MAKASSAR",
+                                  "released": "2013-02-28",
+                                  "file": "/public/apsFenny.pdf"
+                                },
+                                {
+                                  "id": "9",
+                                  "competenceItem": [
+                                    { "id": "1", "competence": "ACP" }
+                                  ],
+                                  "institution": "STPI CURUG",
+                                  "released": "2013-02-28",
+                                  "file": "/public/acpFenny.pdf"
+                                },
+                                {
+                                  "id": "10",
+                                  "competenceItem": [
+                                    { "id": "1", "competence": "ACS" }
+                                  ],
+                                  "institution": "STPI CURUG",
+                                  "released": "2019-02-28",
+                                  "file": "/public/acsFenny.pdf"
+                                }
+                              ]
+                            },
+                            "verification": {
+                              "id": "2",
+                              "applicationDoc": {
+                                "id": "2",
+                                "number": "2026/PERPANJANGAN/ACC/3458-1",
+                                "briefingDate": "",
+                                "isConfirmRating": true,
+                                "reason": "",
+                                "location": "JATSC",
+                                "rating": "ACP, ACS",
+                                "dateForExp": "2026-06-30",
+                                "confirmOjt": false,
+                                "ojtId": "",
+                                "letterNumber": "",
+                                "letterDate": "",
+                                "controlHour": "",
+                                "atsName": "ACC JAKARTA",
+                                "address": "TOWER SOEKARNO HATTA",
+                                "isDrugs": false,
+                                "isFailed": false,
+                                "license": {
+                                  "id": "4",
+                                  "user": {
+                                    "id": "3455",
+                                    "name": "FENNY APRILIANI PUTRI"
+                                  },
+                                  "note": "License 2026 SMT 1",
+                                  "path": "/public/license/fenny2025smt1.pdf"
+                                },
+                                "logBook": {
+                                  "id": "4",
+                                  "user": {
+                                    "id": "3458",
+                                    "name": "FENNY APRILIANI PUTRI"
+                                  },
+                                  "note": "Logbook 2026 SMT 1",
+                                  "path": "/public/logbook/fenny2025smt1.pdf"
+                                },
+                                "appRating": [
+                                  {
+                                    "id": "3",
+                                    "rating": { "id": "1", "rating": "ACP" },
+                                    "controlHour": 90,
+                                    "statusId": {
+                                      "id": "1",
+                                      "status": "REGISTERRED"
+                                    }
+                                  },
+                                  {
+                                    "id": "4",
+                                    "rating": { "id": "2", "rating": "ACS" },
+                                    "controlHour": 90,
+                                    "statusId": {
+                                      "id": "1",
+                                      "status": "REGISTERRED"
+                                    }
+                                  }
+                                ]
+                              },
+                              "verificationData": "",
+                              "isValid": false
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "eventQuestion": [
+                      {
+                        "id": "1",
+                        "sector": { "id": "1", "sector": "WEST" },
+                        "kindOfQuestion": {
+                          "id": "1",
+                          "question": "Essay"
+                        },
+                        "quantity": 5,
+                        "persentage": 0.3,
+                        "minutes": 30
+                      },
+                      {
+                        "id": "2",
+                        "sector": { "id": "1", "sector": "WEST" },
+                        "kindOfQuestion": {
+                          "id": "2",
+                          "question": "Multiple Choice"
+                        },
+                        "quantity": 5,
+                        "persentage": 0.7,
+                        "minutes": 30
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2",
+                    "sector": { "id": "1", "sector": "WEST" },
+                    "event": "Performance Check 2",
+                    "start": "2026-01-01T00:00:00",
+                    "finish": "2026-03-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75,
+                    "group": [
+                      {
+                        "id": "2",
+                        "pic": "INDRA SUDARSONO",
+                        "group": "GROUP A",
+                        "checkerGroup": [
+                          { "id": "4", "checker": "INDRA SUDARSONO" }
+                        ],
+                        "groupMember": [
+                          { "id": "2", "member": "FENNY" },
+                          { "id": "3", "member": "FENNY" },
+                          { "id": "4", "member": "CELOSIA" },
+                          { "id": "5", "member": "GYANO" },
+                          { "id": "6", "member": "SHAIMA" },
+                          {
+                            "id": "13",
+                            "member": {
+                              "nik": "10011528",
+                              "licenseUserId": "3458",
+                              "dateOfBirth": "1992-11-04",
+                              "placeOfBirth": "JAKARTA",
+                              "personalAddress": "KOMPLEK GRAND CITY THE EXTENTION",
+                              "nationality": "INDONESIA",
+                              "phoneNumber": "081213518268",
+                              "gender": { "id": "1", "gender": "LAKI-LAKI" },
+                              "email": "indra.sudarsono@airnavindonesia.co.id",
+                              "name": "INDRA SUDARSONO",
+                              "license": [
+                                {
+                                  "id": "1",
+                                  "user": { "id": "3458", "name": "INDRA" },
+                                  "note": "License 2025 SMT 1",
+                                  "path": "/public/license/indra2025smt1.pdf"
+                                },
+                                {
+                                  "id": "2",
+                                  "user": { "id": "3458", "name": "INDRA" },
+                                  "note": "License 2025 SMT 2",
+                                  "path": "/public/license/indra2025smt2.pdf"
+                                },
+                                {
+                                  "id": "3",
+                                  "user": { "id": "3458", "name": "INDRA" },
+                                  "note": "License 2026 SMT 1",
+                                  "path": "/public/license/indra2025smt1.pdf"
+                                }
+                              ],
+                              "logbook": [
+                                {
+                                  "id": "1",
+                                  "user": { "id": "3458", "name": "INDRA" },
+                                  "note": "Logbook 2025 SMT 1",
+                                  "path": "/public/logbook/indra2025smt1.pdf"
+                                },
+                                {
+                                  "id": "2",
+                                  "user": { "id": "3458", "name": "INDRA" },
+                                  "note": "Logbook 2025 SMT 2",
+                                  "path": "/public/logbook/indra2025smt2.pdf"
+                                },
+                                {
+                                  "id": "3",
+                                  "user": { "id": "3458", "name": "INDRA" },
+                                  "note": "Logbook 2026 SMT 1",
+                                  "path": "/public/logbook/indra2025smt1.pdf"
+                                }
+                              ],
+                              "ielp": [
+                                {
+                                  "id": "1",
+                                  "isConfirm": true,
+                                  "released": "2015-02-28",
+                                  "expired": "2018-02-28",
+                                  "rater": "SUSI",
+                                  "institution": "PPIC CURUG",
+                                  "level": "4",
+                                  "file": "/public/logbook/indraIelp1.pdf"
+                                },
+                                {
+                                  "id": "2",
+                                  "isConfirm": true,
+                                  "released": "2018-02-28",
+                                  "expired": "2024-02-28",
+                                  "rater": "SUSI",
+                                  "institution": "PPIC CURUG",
+                                  "level": "5",
+                                  "file": "/public/logbook/indraIelp2.pdf"
+                                },
+                                {
+                                  "id": "3",
+                                  "isConfirm": true,
+                                  "released": "2024-02-28",
+                                  "expired": "2030-02-28",
+                                  "rater": "SUSI",
+                                  "institution": "PPIC CURUG",
+                                  "level": "5",
+                                  "file": ""
+                                }
+                              ],
+                              "medex": [
+                                {
+                                  "id": "1",
+                                  "isConfirm": true,
+                                  "released": "2020-02-28",
+                                  "expired": "2022-02-28",
+                                  "examiner": "DR. DINAR",
+                                  "institution": "HATPEN",
+                                  "file": "/public/logbook/indraMedex1.pdf"
+                                },
+                                {
+                                  "id": "2",
+                                  "isConfirm": true,
+                                  "released": "2022-02-28",
+                                  "expired": "2024-02-28",
+                                  "examiner": "DR. DINAR",
+                                  "institution": "HATPEN",
+                                  "file": ""
+                                },
+                                {
+                                  "id": "3",
+                                  "isConfirm": true,
+                                  "released": "2024-02-28",
+                                  "expired": "2026-02-28",
+                                  "examiner": "DR. DINAR",
+                                  "institution": "HATPEN",
+                                  "file": "/public/logbook/indraMedex3.pdf"
+                                }
+                              ],
+                              "competence": [
+                                {
+                                  "id": "1",
+                                  "competenceItem": [
+                                    { "id": "1", "competence": "TWR" }
+                                  ],
+                                  "institution": "STPI CURUG",
+                                  "released": "2013-02-28",
+                                  "file": "/public/twrIndra.pdf"
+                                },
+                                {
+                                  "id": "2",
+                                  "competenceItem": [
+                                    { "id": "2", "competence": "APP" }
+                                  ],
+                                  "institution": "STPI CURUG",
+                                  "released": "2016-02-28",
+                                  "file": "/public/appIndra.pdf"
+                                },
+                                {
+                                  "id": "3",
+                                  "competenceItem": [
+                                    { "id": "3", "competence": "APS" }
+                                  ],
+                                  "institution": "ATKP MAKASSAR",
+                                  "released": "2013-02-28",
+                                  "file": "/public/apsIndra.pdf"
+                                },
+                                {
+                                  "id": "4",
+                                  "competenceItem": [
+                                    { "id": "1", "competence": "ACP" }
+                                  ],
+                                  "institution": "STPI CURUG",
+                                  "released": "2013-02-28",
+                                  "file": "/public/acpIndra.pdf"
+                                },
+                                {
+                                  "id": "5",
+                                  "competenceItem": [
+                                    { "id": "1", "competence": "ACS" }
+                                  ],
+                                  "institution": "STPI CURUG",
+                                  "released": "2019-02-28",
+                                  "file": "/public/acsIndra.pdf"
+                                }
+                              ]
+                            },
+                            "verification": {
+                              "id": "1",
+                              "applicationDoc": {
+                                "id": "1",
+                                "number": "2026/PERPANJANGAN/ACC/3458-1",
+                                "briefingDate": "",
+                                "isConfirmRating": true,
+                                "reason": "",
+                                "location": "JATSC",
+                                "rating": "ACP, ACS",
+                                "dateForExp": "2026-06-30",
+                                "confirmOjt": false,
+                                "ojtId": "",
+                                "letterNumber": "",
+                                "letterDate": "",
+                                "controlHour": "",
+                                "atsName": "ACC JAKARTA",
+                                "address": "TOWER SOEKARNO HATTA",
+                                "isDrugs": false,
+                                "isFailed": false,
+                                "license": {
+                                  "id": "3",
+                                  "user": { "id": "3458", "name": "INDRA" },
+                                  "note": "License 2026 SMT 1",
+                                  "path": "/public/license/indra2025smt1.pdf"
+                                },
+                                "logBook": {
+                                  "id": "3",
+                                  "user": { "id": "3458", "name": "INDRA" },
+                                  "note": "Logbook 2026 SMT 1",
+                                  "path": "/public/logbook/indra2025smt1.pdf"
+                                },
+                                "appRating": [
+                                  {
+                                    "id": "1",
+                                    "rating": { "id": "1", "rating": "ACP" },
+                                    "controlHour": 90,
+                                    "statusId": {
+                                      "id": "1",
+                                      "status": "REGISTERRED"
+                                    }
+                                  },
+                                  {
+                                    "id": "2",
+                                    "rating": { "id": "2", "rating": "ACS" },
+                                    "controlHour": 90,
+                                    "statusId": {
+                                      "id": "1",
+                                      "status": "REGISTERRED"
+                                    }
+                                  }
+                                ]
+                              },
+                              "verificationData": "",
+                              "isValid": false
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "eventQuestion": [
+                      {
+                        "id": "3",
+                        "sector": { "id": "1", "sector": "WEST" },
+                        "kindOfQuestion": {
+                          "id": "1",
+                          "question": "Essay"
+                        },
+                        "quantity": 5,
+                        "persentage": 0.3,
+                        "minutes": 30
+                      },
+                      {
+                        "id": "4",
+                        "sector": { "id": "1", "sector": "WEST" },
+                        "kindOfQuestion": {
+                          "id": "2",
+                          "question": "Multiple Choice"
+                        },
+                        "quantity": 5,
+                        "persentage": 0.7,
+                        "minutes": 30
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "2",
+                "session": "2026 Semester 2",
+                "event": [
+                  {
+                    "id": "3",
+                    "sector": { "id": "1", "sector": "WEST" },
+                    "event": "Performance Check 3",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75,
+                    "group": [
+                      {
+                        "id": "3",
+                        "pic": "INDRA SUDARSONO",
+                        "group": "PENERBITAN FENNY",
+                        "checkerGroup": [
+                          { "id": "5", "checker": "INDRA SUDARSONO" },
+                          { "id": "6", "checker": "GYANO" },
+                          { "id": "7", "checker": "CELOSIA" }
+                        ],
+                        "groupMember": [{ "id": "7", "member": "FENNY" }]
+                      }
+                    ],
+                    "eventQuestion": [
+                      {
+                        "id": "5",
+                        "sector": { "id": "1", "sector": "WEST" },
+                        "kindOfQuestion": {
+                          "id": "1",
+                          "kindOfQuestion": "Essay"
+                        },
+                        "quantity": 5,
+                        "persentage": 0.3,
+                        "minutes": 30
+                      },
+                      {
+                        "id": "6",
+                        "sector": { "id": "1", "sector": "WEST" },
+                        "kindOfQuestion": {
+                          "id": "2",
+                          "kindOfQuestion": "Multiple Choice"
+                        },
+                        "quantity": 5,
+                        "persentage": 0.7,
+                        "minutes": 30
+                      }
+                    ]
+                  },
+                  {
+                    "id": "4",
+                    "sector": { "id": "1", "sector": "WEST" },
+                    "event": "Performance Check 4",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75,
+                    "group": [
+                      {
+                        "id": "4",
+                        "pic": "INDRA SUDARSONO",
+                        "group": "GROUP A",
+                        "checkerGroup": [
+                          { "id": "8", "checker": "INDRA SUDARSONO" }
+                        ],
+                        "groupMember": [
+                          { "id": "8", "member": "FENNY" },
+                          { "id": "9", "member": "FENNY" },
+                          { "id": "10", "member": "CELOSIA" },
+                          { "id": "11", "member": "GYANO" },
+                          { "id": "12", "member": "SHAIMA" }
+                        ]
+                      }
+                    ],
+                    "eventQuestion": [
+                      {
+                        "id": "7",
+                        "sector": { "id": "1", "sector": "WEST" },
+                        "kindOfQuestion": {
+                          "id": "1",
+                          "kindOfQuestion": "Essay"
+                        },
+                        "quantity": 5,
+                        "persentage": 0.3,
+                        "minutes": 30
+                      },
+                      {
+                        "id": "8",
+                        "sector": { "id": "1", "sector": "WEST" },
+                        "kindOfQuestion": {
+                          "id": "2",
+                          "kindOfQuestion": "Multiple Choice"
+                        },
+                        "quantity": 5,
+                        "persentage": 0.7,
+                        "minutes": 30
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2",
+            "unit": "APP",
+            "sector": [
+              {
+                "id": "6",
+                "sector": "APP",
+                "sectorCwp": [
+                  {
+                    "id": "22",
+                    "cwp": {
+                      "id": "10",
+                      "cwp": "TWR",
+                      "rating": { "id": "1", "rating": "TWR" }
+                    }
+                  },
+                  {
+                    "id": "23",
+                    "cwp": {
+                      "id": "11",
+                      "cwp": "LEA",
+                      "rating": { "id": "2", "rating": "APP" }
+                    }
+                  },
+                  {
+                    "id": "24",
+                    "cwp": {
+                      "id": "12",
+                      "cwp": "LE",
+                      "rating": { "id": "3", "rating": "APS" }
+                    }
+                  }
+                ]
+              }
+            ],
+            "session": [
+              {
+                "id": "3",
+                "session": "2026 Semester 1",
+                "event": [
+                  {
+                    "id": "5",
+                    "event": "Performance Check 1",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "6",
+                    "event": "Performance Check 2",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              },
+              {
+                "id": "4",
+                "session": "2026 Semester 2",
+                "event": [
+                  {
+                    "id": "7",
+                    "event": "Performance Check 1",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "8",
+                    "event": "Performance Check 2",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "branch": "MEDAN",
+        "branchUnit": [
+          {
+            "id": "3",
+            "unit": "APPTMA",
+            "sector": [
+              {
+                "id": "7",
+                "sector": "APPTMA",
+                "sectorCwp": [
+                  {
+                    "id": "23",
+                    "cwp": {
+                      "id": "13",
+                      "cwp": "TWR",
+                      "rating": { "id": "1", "rating": "TWR" }
+                    }
+                  },
+                  {
+                    "id": "24",
+                    "cwp": {
+                      "id": "14",
+                      "cwp": "MWA",
+                      "rating": { "id": "2", "rating": "APP" }
+                    }
+                  },
+                  {
+                    "id": "25",
+                    "cwp": {
+                      "id": "15",
+                      "cwp": "MW",
+                      "rating": { "id": "3", "rating": "APS" }
+                    }
+                  }
+                ]
+              }
+            ],
+            "session": [
+              {
+                "id": "5",
+                "session": "2026 Semester 1",
+                "event": [
+                  {
+                    "id": "9",
+                    "event": "Performance Check 1",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "10",
+                    "event": "Performance Check 2",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              },
+              {
+                "id": "6",
+                "session": "2026 Semester 2",
+                "event": [
+                  {
+                    "id": "11",
+                    "event": "Performance Check 1",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "12",
+                    "event": "Performance Check 2",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "4",
+            "unit": "ACO",
+            "sector": [
+              {
+                "id": "8",
+                "sector": "MDNFIC",
+                "sectorCwp": [
+                  {
+                    "id": "26",
+                    "cwp": {
+                      "id": "16",
+                      "cwp": "MDNFIC",
+                      "rating": { "id": "6", "rating": "ACO" }
+                    }
+                  }
+                ]
+              }
+            ],
+            "session": [
+              {
+                "id": "7",
+                "session": "2026 Semester 1",
+                "event": [
+                  {
+                    "id": "13",
+                    "event": "Performance Check 1",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "14",
+                    "event": "Performance Check 2",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              },
+              {
+                "id": "8",
+                "session": "2026 Semester 2",
+                "event": [
+                  {
+                    "id": "15",
+                    "event": "Performance Check 1",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "16",
+                    "event": "Performance Check 2",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "region": "EAST REGION",
+    "branch": [
+      {
+        "id": "3",
+        "branch": "SURABAYA",
+        "branchUnit": [
+          {
+            "id": "5",
+            "unit": "APPTMA",
+            "sector": [
+              {
+                "id": "9",
+                "sector": "APPTMA",
+                "sectorCwp": [
+                  {
+                    "id": "27",
+                    "cwp": {
+                      "id": "17",
+                      "cwp": "TWR",
+                      "rating": { "id": "1", "rating": "TWR" }
+                    }
+                  },
+                  {
+                    "id": "28",
+                    "cwp": {
+                      "id": "18",
+                      "cwp": "SWA",
+                      "rating": { "id": "2", "rating": "APP" }
+                    }
+                  },
+                  {
+                    "id": "29",
+                    "cwp": {
+                      "id": "19",
+                      "cwp": "SW",
+                      "rating": { "id": "3", "rating": "APS" }
+                    }
+                  }
+                ]
+              }
+            ],
+            "session": [
+              {
+                "id": "9",
+                "session": "2026 Semester 1",
+                "event": [
+                  {
+                    "id": "17",
+                    "event": "Performance Check 1",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "18",
+                    "event": "Performance Check 2",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              },
+              {
+                "id": "10",
+                "session": "2026 Semester 2",
+                "event": [
+                  {
+                    "id": "19",
+                    "event": "Performance Check 1",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "20",
+                    "event": "Performance Check 2",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "6",
+            "unit": "AIS",
+            "sector": [
+              {
+                "id": "10",
+                "sector": "AIS",
+                "sectorCwp": [
+                  {
+                    "id": "30",
+                    "cwp": {
+                      "id": "20",
+                      "cwp": "AIS",
+                      "rating": { "id": "7", "rating": "KARTOGRAFI" }
+                    }
+                  }
+                ]
+              }
+            ],
+            "session": [
+              {
+                "id": "11",
+                "session": "2026 Semester 1",
+                "event": [
+                  {
+                    "id": "21",
+                    "event": "Performance Check 1",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "22",
+                    "event": "Performance Check 2",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              },
+              {
+                "id": "12",
+                "session": "2026 Semester 2",
+                "event": [
+                  {
+                    "id": "23",
+                    "event": "Performance Check 1",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "24",
+                    "event": "Performance Check 2",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "4",
+        "branch": "UJUNG PANDANG",
+        "branchUnit": [
+          {
+            "id": "7",
+            "unit": "ACC",
+            "sector": [
+              {
+                "id": "11",
+                "sector": "ACC",
+                "sectorCwp": [
+                  {
+                    "id": "31",
+                    "cwp": {
+                      "id": "21",
+                      "cwp": "UPGW",
+                      "rating": { "id": "5", "rating": "APS" }
+                    }
+                  },
+                  {
+                    "id": "32",
+                    "cwp": {
+                      "id": "22",
+                      "cwp": "UPGE",
+                      "rating": { "id": "5", "rating": "APS" }
+                    }
+                  },
+                  {
+                    "id": "33",
+                    "cwp": {
+                      "id": "23",
+                      "cwp": "UPGWA",
+                      "rating": { "id": "4", "rating": "APP" }
+                    }
+                  }
+                ]
+              }
+            ],
+            "session": [
+              {
+                "id": "13",
+                "session": "2026 Semester 1",
+                "event": [
+                  {
+                    "id": "25",
+                    "event": "Performance Check 1",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "26",
+                    "event": "Performance Check 2",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              },
+              {
+                "id": "14",
+                "session": "2026 Semester 2",
+                "event": [
+                  {
+                    "id": "27",
+                    "event": "Performance Check 1",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "28",
+                    "event": "Performance Check 2",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "8",
+            "unit": "APP",
+            "sector": [
+              {
+                "id": "12",
+                "sector": "APP",
+                "sectorCwp": [
+                  {
+                    "id": "34",
+                    "cwp": {
+                      "id": "16",
+                      "cwp": "UPWA",
+                      "rating": { "id": "3", "rating": "APP" }
+                    }
+                  },
+                  {
+                    "id": "35",
+                    "cwp": {
+                      "id": "17",
+                      "cwp": "UPW",
+                      "rating": { "id": "3", "rating": "APS" }
+                    }
+                  }
+                ]
+              }
+            ],
+            "session": [
+              {
+                "id": "15",
+                "session": "2026 Semester 1",
+                "event": [
+                  {
+                    "id": "29",
+                    "event": "Performance Check 1",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "30",
+                    "event": "Performance Check 2",
+                    "start": "2026-06-01T00:00:00",
+                    "finish": "2026-06-30T00:00:00",
+                    "forExpDate": "2026-12-31T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              },
+              {
+                "id": "16",
+                "session": "2026 Semester 2",
+                "event": [
+                  {
+                    "id": "31",
+                    "event": "Performance Check 1",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "1", "remark": "PENERBITAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  },
+                  {
+                    "id": "32",
+                    "event": "Performance Check 2",
+                    "start": "2026-12-01T00:00:00",
+                    "finish": "2026-12-30T00:00:00",
+                    "forExpDate": "2027-06-30T23:59:59",
+                    "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" },
+                    "briefingFile": "/public/briefing.pdf",
+                    "passingGrade": 75
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

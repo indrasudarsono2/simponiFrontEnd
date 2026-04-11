@@ -1,0 +1,251 @@
+[
+  {
+    "id": "1",
+    "sector": { "id": "1", "sector": "WEST" },
+    "rating": { "id": "4", "rating": "ACP" },
+    "questionGroup": [
+      {
+        "id": "1",
+        "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+        "group": "PENDEK",
+        "quantity": "2",
+        "essayQuestionGroup": [
+          {
+            "id": "1",
+            "sector": { "id": "1", "sector": "WEST" },
+            "essay": {
+              "id": "1",
+              "question": "Accoording TLI ( Temporary Local Instruction ) Jakarta ACC and MEDAN APP , when Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit …",
+              "answer": "Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit before 300 nm until 150 nm of DES VOR",
+              "image": "",
+              "value": 4
+            }
+          },
+          {
+            "id": "9",
+            "sector": { "id": "1", "sector": "WEST" },
+            "essay": {
+              "id": "6",
+              "question": "What is the code on Field 10a of Flight Plan to be filled if the aircraft is equipped with CPDLC …....... and what is the LOGON ADS-C/CPDLC in the Jakarta FIR…...",
+              "answer": "Code J1, and LOGON ADS-C/CPDLC in Jakarta FIR is WIII",
+              "image": "",
+              "value": 3
+            }
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+        "group": "PANJANG",
+        "quantity": "3",
+        "essayQuestionGroup": [
+          {
+            "id": "3",
+            "sector": { "id": "1", "sector": "WEST" },
+            "essay": {
+              "id": "4",
+              "question": "when Jakarta ACC shall transfer surveillance identification to Pontianak APP",
+              "answer": "within surveillance coverage accepting unit between 180 nm until 130 nm of PNK VOR",
+              "image": "",
+              "value": 5
+            }
+          }
+        ]
+      },
+      {
+        "id": "3",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "STRUKTUR RUANG UDARA",
+        "quantity": "4"
+      },
+      {
+        "id": "4",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "SOP, LOCA DAN INFO",
+        "quantity": "16"
+      },
+      {
+        "id": "5",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "FAS NAV PNB",
+        "quantity": "6"
+      },
+      {
+        "id": "6",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "FAS PEMANDUAN LLP",
+        "quantity": "4"
+      },
+      {
+        "id": "7",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "TERRAIN, PROMINENT LANMARK",
+        "quantity": "4"
+      },
+      {
+        "id": "8",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "KARAKTERISTIK LLP",
+        "quantity": "3"
+      },
+      {
+        "id": "9",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "CUACA",
+        "quantity": "3"
+      },
+      {
+        "id": "10",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "RENCANA GAWAT DARURAT DAN SAR",
+        "quantity": "5"
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "sector": { "id": "1", "sector": "WEST" },
+    "rating": { "id": "5", "rating": "ACS" },
+    "questionGroup": [
+      {
+        "id": "11",
+        "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+        "group": "PENDEK",
+        "quantity": "2",
+        "essayQuestionGroup": [
+          {
+            "id": "2",
+            "sector": { "id": "1", "sector": "WEST" },
+            "essay": {
+              "id": "1",
+              "question": "Accoording TLI ( Temporary Local Instruction ) Jakarta ACC and MEDAN APP , when Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit …",
+              "answer": "Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit before 300 nm until 150 nm of DES VOR",
+              "image": "",
+              "value": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "12",
+        "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+        "group": "PANJANG",
+        "quantity": "3",
+        "essayQuestionGroup": [
+          {
+            "id": "4",
+            "sector": { "id": "1", "sector": "WEST" },
+            "essay": {
+              "id": "4",
+              "question": "when Jakarta ACC shall transfer surveillance identification to Pontianak APP",
+              "answer": "within surveillance coverage accepting unit between 180 nm until 130 nm of PNK VOR",
+              "image": "",
+              "value": 5
+            }
+          }
+        ]
+      },
+      {
+        "id": "13",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "STRUKTUR RUANG UDARA",
+        "quantity": "4"
+      },
+      {
+        "id": "14",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "SOP, LOCA DAN INFO",
+        "quantity": "16"
+      },
+      {
+        "id": "15",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "FAS NAV PNB",
+        "quantity": "6"
+      },
+      {
+        "id": "16",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "FAS PEMANDUAN LLP",
+        "quantity": "4"
+      },
+      {
+        "id": "17",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "TERRAIN, PROMINENT LANMARK",
+        "quantity": "4"
+      },
+      {
+        "id": "18",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "KARAKTERISTIK LLP",
+        "quantity": "3"
+      },
+      {
+        "id": "19",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "CUACA",
+        "quantity": "3"
+      },
+      {
+        "id": "20",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "RENCANA GAWAT DARURAT DAN SAR",
+        "quantity": "5"
+      },
+      {
+        "id": "21",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "SYSTEM ATS SURVEILLANCE",
+        "quantity": "4"
+      },
+      {
+        "id": "22",
+        "kindOfQuestion": { "id": "2", "question": "MULTIPLE CHOICE" },
+        "group": "ATS SURVEILLANCE PROCEDURE",
+        "quantity": "7"
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "sector": { "id": "1", "sector": "EAST" },
+    "rating": { "id": "4", "rating": "ACP" }
+  },
+  {
+    "id": "4",
+    "sector": { "id": "1", "sector": "EAST" },
+    "rating": { "id": "5", "rating": "ACS" }
+  },
+  {
+    "id": "5",
+    "sector": { "id": "1", "sector": "NORTH" },
+    "rating": { "id": "4", "rating": "ACP" }
+  },
+  {
+    "id": "6",
+    "sector": { "id": "1", "sector": "NORTH" },
+    "rating": { "id": "5", "rating": "ACS" }
+  },
+  {
+    "id": "7",
+    "sector": { "id": "1", "sector": "NORTH WEST" },
+    "rating": { "id": "4", "rating": "ACP" }
+  },
+  {
+    "id": "8",
+    "sector": { "id": "1", "sector": "NORTH WEST" },
+    "rating": { "id": "5", "rating": "ACS" }
+  },
+  {
+    "id": "9",
+    "sector": { "id": "1", "sector": "NORTH EAST" },
+    "rating": { "id": "4", "rating": "ACP" }
+  },
+  {
+    "id": "10",
+    "sector": { "id": "1", "sector": "NORTH EAST" },
+    "rating": { "id": "5", "rating": "ACS" }
+  }
+]

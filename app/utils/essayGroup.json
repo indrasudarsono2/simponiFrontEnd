@@ -1,0 +1,240 @@
+[
+  {
+    "id": "1",
+    "sector": { "id": "1", "sector": "WEST" },
+    "essay": {
+      "id": "1",
+      "question": "Accoording TLI ( Temporary Local Instruction ) Jakarta ACC and MEDAN APP , when Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit …",
+      "answer": "Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit before 300 nm until 150 nm of DES VOR",
+      "image": "",
+      "value": 4
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PENDEK",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "2",
+    "sector": { "id": "2", "sector": "EAST" },
+    "essay": {
+      "id": "1",
+      "question": "Accoording TLI ( Temporary Local Instruction ) Jakarta ACC and MEDAN APP , when Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit …",
+      "answer": "Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit before 300 nm until 150 nm of DES VOR",
+      "image": "",
+      "value": 4
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PENDEK",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "3",
+    "sector": { "id": "3", "sector": "NORTH" },
+    "essay": {
+      "id": "1",
+      "question": "Accoording TLI ( Temporary Local Instruction ) Jakarta ACC and MEDAN APP , when Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit …",
+      "answer": "Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit before 300 nm until 150 nm of DES VOR",
+      "image": "",
+      "value": 4
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PENDEK",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "4",
+    "sector": { "id": "4", "sector": "NORTH WEST" },
+    "essay": {
+      "id": "1",
+      "question": "Accoording TLI ( Temporary Local Instruction ) Jakarta ACC and MEDAN APP , when Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit …",
+      "answer": "Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit before 300 nm until 150 nm of DES VOR",
+      "image": "",
+      "value": 4
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PENDEK",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "5",
+    "sector": { "id": "5", "sector": "NORTH EAST" },
+    "essay": {
+      "id": "1",
+      "question": "Accoording TLI ( Temporary Local Instruction ) Jakarta ACC and MEDAN APP , when Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit …",
+      "answer": "Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit before 300 nm until 150 nm of DES VOR",
+      "image": "",
+      "value": 4
+    },
+    "questionGroup": {
+      "id": "1",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PENDEK",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "6",
+    "sector": { "id": "1", "sector": "WEST" },
+    "essay": {
+      "id": "4",
+      "question": "when Jakarta ACC shall transfer surveillance identification to Pontianak APP",
+      "answer": "within surveillance coverage accepting unit between 180 nm until 130 nm of PNK VOR",
+      "image": "",
+      "value": 5
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PANJANG",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "7",
+    "sector": { "id": "2", "sector": "EAST" },
+    "essay": {
+      "id": "4",
+      "question": "when Jakarta ACC shall transfer surveillance identification to Pontianak APP",
+      "answer": "within surveillance coverage accepting unit between 180 nm until 130 nm of PNK VOR",
+      "image": "",
+      "value": 5
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PANJANG",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "8",
+    "sector": { "id": "3", "sector": "NORTH" },
+    "essay": {
+      "id": "4",
+      "question": "when Jakarta ACC shall transfer surveillance identification to Pontianak APP",
+      "answer": "within surveillance coverage accepting unit between 180 nm until 130 nm of PNK VOR",
+      "image": "",
+      "value": 5
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PANJANG",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "9",
+    "sector": { "id": "1", "sector": "WEST" },
+    "essay": {
+      "id": "6",
+      "question": "What is the code on Field 10a of Flight Plan to be filled if the aircraft is equipped with CPDLC …....... and what is the LOGON ADS-C/CPDLC in the Jakarta FIR…...",
+      "answer": "Code J1, and LOGON ADS-C/CPDLC in Jakarta FIR is WIII",
+      "image": "",
+      "value": 3
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PANJANG",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "10",
+    "sector": { "id": "2", "sector": "EAST" },
+    "essay": {
+      "id": "6",
+      "question": "What is the code on Field 10a of Flight Plan to be filled if the aircraft is equipped with CPDLC …....... and what is the LOGON ADS-C/CPDLC in the Jakarta FIR…...",
+      "answer": "Code J1, and LOGON ADS-C/CPDLC in Jakarta FIR is WIII",
+      "image": "",
+      "value": 3
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PANJANG",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "11",
+    "sector": { "id": "3", "sector": "NORTH" },
+    "essay": {
+      "id": "6",
+      "question": "What is the code on Field 10a of Flight Plan to be filled if the aircraft is equipped with CPDLC …....... and what is the LOGON ADS-C/CPDLC in the Jakarta FIR…...",
+      "answer": "Code J1, and LOGON ADS-C/CPDLC in Jakarta FIR is WIII",
+      "image": "",
+      "value": 3
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PANJANG",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "12",
+    "sector": { "id": "1", "sector": "WEST" },
+    "essay": {
+      "id": "9",
+      "question": "Mention FLAS that used at ATS route M767 if LSWD applied",
+      "answer": "FL320, FL360 and FL400",
+      "image": "",
+      "value": 3
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PANJANG",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "13",
+    "sector": { "id": "3", "sector": "NORTH" },
+    "essay": {
+      "id": "9",
+      "question": "Mention FLAS that used at ATS route M767 if LSWD applied",
+      "answer": "FL320, FL360 and FL400",
+      "image": "",
+      "value": 3
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PANJANG",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  },
+  {
+    "id": "14",
+    "sector": { "id": "4", "sector": "NORTH WEST" },
+    "essay": {
+      "id": "9",
+      "question": "Mention FLAS that used at ATS route M767 if LSWD applied",
+      "answer": "FL320, FL360 and FL400",
+      "image": "",
+      "value": 3
+    },
+    "questionGroup": {
+      "id": "2",
+      "kindOfQuestion": { "id": "1", "question": "ESSAY" },
+      "group": "PANJANG",
+      "rating": { "id": "4", "rating": "ACP" }
+    }
+  }
+]

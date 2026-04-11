@@ -1,0 +1,15 @@
+[
+  {
+    "id": "2",
+    "event": {
+      "id": "2",
+      "event": "Performance Check 2",
+      "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" }
+    },
+    "user": {
+      "nik": "10011528",
+      "licenseUserId": "3458",
+      "name": "INDRA SUDARSONO"
+    }
+  }
+]

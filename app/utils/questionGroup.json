@@ -1,0 +1,670 @@
+{
+  "essay": [
+    {
+      "id": 1,
+      "branchUnitId": 5,
+      "question": "<p><strong>Jakarta ACC shall</strong> transfer surveillance </p><ol><li><p>identification to Medan East TMA within </p></li><li><p>surveillance coverage accepting unit before 300 nm until 150 nm of DES VOR</p></li></ol><p></p>",
+      "image": "",
+      "answer": "<p>Jakarta ACC shall transfer surveillance identification to Medan west TMA within surveillance coverage accepting unit before 200 nm until 100 nm of BAC VOR.</p>",
+      "value": 4,
+      "createdAt": "2026-03-03T07:41:56.683Z",
+      "updatedAt": "2026-03-03T09:49:36.988Z",
+      "deletedAt": null
+    },
+    {
+      "id": 2,
+      "branchUnitId": 5,
+      "question": "<ol><li><p>QQQQQ</p></li><li><p>ADDFAFA4</p></li></ol><p>Mengapa balanala?</p><p></p>",
+      "image": "",
+      "answer": "<p><em>Oafafaf</em> <strong>baiklah</strong></p>",
+      "value": 3,
+      "createdAt": "2026-03-03T07:58:56.921Z",
+      "updatedAt": "2026-03-03T07:58:56.921Z",
+      "deletedAt": null
+    },
+    {
+      "id": 3,
+      "branchUnitId": 5,
+      "question": "<p>Where will the transfer of communications transferred by Jakarta ACC to Singapore ACC for westbound traffic i.g MAS774 RPLL to WMKK via ATS route G580 at<strong> FL 400?</strong></p>",
+      "image": "",
+      "answer": "<p>at waypoint DOWON</p>",
+      "value": 7,
+      "createdAt": "2026-03-03T07:59:53.212Z",
+      "updatedAt": "2026-03-03T07:59:53.212Z",
+      "deletedAt": null
+    },
+    {
+      "id": 4,
+      "branchUnitId": 5,
+      "question": "<p>Regarding LOCA Jakarta ACC and Ch<strong>ennai ACC, estima</strong>te shall be passed for all flight crossing the common FIR boundary to the appropriate accepting<em> ATS Unit at least ..</em>......... before the aircraft is estimate to pass the TCP.</p><p></p>",
+      "image": "",
+      "answer": "<p>Jakarta ACC UPLB, estimate time arrival WIPB (Selampari Airport), to Palembang TMA</p>",
+      "value": 8,
+      "createdAt": "2026-03-03T08:00:41.522Z",
+      "updatedAt": "2026-03-03T08:00:41.522Z",
+      "deletedAt": null
+    },
+    {
+      "id": 5,
+      "branchUnitId": 5,
+      "question": "<p>Pre Coordination Level ( PCL ) with Kuala Lumpur for Aircraft destination to Kuala Lumpur via : A. PUGER ( P574 and R461) B. SALAX ( N563) are.....</p>",
+      "image": "",
+      "answer": "<p>into aerodrome in Batam, tanjungpinang, Johor and Singapore</p>",
+      "value": 7,
+      "createdAt": "2026-03-03T08:01:07.297Z",
+      "updatedAt": "2026-03-03T08:01:07.297Z",
+      "deletedAt": null
+    },
+    {
+      "id": 6,
+      "branchUnitId": 5,
+      "question": "<p>Accoording TLI ( Temporary Local Instruction ) Jakarta ACC and MEDAN APP , when Jakarta ACC shall transfer surveillance identification to Medan East TMA within surveillance coverage accepting unit …</p>",
+      "image": "",
+      "answer": "<p>Jakarta ACC shall transfer surveillance identification to Medan west TMA within surveillance coverage accepting unit before 200 nm until 100 nm of BAC VOR.</p>",
+      "value": 8,
+      "createdAt": "2026-03-03T08:01:41.078Z",
+      "updatedAt": "2026-03-03T08:01:41.078Z",
+      "deletedAt": null
+    },
+    {
+      "id": 7,
+      "branchUnitId": 5,
+      "question": "<p>What shall Jakarta ACC provide to Tanjungpinang APP for arrival aircraft to aerodrome under responsibility of TANJUNG PINANG APP?</p>",
+      "image": "",
+      "answer": "<ul><li><p>ATS Direct Speech circuit; </p></li><li><p>Long distance call - SLJJ; </p></li><li><p> AFTN/AMHS; </p></li><li><p>Dedicated Mobile Phone Number.</p></li></ul><p></p>",
+      "value": 8,
+      "createdAt": "2026-03-03T08:02:04.342Z",
+      "updatedAt": "2026-03-03T08:14:06.517Z",
+      "deletedAt": null
+    },
+    {
+      "id": 8,
+      "branchUnitId": 5,
+      "question": "<p>Pekanbaru shall not request approval of ATC Clearance to Jakarta ACC regarding aircraft departing Pekanbaru entering Singapore FIR via....and....</p>",
+      "image": "",
+      "answer": "<p>starting descent and before passing FL290</p>",
+      "value": 4,
+      "createdAt": "2026-03-03T08:02:32.581Z",
+      "updatedAt": "2026-03-03T08:02:32.581Z",
+      "deletedAt": null
+    }
+  ],
+  "questionGroup": [
+    {
+      "id": 1,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 1,
+          "branchUnitId": 5,
+          "sector": "WEST",
+          "createdAt": "2026-03-02T06:01:49.912Z",
+          "updatedAt": "2026-03-02T06:01:49.912Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 2,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 1,
+          "branchUnitId": 5,
+          "sector": "WEST",
+          "createdAt": "2026-03-02T06:01:49.912Z",
+          "updatedAt": "2026-03-02T06:01:49.912Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 3,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 2,
+          "branchUnitId": 5,
+          "sector": "EAST",
+          "createdAt": "2026-03-02T07:38:44.482Z",
+          "updatedAt": "2026-03-02T07:38:44.482Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 4,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 2,
+          "branchUnitId": 5,
+          "sector": "EAST",
+          "createdAt": "2026-03-02T07:38:44.482Z",
+          "updatedAt": "2026-03-02T07:38:44.482Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 5,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 3,
+          "branchUnitId": 5,
+          "sector": "NORTH",
+          "createdAt": "2026-03-02T07:38:51.696Z",
+          "updatedAt": "2026-03-02T07:38:51.696Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 6,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 3,
+          "branchUnitId": 5,
+          "sector": "NORTH",
+          "createdAt": "2026-03-02T07:38:51.696Z",
+          "updatedAt": "2026-03-02T07:38:51.696Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 7,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 4,
+          "branchUnitId": 5,
+          "sector": "NORTH WEST",
+          "createdAt": "2026-03-02T07:38:59.130Z",
+          "updatedAt": "2026-03-02T07:38:59.130Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 8,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 4,
+          "branchUnitId": 5,
+          "sector": "NORTH WEST",
+          "createdAt": "2026-03-02T07:38:59.130Z",
+          "updatedAt": "2026-03-02T07:38:59.130Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 9,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 5,
+          "branchUnitId": 5,
+          "sector": "NORTH EAST",
+          "createdAt": "2026-03-02T07:39:05.778Z",
+          "updatedAt": "2026-03-02T07:39:05.778Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 10,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 6,
+          "professionId": 1,
+          "rating": "ACP",
+          "description": "Area Control Procedural",
+          "createdAt": "2026-03-01T09:38:10.462Z",
+          "updatedAt": "2026-03-01T09:38:10.462Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 5,
+          "branchUnitId": 5,
+          "sector": "NORTH EAST",
+          "createdAt": "2026-03-02T07:39:05.778Z",
+          "updatedAt": "2026-03-02T07:39:05.778Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 11,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 1,
+          "branchUnitId": 5,
+          "sector": "WEST",
+          "createdAt": "2026-03-02T06:01:49.912Z",
+          "updatedAt": "2026-03-02T06:01:49.912Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 12,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 2,
+          "branchUnitId": 5,
+          "sector": "EAST",
+          "createdAt": "2026-03-02T07:38:44.482Z",
+          "updatedAt": "2026-03-02T07:38:44.482Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 13,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 1,
+          "branchUnitId": 5,
+          "sector": "WEST",
+          "createdAt": "2026-03-02T06:01:49.912Z",
+          "updatedAt": "2026-03-02T06:01:49.912Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 14,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 2,
+          "branchUnitId": 5,
+          "sector": "EAST",
+          "createdAt": "2026-03-02T07:38:44.482Z",
+          "updatedAt": "2026-03-02T07:38:44.482Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 15,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 3,
+          "branchUnitId": 5,
+          "sector": "NORTH",
+          "createdAt": "2026-03-02T07:38:51.696Z",
+          "updatedAt": "2026-03-02T07:38:51.696Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 16,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 3,
+          "branchUnitId": 5,
+          "sector": "NORTH",
+          "createdAt": "2026-03-02T07:38:51.696Z",
+          "updatedAt": "2026-03-02T07:38:51.696Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 17,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 4,
+          "branchUnitId": 5,
+          "sector": "NORTH WEST",
+          "createdAt": "2026-03-02T07:38:59.130Z",
+          "updatedAt": "2026-03-02T07:38:59.130Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 18,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 4,
+          "branchUnitId": 5,
+          "sector": "NORTH WEST",
+          "createdAt": "2026-03-02T07:38:59.130Z",
+          "updatedAt": "2026-03-02T07:38:59.130Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 19,
+      "group": "PENDEK",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 5,
+          "branchUnitId": 5,
+          "sector": "NORTH EAST",
+          "createdAt": "2026-03-02T07:39:05.778Z",
+          "updatedAt": "2026-03-02T07:39:05.778Z",
+          "deletedAt": null
+        }
+      }
+    },
+    {
+      "id": 20,
+      "group": "PANJANG",
+      "subBranchUnitRating": {
+        "rating": {
+          "id": 7,
+          "professionId": 1,
+          "rating": "ACS",
+          "description": "Area Control Surveillance",
+          "createdAt": "2026-03-01T09:38:22.136Z",
+          "updatedAt": "2026-03-01T09:38:22.136Z",
+          "deletedAt": null
+        },
+        "sector": {
+          "id": 5,
+          "branchUnitId": 5,
+          "sector": "NORTH EAST",
+          "createdAt": "2026-03-02T07:39:05.778Z",
+          "updatedAt": "2026-03-02T07:39:05.778Z",
+          "deletedAt": null
+        }
+      }
+    }
+  ],
+  "essayQuestionGroup": [
+    {
+      "essayId": 1,
+      "sector": {
+        "id": 2,
+        "sector": "EAST"
+      },
+      "questionGroup": {
+        "id": 4,
+        "group": "PANJANG",
+        "kindOfQuestion": {
+          "question": "ESSAY"
+        },
+        "subBranchUnitRating": {
+          "rating": {
+            "rating": "ACP"
+          }
+        }
+      }
+    },
+    {
+      "essayId": 1,
+      "sector": {
+        "id": 3,
+        "sector": "NORTH"
+      },
+      "questionGroup": {
+        "id": 5,
+        "group": "PENDEK",
+        "kindOfQuestion": {
+          "question": "ESSAY"
+        },
+        "subBranchUnitRating": {
+          "rating": {
+            "rating": "ACP"
+          }
+        }
+      }
+    },
+    {
+      "essayId": 1,
+      "sector": {
+        "id": 3,
+        "sector": "NORTH"
+      },
+      "questionGroup": {
+        "id": 6,
+        "group": "PANJANG",
+        "kindOfQuestion": {
+          "question": "ESSAY"
+        },
+        "subBranchUnitRating": {
+          "rating": {
+            "rating": "ACP"
+          }
+        }
+      }
+    },
+    {
+      "essayId": 2,
+      "sector": {
+        "id": 5,
+        "sector": "NORTH EAST"
+      },
+      "questionGroup": {
+        "id": 20,
+        "group": "PANJANG",
+        "kindOfQuestion": {
+          "question": "ESSAY"
+        },
+        "subBranchUnitRating": {
+          "rating": {
+            "rating": "ACS"
+          }
+        }
+      }
+    },
+    {
+      "essayId": 2,
+      "sector": {
+        "id": 4,
+        "sector": "NORTH WEST"
+      },
+      "questionGroup": {
+        "id": 17,
+        "group": "PENDEK",
+        "kindOfQuestion": {
+          "question": "ESSAY"
+        },
+        "subBranchUnitRating": {
+          "rating": {
+            "rating": "ACS"
+          }
+        }
+      }
+    },
+    {
+      "essayId": 2,
+      "sector": {
+        "id": 4,
+        "sector": "NORTH WEST"
+      },
+      "questionGroup": {
+        "id": 18,
+        "group": "PANJANG",
+        "kindOfQuestion": {
+          "question": "ESSAY"
+        },
+        "subBranchUnitRating": {
+          "rating": {
+            "rating": "ACS"
+          }
+        }
+      }
+    }
+  ]
+}

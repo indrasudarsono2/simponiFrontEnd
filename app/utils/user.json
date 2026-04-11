@@ -1,0 +1,341 @@
+[
+  {
+    "nik": "10011528",
+    "licenseUserId": "3458",
+    "dateOfBirth": "1992-11-04",
+    "placeOfBirth": "JAKARTA",
+    "personalAddress": "KOMPLEK GRAND CITY THE EXTENTION",
+    "nationality": "INDONESIA",
+    "phoneNumber": "081213518268",
+    "gender": { "id": "1", "gender": "LAKI-LAKI" },
+    "email": "indra.sudarsono@airnavindonesia.co.id",
+    "name": "INDRA SUDARSONO",
+    "sector": {
+      "id": "1",
+      "sector": "WEST",
+      "userRoles": [
+        {
+          "id": "1",
+          "roles": [
+            { "id": "1", "role": "operational" },
+            { "id": "2", "role": "checker" }
+          ]
+        }
+      ]
+    },
+    "license": [
+      {
+        "id": "1",
+        "user": { "id": "3458", "name": "INDRA" },
+        "note": "License 2025 SMT 1",
+        "path": "/public/license/indra2025smt1.pdf"
+      },
+      {
+        "id": "2",
+        "user": { "id": "3458", "name": "INDRA" },
+        "note": "License 2025 SMT 2",
+        "path": "/public/license/indra2025smt2.pdf"
+      },
+      {
+        "id": "3",
+        "user": { "id": "3458", "name": "INDRA" },
+        "note": "License 2026 SMT 1",
+        "path": "/public/license/indra2025smt1.pdf"
+      }
+    ],
+    "logbook": [
+      {
+        "id": "1",
+        "user": { "id": "3458", "name": "INDRA" },
+        "note": "Logbook 2025 SMT 1",
+        "path": "/public/logbook/indra2025smt1.pdf"
+      },
+      {
+        "id": "2",
+        "user": { "id": "3458", "name": "INDRA" },
+        "note": "Logbook 2025 SMT 2",
+        "path": "/public/logbook/indra2025smt2.pdf"
+      },
+      {
+        "id": "3",
+        "user": { "id": "3458", "name": "INDRA" },
+        "note": "Logbook 2026 SMT 1",
+        "path": "/public/logbook/indra2025smt1.pdf"
+      }
+    ],
+    "ielp": [
+      {
+        "id": "1",
+        "isConfirm": true,
+        "released": "2015-02-28",
+        "expired": "2018-02-28",
+        "rater": "SUSI",
+        "institution": "PPIC CURUG",
+        "level": "4",
+        "file": "/public/logbook/indraIelp1.pdf"
+      },
+      {
+        "id": "2",
+        "isConfirm": true,
+        "released": "2018-02-28",
+        "expired": "2024-02-28",
+        "rater": "SUSI",
+        "institution": "PPIC CURUG",
+        "level": "5",
+        "file": "/public/logbook/indraIelp2.pdf"
+      },
+      {
+        "id": "3",
+        "isConfirm": true,
+        "released": "2024-02-28",
+        "expired": "2030-02-28",
+        "rater": "SUSI",
+        "institution": "PPIC CURUG",
+        "level": "5",
+        "file": ""
+      }
+    ],
+    "medex": [
+      {
+        "id": "1",
+        "isConfirm": true,
+        "released": "2020-02-28",
+        "expired": "2022-02-28",
+        "examiner": "DR. DINAR",
+        "institution": "HATPEN",
+        "file": "/public/logbook/indraMedex1.pdf"
+      },
+      {
+        "id": "2",
+        "isConfirm": true,
+        "released": "2022-02-28",
+        "expired": "2024-02-28",
+        "examiner": "DR. DINAR",
+        "institution": "HATPEN",
+        "file": ""
+      },
+      {
+        "id": "3",
+        "isConfirm": true,
+        "released": "2024-02-28",
+        "expired": "2026-02-28",
+        "examiner": "DR. DINAR",
+        "institution": "HATPEN",
+        "file": "/public/logbook/indraMedex3.pdf"
+      }
+    ],
+    "competence": [
+      {
+        "id": "1",
+        "competenceItem": [{ "id": "1", "competence": "TWR" }],
+        "institution": "STPI CURUG",
+        "released": "2013-02-28",
+        "file": "/public/twrIndra.pdf"
+      },
+      {
+        "id": "2",
+        "competenceItem": [{ "id": "2", "competence": "APP" }],
+        "institution": "STPI CURUG",
+        "released": "2016-02-28",
+        "file": "/public/appIndra.pdf"
+      },
+      {
+        "id": "3",
+        "competenceItem": [{ "id": "3", "competence": "APS" }],
+        "institution": "ATKP MAKASSAR",
+        "released": "2013-02-28",
+        "file": "/public/apsIndra.pdf"
+      },
+      {
+        "id": "4",
+        "competenceItem": [{ "id": "1", "competence": "ACP" }],
+        "institution": "STPI CURUG",
+        "released": "2013-02-28",
+        "file": "/public/acpIndra.pdf"
+      },
+      {
+        "id": "5",
+        "competenceItem": [{ "id": "1", "competence": "ACS" }],
+        "institution": "STPI CURUG",
+        "released": "2019-02-28",
+        "file": "/public/acsIndra.pdf"
+      }
+    ],
+    "applicationDoc": [
+      {
+        "id": "1",
+        "number": "2026/PERPANJANGAN/ACC/3458-1",
+        "eventUser": {
+          "id": "1",
+          "event": {
+            "id": "2",
+            "event": "Performance Check 2",
+            "remarkDoc": { "id": "2", "remark": "PERPANJANGAN" }
+          }
+        },
+        "statusId": { "id": "1", "status": "REGISTERRED" },
+        "medex": {
+          "id": "3",
+          "isConfirm": true,
+          "released": "2024-02-28",
+          "expired": "2026-02-28",
+          "examiner": "DR. DINAR",
+          "institution": "HATPEN",
+          "file": "/public/logbook/indraMedex3.pdf"
+        },
+        "ielp": {
+          "id": "3",
+          "isConfirm": true,
+          "released": "2024-02-28",
+          "expired": "2030-02-28",
+          "rater": "SUSI",
+          "institution": "PPIC CURUG",
+          "level": "5",
+          "file": ""
+        },
+        "briefingDate": "",
+        "isConfirmRating": true,
+        "reason": "PERPANJANGAN RATING",
+        "location": "JATSC",
+        "rating": "ACP, ACS",
+        "dateForExp": "2026-06-30",
+        "confirmOjt": false,
+        "ojtId": "",
+        "letterNumber": "",
+        "letterDate": "",
+        "controlHour": "",
+        "atsName": "ACC JAKARTA",
+        "address": "TOWER SOEKARNO HATTA",
+        "isDrugs": false,
+        "isFailed": false,
+        "license": {
+          "id": "3",
+          "user": { "id": "3458", "name": "INDRA" },
+          "note": "License 2026 SMT 1",
+          "path": "/public/license/indra2025smt1.pdf"
+        },
+        "logBook": {
+          "id": "3",
+          "user": { "id": "3458", "name": "INDRA" },
+          "note": "Logbook 2026 SMT 1",
+          "path": "/public/logbook/indra2025smt1.pdf"
+        },
+        "appRating": [
+          {
+            "id": "1",
+            "rating": { "id": "1", "rating": "ACP" },
+            "controlHour": 90,
+            "statusId": { "id": "1", "status": "REGISTERRED" }
+          },
+          {
+            "id": "2",
+            "rating": { "id": "2", "rating": "ACS" },
+            "controlHour": 90,
+            "statusId": { "id": "1", "status": "REGISTERRED" }
+          }
+        ],
+        "verification": {
+          "id": "1",
+          "verificationData": "",
+          "isValid": false,
+          "groupMember": {
+            "id": "13",
+            "member": "INDRA SUDARSONO",
+            "checkerGroup": [{ "id": "4", "checker": "INDRA SUDARSONO" }],
+            "group": {
+              "id": "2",
+              "pic": "INDRA SUDARSONO",
+              "group": "GROUP A"
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "nik": "3459",
+    "name": "FENNY APRILIANI PUTRI",
+    "sector": { "id": "1", "sector": "WEST" },
+    "userRoles": [
+      {
+        "id": "2",
+        "roles": [{ "id": "1", "role": "operational" }]
+      }
+    ]
+  },
+  {
+    "nik": "3460",
+    "name": "CELOSIA",
+    "sector": { "id": "1", "sector": "WEST" },
+    "userRoles": [
+      {
+        "id": "3",
+        "roles": [
+          { "id": "1", "role": "operational" },
+          { "id": "2", "role": "checker" }
+        ]
+      }
+    ]
+  },
+  {
+    "nik": "3461",
+    "name": "GYANO",
+    "sector": { "id": "1", "sector": "WEST" },
+    "userRoles": [
+      {
+        "id": "4",
+        "roles": [
+          { "id": "1", "role": "operational" },
+          { "id": "2", "role": "checker" }
+        ]
+      }
+    ]
+  },
+  {
+    "nik": "3462",
+    "name": "SHAIMA",
+    "sector": { "id": "1", "sector": "WEST" },
+    "userRoles": [
+      {
+        "id": "5",
+        "roles": [{ "id": "1", "role": "operational" }]
+      }
+    ]
+  },
+  {
+    "nik": "3463",
+    "name": "JOKO",
+    "sector": { "id": "2", "sector": "EAST" },
+    "userRoles": [
+      {
+        "id": "6",
+        "roles": [
+          { "id": "1", "role": "operational" },
+          { "id": "2", "role": "checker" }
+        ]
+      }
+    ]
+  },
+  {
+    "nik": "3464",
+    "name": "KADRI",
+    "sector": { "id": "2", "sector": "EAST" },
+    "userRoles": [
+      {
+        "id": "7",
+        "roles": [{ "id": "1", "role": "operational" }]
+      }
+    ]
+  },
+  {
+    "nik": "3465",
+    "name": "SUSI",
+    "sector": { "id": "2", "sector": "EAST" },
+    "userRoles": [
+      {
+        "id": "8",
+        "roles": [{ "id": "1", "role": "operational" }]
+      }
+    ]
+  }
+]
