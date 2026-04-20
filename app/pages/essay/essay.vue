@@ -11,7 +11,7 @@ interface Essay {
   branchUnitId: number;
   question: string;
   answer: string;
-  image: string;
+  image?: string | null;
   value: number;
   createdAt?: string;
   updatedAt?: string;
@@ -30,6 +30,8 @@ interface ApiResponse {
 
 const toast = useToast();
 const table = useTemplateRef("table");
+const isImagePreviewOpen = ref(false);
+const previewImageSrc = ref("");
 
 // State for modals
 const selectedEssay = ref<Essay | null>(null);
@@ -75,6 +77,24 @@ function handleDelete(item: Essay) {
 function truncateHtml(html: string, maxLength: number = 100) {
   if (html.length <= maxLength) return html;
   return html.substring(0, maxLength) + "...";
+}
+
+function hasImage(imagePath?: string | null): boolean {
+  return typeof imagePath === "string" && imagePath.trim() !== "";
+}
+
+function resolveImageUrl(imagePath?: string | null): string {
+  const trimmed = (imagePath || "").trim();
+  if (!trimmed) return "";
+  if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
+  if (/^(data|blob):/i.test(trimmed)) return trimmed;
+  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+}
+
+function openImagePreview(imagePath?: string | null) {
+  if (!hasImage(imagePath)) return;
+  previewImageSrc.value = resolveImageUrl(imagePath);
+  isImagePreviewOpen.value = true;
 }
 
 // Table columns definition
@@ -129,15 +149,6 @@ const columns: TableColumn<Essay>[] = [
   {
     accessorKey: "image",
     header: "Image",
-    cell: ({ row }) => {
-      if (row.original.image && row.original.image.trim() !== "") {
-        return h("div", { class: "flex items-center gap-2" }, [
-          h("i", { class: "i-lucide-image text-primary" }),
-          h("span", { class: "text-xs text-muted" }, "Has image"),
-        ]);
-      }
-      return h("span", { class: "text-xs text-muted" }, "No image");
-    },
   },
   {
     accessorKey: "value",
@@ -209,6 +220,44 @@ const pagination = ref({
   pageIndex: 0,
   pageSize: 10,
 });
+
+const pageSizeOptions = [
+  { label: "10 / page", value: 10 },
+  { label: "20 / page", value: 20 },
+  { label: "50 / page", value: 50 },
+  { label: "100 / page", value: 100 },
+];
+const pageSizeStorageKey = "essay-question-page-size";
+
+function sanitizePageSize(value: unknown): number {
+  const next = Number(value);
+  const allowed = pageSizeOptions.map((item) => item.value);
+  return allowed.includes(next) ? next : 10;
+}
+
+const selectedPageSize = computed({
+  get: () => pagination.value.pageSize,
+  set: (value: number) => {
+    const next = sanitizePageSize(value);
+    pagination.value.pageSize = next;
+    pagination.value.pageIndex = 0;
+    table.value?.tableApi?.setPageSize(next);
+    table.value?.tableApi?.setPageIndex(0);
+  },
+});
+
+onMounted(() => {
+  const saved = sanitizePageSize(localStorage.getItem(pageSizeStorageKey));
+  selectedPageSize.value = saved;
+});
+
+watch(
+  () => pagination.value.pageSize,
+  (size) => {
+    if (!import.meta.client) return;
+    localStorage.setItem(pageSizeStorageKey, String(sanitizePageSize(size)));
+  },
+);
 
 // Handle modal events
 function handleEssayAdded() {
@@ -286,6 +335,13 @@ function handleModalClose() {
         />
 
         <div class="flex flex-wrap items-center gap-1.5">
+          <USelect
+            v-model="selectedPageSize"
+            :items="pageSizeOptions"
+            label-key="label"
+            value-key="value"
+            class="w-28"
+          />
           <UButton
             label="Refresh"
             color="neutral"
@@ -317,7 +373,27 @@ function handleModalClose() {
           td: 'border-b border-default align-top',
           separator: 'h-0',
         }"
-      />
+      >
+        <template #image-cell="{ row }">
+          <div class="py-2">
+            <template v-if="hasImage(row.original.image)">
+              <button
+                type="button"
+                class="rounded focus:outline-none focus:ring-2 focus:ring-primary/60"
+                @click="openImagePreview(row.original.image)"
+              >
+                <img
+                  :src="resolveImageUrl(row.original.image)"
+                  alt="Essay image"
+                  class="h-16 w-24 rounded border border-default object-cover bg-muted/20 cursor-zoom-in"
+                  loading="lazy"
+                />
+              </button>
+            </template>
+            <span v-else class="text-xs text-muted">No image</span>
+          </div>
+        </template>
+      </UTable>
 
       <div
         class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
@@ -359,6 +435,22 @@ function handleModalClose() {
         @essay-deleted="handleEssayDeleted"
         @close="handleModalClose"
       />
+
+      <UModal
+        v-model:open="isImagePreviewOpen"
+        title="Image Preview"
+        :ui="{ content: 'max-w-4xl' }"
+      >
+        <template #body>
+          <div class="flex items-center justify-center">
+            <img
+              :src="previewImageSrc"
+              alt="Essay image preview"
+              class="max-h-[75vh] w-auto rounded border border-default"
+            />
+          </div>
+        </template>
+      </UModal>
     </template>
   </UDashboardPanel>
 </template>

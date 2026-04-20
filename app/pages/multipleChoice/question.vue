@@ -38,6 +38,8 @@ interface ApiResponse {
 
 const toast = useToast();
 const table = useTemplateRef("table");
+const isImagePreviewOpen = ref(false);
+const previewImageSrc = ref("");
 
 // State for modals
 const selectedQuestion = ref<MultipleChoice | null>(null);
@@ -90,6 +92,24 @@ function truncateText(text: string, maxLength: number = 100) {
 function truncateHtml(html: string, maxLength: number = 100) {
   if (html.length <= maxLength) return html;
   return html.substring(0, maxLength) + "...";
+}
+
+function hasImage(imagePath?: string | null): boolean {
+  return typeof imagePath === "string" && imagePath.trim() !== "";
+}
+
+function resolveImageUrl(imagePath?: string | null): string {
+  const trimmed = (imagePath || "").trim();
+  if (!trimmed) return "";
+  if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
+  if (/^(data|blob):/i.test(trimmed)) return trimmed;
+  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+}
+
+function openImagePreview(imagePath?: string | null) {
+  if (!hasImage(imagePath)) return;
+  previewImageSrc.value = resolveImageUrl(imagePath);
+  isImagePreviewOpen.value = true;
 }
 
 // Table columns definition
@@ -187,73 +207,33 @@ const columns: TableColumn<MultipleChoice>[] = [
       });
     },
   },
-  // {
-  //   accessorKey: "key",
-  //   header: ({ column }) => {
-  //     const isSorted = column.getIsSorted();
-  //     return h(UButton, {
-  //       color: "neutral",
-  //       variant: "ghost",
-  //       label: "Key",
-  //       icon: isSorted
-  //         ? isSorted === "asc"
-  //           ? "i-lucide-arrow-up-narrow-wide"
-  //           : "i-lucide-arrow-down-wide-narrow"
-  //         : "i-lucide-arrow-up-down",
-  //       class: "-mx-2.5",
-  //       // onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-  //     });
-  //   },
-  //   cell: ({ row }) => {
-  //     return h(
-  //       "div",
-  //       { class: "text-center font-bold text-success" },
-  //       row.original.key,
-  //     );
-  //   },
-  // },
-  // {
-  //   accessorKey: "key",
-  //   header: ({ column }) => {
-  //     const isSorted = column.getIsSorted();
-  //     return h(UButton, {
-  //       color: "neutral",
-  //       variant: "ghost",
-  //       label: "Key",
-  //       icon: isSorted
-  //         ? isSorted === "asc"
-  //           ? "i-lucide-arrow-up-narrow-wide"
-  //           : "i-lucide-arrow-down-wide-narrow"
-  //         : "i-lucide-arrow-up-down",
-  //       class: "-mx-2.5",
-  //     });
-  //   },
-  //   cell: ({ row }) => {
-  //     return h(
-  //       "div",
-  //       { class: "text-center font-bold text-success" },
-  //       row.original.key,
-  //     );
-  //   },
-  // },
   {
     accessorKey: "image",
     header: "Image",
     cell: ({ row }) => {
-      if (row.original.image && row.original.image.trim() !== "") {
-        return h("div", { class: "flex items-center justify-center" }, [
-          h("img", {
-            src: row.original.image,
-            alt: "Question image",
-            class: "h-12 w-12 object-cover rounded border border-default",
-            onError: (e: Event) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = "none";
+      if (hasImage(row.original.image)) {
+        return h("div", { class: "py-2" }, [
+          h(
+            "button",
+            {
+              type: "button",
+              class:
+                "rounded focus:outline-none focus:ring-2 focus:ring-primary/60",
+              onClick: () => openImagePreview(row.original.image),
             },
-          }),
+            [
+              h("img", {
+                src: resolveImageUrl(row.original.image),
+                alt: "Question image",
+                class:
+                  "h-16 w-24 rounded border border-default object-cover bg-muted/20 cursor-zoom-in",
+                loading: "lazy",
+              }),
+            ],
+          ),
         ]);
       }
-      return h("span", { class: "text-muted text-sm" }, "");
+      return h("span", { class: "text-xs text-muted" }, "No image");
     },
   },
   {
@@ -302,6 +282,44 @@ const pagination = ref({
   pageIndex: 0,
   pageSize: 10,
 });
+
+const pageSizeOptions = [
+  { label: "10 / page", value: 10 },
+  { label: "20 / page", value: 20 },
+  { label: "50 / page", value: 50 },
+  { label: "100 / page", value: 100 },
+];
+const pageSizeStorageKey = "multiple-choice-question-page-size";
+
+function sanitizePageSize(value: unknown): number {
+  const next = Number(value);
+  const allowed = pageSizeOptions.map((item) => item.value);
+  return allowed.includes(next) ? next : 10;
+}
+
+const selectedPageSize = computed({
+  get: () => pagination.value.pageSize,
+  set: (value: number) => {
+    const next = sanitizePageSize(value);
+    pagination.value.pageSize = next;
+    pagination.value.pageIndex = 0;
+    table.value?.tableApi?.setPageSize(next);
+    table.value?.tableApi?.setPageIndex(0);
+  },
+});
+
+onMounted(() => {
+  const saved = sanitizePageSize(localStorage.getItem(pageSizeStorageKey));
+  selectedPageSize.value = saved;
+});
+
+watch(
+  () => pagination.value.pageSize,
+  (size) => {
+    if (!import.meta.client) return;
+    localStorage.setItem(pageSizeStorageKey, String(sanitizePageSize(size)));
+  },
+);
 
 // Handle modal events
 function handleQuestionAdded() {
@@ -379,6 +397,13 @@ function handleModalClose() {
         />
 
         <div class="flex flex-wrap items-center gap-1.5">
+          <USelect
+            v-model="selectedPageSize"
+            :items="pageSizeOptions"
+            label-key="label"
+            value-key="value"
+            class="w-28"
+          />
           <UButton
             label="Refresh"
             color="neutral"
@@ -452,6 +477,22 @@ function handleModalClose() {
         @question-deleted="handleQuestionDeleted"
         @close="handleModalClose"
       />
+
+      <UModal
+        v-model:open="isImagePreviewOpen"
+        title="Image Preview"
+        :ui="{ content: 'max-w-4xl' }"
+      >
+        <template #body>
+          <div class="flex items-center justify-center">
+            <img
+              :src="previewImageSrc"
+              alt="Question image preview"
+              class="max-h-[75vh] w-auto rounded border border-default"
+            />
+          </div>
+        </template>
+      </UModal>
     </template>
   </UDashboardPanel>
 </template>

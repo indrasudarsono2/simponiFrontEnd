@@ -1,23 +1,29 @@
 <script setup lang="ts">
 import ip from "../../utils/config.json";
 
-interface EssayQuestionPayload {
-  essay?: {
-    id: number;
-    question?: string | null;
-    image?: string | null;
-  } | null;
+interface MultipleChoiceItem {
+  id: number;
+  question?: string | null;
+  a?: string | null;
+  b?: string | null;
+  c?: string | null;
+  d?: string | null;
+  image?: string | null;
 }
 
-interface EssayGroupPayload {
+interface MultipleChoiceQuestionPayload {
+  multipleChoice?: MultipleChoiceItem | null;
+}
+
+interface MultipleChoiceGroupPayload {
   id: number;
   quantity: number;
   group?: string | null;
-  essay?: EssayQuestionPayload[];
+  multipleChoice?: MultipleChoiceQuestionPayload[];
 }
 
-interface ExaminationEssayResponse {
-  essay?: EssayGroupPayload[];
+interface ExaminationMultipleChoiceResponse {
+  multipleChoice?: MultipleChoiceGroupPayload[];
   appRatingId?: number;
   eventUserId?: number;
   groupMemberId?: number;
@@ -34,27 +40,61 @@ interface ExaminationEssayResponse {
     time?: number;
   } | null;
 }
+interface SubmitFalseAnswerItem {
+  id?: number;
+  question?: string | null;
+  a?: string | null;
+  b?: string | null;
+  c?: string | null;
+  d?: string | null;
+}
+interface SubmitEssayCorrectionItem {
+  id?: number;
+  score?: number | null;
+  checkerUser?: {
+    name?: string | null;
+  } | null;
+  essay?: {
+    id?: number;
+    question?: string | null;
+    value?: number | null;
+  } | null;
+}
+interface ExaminationSubmitResponse {
+  finalValue?: number | null;
+  falseAnswer?: SubmitFalseAnswerItem[] | null;
+  essayCorrection?: SubmitEssayCorrectionItem[] | null;
+  [key: string]: unknown;
+}
+
+type OptionKey = "A" | "B" | "C" | "D";
+const displayOptionSlots: OptionKey[] = ["A", "B", "C", "D"];
 
 const { token } = useAuth();
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
-const EXAMINATION_ESSAY_META_STORAGE_KEY = "examinationEssayMeta";
+const EXAMINATION_MULTIPLE_CHOICE_META_STORAGE_KEY =
+  "examinationMultipleChoiceMeta";
+const EXAMINATION_SUBMIT_RESULT_STORAGE_KEY = "examinationSubmitResult";
 
 const loading = ref(true);
 const fetchError = ref<string | null>(null);
-const essayData = ref<ExaminationEssayResponse | null>(null);
+const multipleChoiceData = ref<ExaminationMultipleChoiceResponse | null>(null);
 
-const examinationEssayResponse = useState<ExaminationEssayResponse | null>(
-  "examinationEssayResponse",
-  () => null,
-);
-const examinationEssayMeta = useState<{
+const examinationMultipleChoiceResponse =
+  useState<ExaminationMultipleChoiceResponse | null>(
+    "examinationMultipleChoiceResponse",
+    () => null,
+  );
+const examinationMultipleChoiceMeta = useState<{
   eventId: number;
   appRatingId: number;
-} | null>("examinationEssayMeta", () => null);
+} | null>("examinationMultipleChoiceMeta", () => null);
 
-const answers = reactive<Record<number, string>>({});
+const answers = reactive<Record<number, "A" | "B" | "C" | "D" | "">>({});
+const optionOrderByQuestion = reactive<Record<number, OptionKey[]>>({});
+const activeGroupId = ref<number | undefined>(undefined);
 const remainingSeconds = ref(0);
 const isTimeUpToastShown = ref(false);
 const isSubmittingAnswers = ref(false);
@@ -88,10 +128,10 @@ function parsePositiveNumber(raw: unknown): number | null {
 }
 
 function persistRequestMeta(meta: { eventId: number; appRatingId: number }) {
-  examinationEssayMeta.value = meta;
+  examinationMultipleChoiceMeta.value = meta;
   if (!import.meta.client) return;
   sessionStorage.setItem(
-    EXAMINATION_ESSAY_META_STORAGE_KEY,
+    EXAMINATION_MULTIPLE_CHOICE_META_STORAGE_KEY,
     JSON.stringify(meta),
   );
 }
@@ -101,7 +141,9 @@ function readMetaFromSessionStorage(): {
   appRatingId: number;
 } | null {
   if (!import.meta.client) return null;
-  const raw = sessionStorage.getItem(EXAMINATION_ESSAY_META_STORAGE_KEY);
+  const raw = sessionStorage.getItem(
+    EXAMINATION_MULTIPLE_CHOICE_META_STORAGE_KEY,
+  );
   if (!raw) return null;
 
   try {
@@ -115,18 +157,97 @@ function readMetaFromSessionStorage(): {
   }
 }
 
-const essayGroups = computed(() => essayData.value?.essay || []);
+const multipleChoiceGroups = computed(
+  () => multipleChoiceData.value?.multipleChoice || [],
+);
+const isAnsweredOption = (value: unknown): value is OptionKey =>
+  value === "A" || value === "B" || value === "C" || value === "D";
+const getGroupAnsweredCount = (group: MultipleChoiceGroupPayload): number => {
+  const questions = group.multipleChoice || [];
+  return questions.reduce((count, item) => {
+    const id = item.multipleChoice?.id;
+    if (!id) return count;
+    return isAnsweredOption(answers[id]) ? count + 1 : count;
+  }, 0);
+};
+type GroupProgressState = "need-more" | "complete" | "better";
+const getGroupTargetCount = (group: MultipleChoiceGroupPayload): number => {
+  const quantity = Number(group.quantity);
+  if (Number.isFinite(quantity) && quantity > 0) return quantity;
+  return group.multipleChoice?.length || 0;
+};
+const getGroupProgressState = (
+  group: MultipleChoiceGroupPayload,
+): GroupProgressState => {
+  const answered = getGroupAnsweredCount(group);
+  const target = getGroupTargetCount(group);
+  if (answered < target) return "need-more";
+  if (answered === target) return "complete";
+  return "better";
+};
+const getGroupProgressClass = (state: GroupProgressState): string => {
+  if (state === "need-more") {
+    return "data-[state=inactive]:text-orange-600 data-[state=active]:text-orange-700";
+  }
+  if (state === "complete") {
+    return "data-[state=inactive]:text-green-600 data-[state=active]:text-green-700";
+  }
+  return "data-[state=inactive]:text-blue-600 data-[state=active]:text-blue-700";
+};
+const getGroupById = (
+  groupId: number,
+): MultipleChoiceGroupPayload | undefined =>
+  multipleChoiceGroups.value.find((group) => group.id === groupId);
+const getGroupProgressLabelById = (groupId: number): string => {
+  const group = getGroupById(groupId);
+  if (!group) return "0/0";
+  const answered = getGroupAnsweredCount(group);
+  const target = getGroupTargetCount(group);
+  return `${answered}/${target}`;
+};
+const getGroupProgressPillClassById = (groupId: number): string => {
+  const group = getGroupById(groupId);
+  if (!group) return "bg-muted text-muted";
+  const state = getGroupProgressState(group);
+  if (state === "need-more") return "bg-orange-100 text-orange-700";
+  if (state === "complete") return "bg-green-100 text-green-700";
+  return "bg-blue-100 text-blue-700";
+};
+const groupTabs = computed(() =>
+  multipleChoiceGroups.value.map((group, index) => {
+    const state = getGroupProgressState(group);
+
+    return {
+      label: `Group ${index + 1}`,
+      value: group.id,
+      ui: {
+        trigger: getGroupProgressClass(state),
+      },
+    };
+  }),
+);
+const activeGroup = computed(() => {
+  if (!multipleChoiceGroups.value.length) return null;
+  return (
+    multipleChoiceGroups.value.find(
+      (group) => group.id === activeGroupId.value,
+    ) || multipleChoiceGroups.value[0]
+  );
+});
+const getGroupLabel = (groupId?: number): string => {
+  if (!groupId) return "Group";
+  const index = multipleChoiceGroups.value.findIndex(
+    (group) => group.id === groupId,
+  );
+  return index >= 0 ? `Group ${index + 1}` : "Group";
+};
 
 const totalQuestions = computed(() =>
-  essayGroups.value.reduce(
-    (total, group) => total + (group.essay?.length || 0),
+  multipleChoiceGroups.value.reduce(
+    (total, group) => total + (group.multipleChoice?.length || 0),
     0,
   ),
 );
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
-}
 
 function hasImage(imagePath?: string | null): boolean {
   return typeof imagePath === "string" && imagePath.trim() !== "";
@@ -135,13 +256,47 @@ function hasImage(imagePath?: string | null): boolean {
 function resolveImageUrl(imagePath?: string | null): string {
   const trimmed = (imagePath || "").trim();
   if (!trimmed) return "";
+  if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
   if (/^(data|blob):/i.test(trimmed)) return trimmed;
-  return `/api/essay/image?image=${encodeURIComponent(trimmed)}`;
+  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+}
+
+function shuffleOptionKeys(): OptionKey[] {
+  const keys: OptionKey[] = ["A", "B", "C", "D"];
+  for (let i = keys.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = keys[i] as OptionKey;
+    keys[i] = keys[j] as OptionKey;
+    keys[j] = temp;
+  }
+  return keys;
+}
+
+function getOptionOrder(questionId: number): OptionKey[] {
+  if (!optionOrderByQuestion[questionId]) {
+    optionOrderByQuestion[questionId] = shuffleOptionKeys();
+  }
+  return optionOrderByQuestion[questionId];
+}
+
+function getShuffledContentKey(questionId: number, index: number): OptionKey {
+  return getOptionOrder(questionId)[index] as OptionKey;
+}
+
+function getOptionText(
+  question: MultipleChoiceItem | undefined | null,
+  key: OptionKey,
+): string {
+  if (!question) return "-";
+  if (key === "A") return question.a || "-";
+  if (key === "B") return question.b || "-";
+  if (key === "C") return question.c || "-";
+  return question.d || "-";
 }
 
 const answeredCount = computed(() => {
   return Object.values(answers).filter(
-    (item) => stripHtml(item || "").length > 0,
+    (item) => item === "A" || item === "B" || item === "C" || item === "D",
   ).length;
 });
 const isAllQuestionsAnswered = computed(
@@ -201,7 +356,7 @@ function startCountdown(minutes: number) {
       isTimeUpToastShown.value = true;
       toast.add({
         title: "Time is up",
-        description: "Essay timer has finished.",
+        description: "Multiple choice timer has finished.",
         color: "warning",
       });
       clearCountdown();
@@ -210,7 +365,9 @@ function startCountdown(minutes: number) {
   }, 1000);
 }
 
-function getCountdownMinutes(payload: ExaminationEssayResponse): number {
+function getCountdownMinutes(
+  payload: ExaminationMultipleChoiceResponse,
+): number {
   const totalMinutesRaw =
     payload.eventQuestion?.minutes ?? payload.eventShort?.minutes ?? 0;
   const totalMinutes = Number(totalMinutesRaw);
@@ -228,14 +385,16 @@ function getCountdownMinutes(payload: ExaminationEssayResponse): number {
   return Math.max(0, totalMinutes - usedMinutes);
 }
 
-function getEventQuestionId(payload: ExaminationEssayResponse): number | null {
+function getEventQuestionId(
+  payload: ExaminationMultipleChoiceResponse,
+): number | null {
   const raw = payload.eventQuestion?.id ?? payload.eventShort?.id;
   const parsed = Number(raw);
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
   return parsed;
 }
 
-async function postMonitorTime(payload: ExaminationEssayResponse) {
+async function postMonitorTime(payload: ExaminationMultipleChoiceResponse) {
   const eventQuestionId = getEventQuestionId(payload);
   const currentAppRatingId = Number(
     payload.appRatingId ?? requestMeta.value?.appRatingId,
@@ -254,11 +413,11 @@ async function postMonitorTime(payload: ExaminationEssayResponse) {
       },
     });
   } catch (_error) {
-    // Keep silent to avoid interrupting exam UX on background ping failure.
+    // Silent background ping failure.
   }
 }
 
-function startPostTimeInterval(payload: ExaminationEssayResponse) {
+function startPostTimeInterval(payload: ExaminationMultipleChoiceResponse) {
   clearPostTimeInterval();
 
   const eventQuestionId = getEventQuestionId(payload);
@@ -285,23 +444,31 @@ function startPostTimeInterval(payload: ExaminationEssayResponse) {
   );
 }
 
-function buildEssayAnswersPayload(payload: ExaminationEssayResponse) {
-  const questions = payload.essay?.flatMap((group) => group.essay || []) || [];
+function buildMultipleChoiceAnswersPayload(
+  payload: ExaminationMultipleChoiceResponse,
+) {
+  const questions =
+    payload.multipleChoice?.flatMap((group) => group.multipleChoice || []) ||
+    [];
   return questions
     .map((item) => {
-      const essayId = Number(item.essay?.id);
-      if (!Number.isFinite(essayId) || essayId <= 0) return null;
+      const multipleChoiceId = Number(item.multipleChoice?.id);
+      if (!Number.isFinite(multipleChoiceId) || multipleChoiceId <= 0)
+        return null;
       return {
-        essayId,
-        answer: answers[essayId] || "",
+        multipleChoiceId,
+        answer: answers[multipleChoiceId] || "",
       };
     })
-    .filter(Boolean) as Array<{ essayId: number; answer: string }>;
+    .filter(Boolean) as Array<{
+    multipleChoiceId: number;
+    answer: "A" | "B" | "C" | "D" | "";
+  }>;
 }
 
 async function submitAnswers(isAutoSubmit = false) {
   if (isSubmittingAnswers.value || hasSubmittedAnswers.value) return;
-  const payload = essayData.value;
+  const payload = multipleChoiceData.value;
   if (!payload) return;
 
   const currentAppRatingId = Number(
@@ -332,7 +499,7 @@ async function submitAnswers(isAutoSubmit = false) {
     return;
   }
 
-  const essay = buildEssayAnswersPayload(payload);
+  const multipleChoice = buildMultipleChoiceAnswersPayload(payload);
   if (!isAutoSubmit && !isAllQuestionsAnswered.value) {
     toast.add({
       title: "Incomplete Answers",
@@ -344,43 +511,31 @@ async function submitAnswers(isAutoSubmit = false) {
 
   try {
     isSubmittingAnswers.value = true;
-    const submitResponse = await $fetch<{ message?: string }>(
-      `http://${ip.ipBackEnd}/api/examinationAnswer`,
+    const submitPayload = await $fetch<ExaminationSubmitResponse>(
+      `http://${ip.ipBackEnd}/api/examinationMultipleChoiceAnswer`,
       {
-      method: "POST",
-      headers: {
-        Authorization: token.value ? `Bearer ${token.value}` : "",
-      },
-      body: {
-        essay,
-        appRatingId: currentAppRatingId,
-        eventId,
-        eventUserId,
-        groupMemberId,
-      },
+        method: "POST",
+        headers: {
+          Authorization: token.value ? `Bearer ${token.value}` : "",
+        },
+        body: {
+          multipleChoice,
+          appRatingId: currentAppRatingId,
+          eventId,
+          eventUserId,
+          groupMemberId,
+        },
       },
     );
-
-    const submitMessage = String(submitResponse?.message || "")
-      .trim()
-      .toLowerCase();
-    if (submitMessage && submitMessage !== "success") {
-      toast.add({
-        title: "Error",
-        description: submitResponse?.message || "Failed to submit examination answers.",
-        color: "error",
-      });
-      return;
-    }
 
     hasSubmittedAnswers.value = true;
     clearCountdown();
     clearPostTimeInterval();
-    examinationEssayResponse.value = null;
-    examinationEssayMeta.value = null;
+    examinationMultipleChoiceResponse.value = null;
+    examinationMultipleChoiceMeta.value = null;
     requestMeta.value = null;
     if (import.meta.client) {
-      sessionStorage.removeItem(EXAMINATION_ESSAY_META_STORAGE_KEY);
+      sessionStorage.removeItem(EXAMINATION_MULTIPLE_CHOICE_META_STORAGE_KEY);
     }
 
     toast.add({
@@ -390,10 +545,18 @@ async function submitAnswers(isAutoSubmit = false) {
         : "Answers submitted successfully.",
       color: "success",
     });
+
     try {
       clearNuxtData((key) => key.includes("/api/examination"));
     } catch (_error) {
       // Prevent cache-clear issues from blocking redirect.
+    }
+
+    if (import.meta.client) {
+      sessionStorage.setItem(
+        EXAMINATION_SUBMIT_RESULT_STORAGE_KEY,
+        JSON.stringify(submitPayload || {}),
+      );
     }
 
     await router.replace({
@@ -420,13 +583,13 @@ function handleManualSubmit() {
   ) {
     return;
   }
-  if (!window.confirm("Are you sure to submit essay answer?")) {
+  if (!window.confirm("Are you sure to submit multiple choice answers?")) {
     return;
   }
   void submitAnswers(false);
 }
 
-async function loadEssayData() {
+async function loadMultipleChoiceData() {
   loading.value = true;
   fetchError.value = null;
 
@@ -442,10 +605,10 @@ async function loadEssayData() {
       persistRequestMeta(requestMeta.value);
 
       await router.replace({ path: route.path, query: {} });
-    } else if (examinationEssayMeta.value) {
+    } else if (examinationMultipleChoiceMeta.value) {
       requestMeta.value = {
-        eventId: examinationEssayMeta.value.eventId,
-        appRatingId: examinationEssayMeta.value.appRatingId,
+        eventId: examinationMultipleChoiceMeta.value.eventId,
+        appRatingId: examinationMultipleChoiceMeta.value.appRatingId,
       };
     } else {
       requestMeta.value = readMetaFromSessionStorage();
@@ -465,17 +628,18 @@ async function loadEssayData() {
     }
 
     const hasCachedPayload =
-      examinationEssayMeta.value?.eventId === currentEventId &&
-      examinationEssayMeta.value?.appRatingId === currentAppRatingId &&
-      !!examinationEssayResponse.value;
+      examinationMultipleChoiceMeta.value?.eventId === currentEventId &&
+      examinationMultipleChoiceMeta.value?.appRatingId === currentAppRatingId &&
+      !!examinationMultipleChoiceResponse.value;
 
-    let payload: ExaminationEssayResponse;
+    let payload: ExaminationMultipleChoiceResponse;
 
     if (hasCachedPayload) {
-      payload = examinationEssayResponse.value as ExaminationEssayResponse;
+      payload =
+        examinationMultipleChoiceResponse.value as ExaminationMultipleChoiceResponse;
     } else {
-      payload = await $fetch<ExaminationEssayResponse>(
-        `http://${ip.ipBackEnd}/api/examinationEssay`,
+      payload = await $fetch<ExaminationMultipleChoiceResponse>(
+        `http://${ip.ipBackEnd}/api/examinationMultipleChoice`,
         {
           method: "POST",
           headers: {
@@ -488,22 +652,26 @@ async function loadEssayData() {
         },
       );
 
-      examinationEssayResponse.value = payload;
+      examinationMultipleChoiceResponse.value = payload;
       persistRequestMeta({
         eventId: currentEventId,
         appRatingId: currentAppRatingId,
       });
     }
 
-    essayData.value = payload;
+    multipleChoiceData.value = payload;
 
     const allQuestions =
-      payload.essay?.flatMap((group) => group.essay || []) || [];
+      payload.multipleChoice?.flatMap((group) => group.multipleChoice || []) ||
+      [];
     for (const item of allQuestions) {
-      const id = item.essay?.id;
+      const id = item.multipleChoice?.id;
       if (!id) continue;
-      if (typeof answers[id] !== "string") {
+      if (!["A", "B", "C", "D"].includes(String(answers[id] || ""))) {
         answers[id] = "";
+      }
+      if (!optionOrderByQuestion[id]) {
+        optionOrderByQuestion[id] = shuffleOptionKeys();
       }
     }
 
@@ -516,13 +684,30 @@ async function loadEssayData() {
     fetchError.value =
       error?.data?.message ||
       error?.message ||
-      "Failed to load essay examination data.";
+      "Failed to load multiple choice examination data.";
   } finally {
     loading.value = false;
   }
 }
 
-onMounted(loadEssayData);
+onMounted(loadMultipleChoiceData);
+watch(
+  multipleChoiceGroups,
+  (groups) => {
+    if (!groups.length) {
+      activeGroupId.value = undefined;
+      return;
+    }
+
+    const hasActiveGroup = groups.some(
+      (group) => group.id === activeGroupId.value,
+    );
+    if (!hasActiveGroup) {
+      activeGroupId.value = groups[0]?.id;
+    }
+  },
+  { immediate: true },
+);
 watch(isTimeUp, (value) => {
   if (value) {
     void submitAnswers(true);
@@ -543,7 +728,7 @@ onBeforeUnmount(() => {
     @keydown.capture="blockClipboardShortcuts"
   >
     <template #header>
-      <UDashboardNavbar title="Essay Examination">
+      <UDashboardNavbar title="Multiple Choice Examination">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -565,7 +750,7 @@ onBeforeUnmount(() => {
           class="flex items-center justify-center py-10 text-muted"
         >
           <UIcon name="i-lucide-loader-2" class="size-6 animate-spin mr-2" />
-          Loading essay examination...
+          Loading multiple choice examination...
         </div>
 
         <div
@@ -578,15 +763,15 @@ onBeforeUnmount(() => {
             color="error"
             variant="outline"
             icon="i-lucide-refresh-cw"
-            @click="loadEssayData"
+            @click="loadMultipleChoiceData"
           />
         </div>
 
         <div
-          v-else-if="essayGroups.length === 0"
+          v-else-if="multipleChoiceGroups.length === 0"
           class="rounded-lg border p-4 text-muted"
         >
-          No essay data available.
+          No multiple choice data available.
         </div>
 
         <template v-else>
@@ -646,26 +831,43 @@ onBeforeUnmount(() => {
             />
           </div>
 
-          <UCard
-            v-for="(group, groupIndex) in essayGroups"
-            :key="group.id"
-            class="space-y-4"
+          <UTabs
+            v-model="activeGroupId"
+            :items="groupTabs"
+            :content="false"
+            size="lg"
           >
+            <template #trailing="{ item }">
+              <span
+                class="ml-2 rounded-md px-2 py-1 text-sm font-semibold"
+                :class="getGroupProgressPillClassById(Number(item.value))"
+              >
+                {{ getGroupProgressLabelById(Number(item.value)) }}
+              </span>
+            </template>
+          </UTabs>
+
+          <UCard v-if="activeGroup" :key="activeGroup.id" class="space-y-4">
             <template #header>
               <div class="flex items-center justify-between gap-2">
                 <h2 class="text-base font-semibold text-highlighted">
-                  Group {{ groupIndex + 1 }}: {{ group.group || "-" }}
+                  {{ getGroupLabel(activeGroup.id) }}:
+                  {{ activeGroup.group || "-" }}
                 </h2>
                 <span class="text-xs text-muted">
-                  Quantity: {{ group.quantity }}
+                  Quantity: {{ activeGroup.quantity }}
                 </span>
               </div>
             </template>
 
             <div class="space-y-6">
               <div
-                v-for="(item, questionIndex) in group.essay || []"
-                :key="item.essay?.id || `${group.id}-${questionIndex}`"
+                v-for="(item, questionIndex) in activeGroup.multipleChoice ||
+                []"
+                :key="
+                  item.multipleChoice?.id ||
+                  `${activeGroup.id}-${questionIndex}`
+                "
                 class="space-y-3 rounded-lg border p-4"
               >
                 <div class="text-sm font-medium text-highlighted">
@@ -673,31 +875,53 @@ onBeforeUnmount(() => {
                 </div>
 
                 <img
-                  v-if="hasImage(item.essay?.image)"
-                  :src="resolveImageUrl(item.essay?.image)"
-                  alt="Essay question image"
+                  v-if="hasImage(item.multipleChoice?.image)"
+                  :src="resolveImageUrl(item.multipleChoice?.image)"
+                  alt="Multiple choice question image"
                   class="max-h-72 w-auto rounded border border-default block mx-auto"
                 />
 
                 <div
                   class="text-sm rich-preview [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1"
-                  v-html="item.essay?.question || '-'"
+                  v-html="item.multipleChoice?.question || '-'"
                 />
 
-                <UFormField label="Your Answer">
-                  <div
-                    :class="isTimeUp ? 'pointer-events-none opacity-70' : ''"
+                <div
+                  v-if="item.multipleChoice?.id"
+                  :class="isTimeUp ? 'pointer-events-none opacity-70' : ''"
+                  class="space-y-2"
+                >
+                  <label
+                    v-for="(slotKey, slotIndex) in displayOptionSlots"
+                    :key="`${item.multipleChoice.id}-${slotKey}`"
+                    class="flex items-center gap-2 text-sm"
                   >
-                    <RichTextEditor
-                      v-if="item.essay?.id"
-                      v-model="answers[item.essay.id]"
-                      placeholder="Write your answer here..."
+                    <input
+                      :id="`q-${item.multipleChoice?.id}-${slotKey}`"
+                      v-model="answers[item.multipleChoice.id]"
+                      type="radio"
+                      :name="`q-${item.multipleChoice?.id}`"
+                      :value="
+                        getShuffledContentKey(item.multipleChoice.id, slotIndex)
+                      "
                     />
-                    <div v-else class="text-xs text-error">
-                      Invalid question ID.
-                    </div>
-                  </div>
-                </UFormField>
+                    <span>
+                      <strong>{{ slotKey }}.</strong>
+                      {{
+                        getOptionText(
+                          item.multipleChoice,
+                          getShuffledContentKey(
+                            item.multipleChoice.id,
+                            slotIndex,
+                          ),
+                        )
+                      }}
+                    </span>
+                  </label>
+                </div>
+                <div v-else class="text-xs text-error">
+                  Invalid question ID.
+                </div>
               </div>
             </div>
           </UCard>
@@ -705,6 +929,7 @@ onBeforeUnmount(() => {
       </div>
     </template>
   </UDashboardPanel>
+
 </template>
 
 <style scoped>

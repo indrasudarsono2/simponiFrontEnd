@@ -1,0 +1,75 @@
+{
+  "essay": [
+    {
+      "id": 31,
+      "quantity": 2,
+      "group": "PENDEK",
+      "essay": [
+        {
+          "essay": {
+            "id": 10,
+            "branchUnitId": 17,
+            "question": "<p>Bali (WADD) serves as a primary hub for a diverse mix of traffic, from international heavy jets (A380/B777) to domestic turboprops and VFR general aviation.</p>",
+            "image": ""
+          }
+        },
+        {
+          "essay": {
+            "id": 11,
+            "branchUnitId": 17,
+            "question": "<p>To the north of Ngurah Rai Airport, the terrain rises significantly toward Mount Agung and the central mountain range.</p>",
+            "image": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "quantity": 3,
+      "group": "PANJANG",
+      "essay": [
+        {
+          "essay": {
+            "id": 16,
+            "branchUnitId": 17,
+            "question": "<p>afawgawgawgwgwgwaa</p>",
+            "image": "/uploads/essay/essay-1776033123662-685828586.jpeg"
+          }
+        },
+        {
+          "essay": {
+            "id": 12,
+            "branchUnitId": 17,
+            "question": "<p>The Bali TMA is subject to sudden weather changes, including heavy tropical rain and volcanic ash activity from nearby volcanoes.</p>",
+            "image": ""
+          }
+        },
+        {
+          "essay": {
+            "id": 13,
+            "branchUnitId": 17,
+            "question": "<p>Bali is a popular destination for scenic VFR flights and helicopter transfers.</p>",
+            "image": ""
+          }
+        }
+      ]
+    }
+  ],
+  "eventQuestion": {
+    "id": 4,
+    "sectorId": 8,
+    "eventId": 10,
+    "kindOfQuestionId": 1,
+    "quantity": 5,
+    "persentage": 0.4,
+    "minutes": 30,
+    "createdAt": "2026-04-08T06:57:53.980Z",
+    "updatedAt": "2026-04-08T06:57:53.980Z",
+    "deletedAt": null
+  },
+  "appRatingId": 40,
+  "monitorTime": null,
+  "eventUserId": 13,
+  "groupMemberId": 52,
+  "eventId": 10
+}

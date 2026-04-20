@@ -1,0 +1,323 @@
+{
+  "falseAnswer": [
+    {
+      "id": 9,
+      "question": "<p>The transition altitude at I Gusti Ngurah Rai International Airport <strong>(WADD) </strong>is set at:</p>",
+      "a": "11,000 ft",
+      "b": "13,000 ft",
+      "c": "10,000 ft",
+      "d": "8,000 ft"
+    },
+    {
+      "id": 10,
+      "question": "<p>When an aircraft is being vectored, the controller must ensure terrain clearance until:</p>",
+      "a": "The aircraft reaches the destination.",
+      "b": "The aircraft is established on a pilot-interpreted signal (like ILS) or a cleared approach.",
+      "c": "The pilot reports \"field in sight.\"",
+      "d": "The aircraft is within 5nm of the runway."
+    },
+    {
+      "id": 12,
+      "question": "<p>The Bali TMA lateral boundaries are primarily designed to:</p>",
+      "a": "Include all islands in the Nusa Tenggara chain.",
+      "b": "Protect IFR arrival/departure paths and facilitate handovers with Makassar ACC.",
+      "c": "Mandate that all aircraft fly below 5,000 ft.",
+      "d": "Separate military aircraft from civil aircraft."
+    },
+    {
+      "id": 14,
+      "question": "<p>If an aircraft is flying via a Standard Terminal Arrival Route (STAR), the controller should:</p>",
+      "a": "Always vector them off the STAR immediately.",
+      "b": "Maintain the aircraft on the profile unless tactical intervention is required.",
+      "c": "Let the pilot choose their own waypoints.",
+      "d": "Cancel the STAR once the aircraft descends below 15,000 ft."
+    },
+    {
+      "id": 15,
+      "question": "<p>Why are \"Prohibited\" or \"Restricted\" areas strictly monitored in the Bali TMA?</p>",
+      "a": "To save fuel for the airlines.",
+      "b": "To protect ground installations, VIP areas, or sensitive airspace.",
+      "c": "To make the radar screen look organized.",
+      "d": "To limit the speed of incoming jets."
+    },
+    {
+      "id": 17,
+      "question": "<p>What is the standard horizontal radar separation minima used within the Bali TMA?</p>",
+      "a": "3 NM",
+      "b": "5 NM",
+      "c": "10 NM",
+      "d": "2 NM"
+    },
+    {
+      "id": 19,
+      "question": "<p>A \"Super\" wake turbulence category is specifically applied to which aircraft at WADD?</p>",
+      "a": "Boeing 747-8",
+      "b": "Airbus A380-800",
+      "c": "Antonov An-124",
+      "d": "Boeing 777-9"
+    },
+    {
+      "id": 20,
+      "question": "<p>When can \"Reduced Runway Separation\" be applied by a controller?</p>",
+      "a": "Only at night.",
+      "b": "When the runway is wet.",
+      "c": "When the preceding aircraft has passed the threshold or started its takeoff roll.",
+      "d": "Never in the Bali TMA."
+    },
+    {
+      "id": 22,
+      "question": "<p>If two aircraft are departing on the same SID, what is the standard time separation if radar is not used?</p>",
+      "a": "1 minute",
+      "b": "2 minutes",
+      "c": "5 minutes",
+      "d": "10 minutes"
+    },
+    {
+      "id": 23,
+      "question": "<p>\"Essential Traffic Information\" is provided to pilots to:</p>",
+      "a": "Promote a specific airline.",
+      "b": "Inform them of other aircraft that may constitute a collision hazard.",
+      "c": "Tell them about the weather in Jakarta.",
+      "d": "Give them the gate number for arrival."
+    },
+    {
+      "id": 24,
+      "question": "<p>What is the standard maximum speed for aircraft below 10,000ft in Class C/D airspace?</p><p></p>",
+      "a": "210 KIAS",
+      "b": "250 KIAS",
+      "c": "280 KIAS",
+      "d": "300 KIAS"
+    },
+    {
+      "id": 25,
+      "question": "<p>When vectoring, a controller's \"Minimum Vectoring Altitude\" (MVA) is:</p>",
+      "a": "Higher than the MSA.",
+      "b": "The lowest altitude a controller can assign while ensuring terrain clearance.",
+      "c": "Always 2,000 ft.",
+      "d": "Determined by the pilot."
+    },
+    {
+      "id": 26,
+      "question": "<p>Vertical separation for IFR aircraft below FL290 is usually:</p>",
+      "a": "500 ft",
+      "b": "1,000 ft",
+      "c": "2,000 ft",
+      "d": "3,000 ft"
+    },
+    {
+      "id": 28,
+      "question": "<p>A \"Continuous Descent Operation\" (CDO) is a technique that minimizes:</p>",
+      "a": "Aircraft speed.",
+      "b": "Level flight segments, reducing noise and fuel burn.",
+      "c": "Radar visibility.",
+      "d": "Pilot workload but increases fuel burn."
+    },
+    {
+      "id": 29,
+      "question": "<p>If the \"BALI\" holding pattern is at capacity, the Approach controller must:</p>",
+      "a": "Force planes to land on the grass.",
+      "b": "Coordinate with ACC for \"linear holding\" or speed control further out.",
+      "c": "Turn off the radio.",
+      "d": "Tell pilots to orbit over the volcano."
+    },
+    {
+      "id": 30,
+      "question": "<p>An \"Expected Approach Time\" (EAT) must be issued to an aircraft if the delay is expected to exceed:</p>",
+      "a": "5 minutes",
+      "b": "10 minutes",
+      "c": "30 minutes",
+      "d": "60 minutes"
+    },
+    {
+      "id": 31,
+      "question": "<p>Granting a \"Direct To\" (Short-cut) request in the Bali TMA requires the controller to first check:</p>",
+      "a": "The aircraft's fuel price.",
+      "b": "The Minimum Vectoring Altitude (MVA) for that specific area.",
+      "c": "The passenger count.",
+      "d": "If the pilot is friendly."
+    },
+    {
+      "id": 32,
+      "question": "<p>The \"Point Merge\" system (if used) helps controllers by:</p>",
+      "a": "Eliminating the need for a runway.",
+      "b": "Providing a structured way to sequence arrivals using arcs.",
+      "c": "Forcing all planes to fly at the same altitude.",
+      "d": "Making the pilots navigate using only stars."
+    },
+    {
+      "id": 33,
+      "question": "<p>The primary objective of an Approach Controller is:</p>",
+      "a": "To sell duty-free items.",
+      "b": "To achieve a safe, orderly, and expeditious flow of air traffic.",
+      "c": "To guide aircraft to the parking gate.",
+      "d": "To manage the airport's lighting system."
+    },
+    {
+      "id": 46,
+      "question": "<p>If the main radar system fails, the controller must transition to:</p>",
+      "a": "Procedural (non-radar) separation.",
+      "b": "Visual separation by looking out the window.",
+      "c": "Asking pilots to use their cell phones.",
+      "d": "Closing the entire FIR."
+    },
+    {
+      "id": 47,
+      "question": "<p>During the Northwest Monsoon, the prevailing wind at WADD usually favors:</p>",
+      "a": "Runway 09",
+      "b": "Runway 27",
+      "c": "Runway 13",
+      "d": "Runway 31"
+    },
+    {
+      "id": 49,
+      "question": "<p>Primary Surveillance Radar (PSR) differs from Secondary (SSR) because:</p>",
+      "a": "PSR requires a transponder.",
+      "b": "PSR detects the \"skin\" reflection of the aircraft without needing a transponder.",
+      "c": "SSR is only for weather.",
+      "d": "PSR is much newer than SSR."
+    },
+    {
+      "id": 50,
+      "question": "<p>To \"Identify\" an aircraft using the \"Squawk Ident\" method, the controller looks for:</p>",
+      "a": "The aircraft to turn 90 degrees.",
+      "b": "The data block or target to flash or change appearance on the radar.",
+      "c": "The pilot to wave their wings.",
+      "d": "The altitude to change."
+    },
+    {
+      "id": 51,
+      "question": "<p>What information is <em>not</em> typically found on the ATIS (Automatic Terminal Information Service)?</p>",
+      "a": "Current weather (METAR).",
+      "b": "Runway in use.",
+      "c": "Captain's name and age.",
+      "d": "Transition level."
+    },
+    {
+      "id": 8,
+      "question": "<p>Which mountain peak poses the most significant terrain clearance challenge for the northern sector of the Bali TMA?</p>",
+      "a": "Mount Batur",
+      "b": "Mount Agung",
+      "c": "Mount Abang",
+      "d": "Mount Batukaru"
+    },
+    {
+      "id": 34,
+      "question": "<p>Following a \"Missed Approach,\" the controller's first priority is:</p>",
+      "a": "To ask why the pilot missed.",
+      "b": "To ensure the aircraft is climbing and separated from other traffic.",
+      "c": "To fill out an incident report.",
+      "d": "To cancel the flight plan."
+    },
+    {
+      "id": 35,
+      "question": "<p>At what point does the Approach controller typically hand off an arriving aircraft to the Tower?</p>",
+      "a": "At the Top of Descent.",
+      "b": "When the aircraft is established on final and at a specified distance/fix.",
+      "c": "After the aircraft has landed.",
+      "d": "When the pilot sees the beach."
+    },
+    {
+      "id": 37,
+      "question": "<p>Which transponder code indicates a complete \"Loss of Communication\"?</p>",
+      "a": "7500",
+      "b": "7600",
+      "c": "7700",
+      "d": "2000"
+    },
+    {
+      "id": 38,
+      "question": "<p>Which transponder code is used for an \"Unlawful Interference\" (Hijack)?</p>",
+      "a": "7500",
+      "b": "7600",
+      "c": "7700",
+      "d": "7000"
+    },
+    {
+      "id": 41,
+      "question": "<p>If volcanic ash from Mt. Agung is reported in the TMA, the controller should:</p>",
+      "a": "Direct all aircraft into the ash cloud to test it.",
+      "b": "Provide the latest reports and assist pilots in avoiding the affected areas.",
+      "c": "Ignore it unless a pilot complains.",
+      "d": "Close the tower and go home."
+    },
+    {
+      "id": 42,
+      "question": "<p>A \"MAYDAY FUEL\" declaration requires the controller to:</p>",
+      "a": "Tell the aircraft to hold for 20 minutes.",
+      "b": "Provide immediate priority to the nearest suitable airport.",
+      "c": "Check if the pilot has a credit card for fuel.",
+      "d": "Ask the aircraft to fly at a higher altitude."
+    },
+    {
+      "id": 43,
+      "question": "<p>In the event of a \"Bird Strike\" on departure, the controller should:</p>",
+      "a": "Ask the pilot to bring the bird to the office.",
+      "b": "Coordinate an immediate return or standby for emergency instructions.",
+      "c": "Clear a second aircraft to take off immediately.",
+      "d": "Do nothing unless the engine stops."
+    }
+  ],
+  "finalValue": 57.33333333333333,
+  "essayCorrection": [
+    {
+      "id": 71,
+      "essay": {
+        "id": 10,
+        "question": "<p>Bali (WADD) serves as a primary hub for a diverse mix of traffic, from international heavy jets (A380/B777) to domestic turboprops and VFR general aviation.</p>",
+        "value": 3
+      },
+      "score": 3,
+      "checkerUser": {
+        "name": "CITTA"
+      }
+    },
+    {
+      "id": 72,
+      "essay": {
+        "id": 11,
+        "question": "<p>To the north of Ngurah Rai Airport, the terrain rises significantly toward Mount Agung and the central mountain range.</p>",
+        "value": 3
+      },
+      "score": 3,
+      "checkerUser": {
+        "name": "CITTA"
+      }
+    },
+    {
+      "id": 73,
+      "essay": {
+        "id": 13,
+        "question": "<p>Bali is a popular destination for scenic VFR flights and helicopter transfers.</p>",
+        "value": 5
+      },
+      "score": 5,
+      "checkerUser": {
+        "name": "CITTA"
+      }
+    },
+    {
+      "id": 74,
+      "essay": {
+        "id": 14,
+        "question": "<p>Modern Air Traffic Management in Indonesia increasingly relies on Performance-Based Navigation (PBN) and ADS-B surveillance.</p>",
+        "value": 6
+      },
+      "score": 6,
+      "checkerUser": {
+        "name": "CITTA"
+      }
+    },
+    {
+      "id": 75,
+      "essay": {
+        "id": 16,
+        "question": "<p>afawgawgawgwgwgwaa</p>",
+        "value": 6
+      },
+      "score": 6,
+      "checkerUser": {
+        "name": "CITTA"
+      }
+    }
+  ]
+}

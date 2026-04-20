@@ -127,16 +127,36 @@ function formatEventRemainingText(
   return "Expired";
 }
 
+function toArray<T>(value: T | T[] | null | undefined): T[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function pickLatestByDate<T extends { updatedAt?: string; createdAt?: string }>(
+  items: T[],
+): T | undefined {
+  if (!items.length) return undefined;
+  return [...items].sort((a, b) => {
+    const aTs = new Date(a.updatedAt || a.createdAt || 0).getTime();
+    const bTs = new Date(b.updatedAt || b.createdAt || 0).getTime();
+    return bTs - aTs;
+  })[0];
+}
+
 // Computed stats based on dashboard data
 const stats = computed(() => {
   const data = props.dashboardData;
 
   // IELP data
-  const ielp = data?.ielp?.[0];
+  const ielpList = toArray(data?.ielp);
+  const ielp = ielpList.length ? ielpList[ielpList.length - 1] : undefined;
   const ielpExpired = ielp?.expired;
 
   // MEDEX data
-  const medex = data?.medex?.[0];
+  const medexList = toArray(data?.medex);
+  const medex = medexList.length
+    ? medexList[medexList.length - 1]
+    : undefined;
   const medexExpired = medex?.expired;
 
   return [
@@ -184,9 +204,17 @@ const available1Data = computed(() => {
 });
 
 const available2Data = computed(() => {
-  const applicationDoc =
-    currentEventUser.value?.applicationDocs ||
-    currentEventUser.value?.applicationDoc;
+  const applicationDocs = [
+    ...toArray(currentEventUser.value?.applicationDocs),
+    ...toArray(currentEventUser.value?.applicationDoc),
+  ] as Array<{
+    id?: number;
+    number?: string;
+    briefingDate?: string | null;
+    updatedAt?: string;
+    createdAt?: string;
+  }>;
+  const applicationDoc = pickLatestByDate(applicationDocs);
 
   return {
     title: "Data",

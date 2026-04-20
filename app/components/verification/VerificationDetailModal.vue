@@ -9,6 +9,17 @@ interface VerificationDataItem {
   keterangan: string;
 }
 
+interface VerificationSnapshot {
+  applicationDoc?: {
+    number?: string;
+  } | null;
+  verificationData?: string | VerificationDataItem[] | null;
+  updatedAt?: string | null;
+  isValid?: boolean | null;
+  applicationDocId?: number;
+  groupMemberId?: number;
+}
+
 interface Props {
   isOpen: boolean;
   member: any | null;
@@ -27,9 +38,52 @@ const toast = useToast();
 const loading = ref(false);
 const error = ref<string | null>(null);
 const apiResponse = ref<any>(null);
+const selectedSnapshotIndex = ref(0);
+
+const verificationSnapshots = computed<VerificationSnapshot[]>(() => {
+  const raw = props.verification;
+  if (!raw) return [];
+  const list = Array.isArray(raw) ? raw : [raw];
+
+  return [...list].sort((a: VerificationSnapshot, b: VerificationSnapshot) => {
+    const aTs = new Date(a?.updatedAt || 0).getTime();
+    const bTs = new Date(b?.updatedAt || 0).getTime();
+    return bTs - aTs;
+  });
+});
+
+const activeSnapshot = computed<VerificationSnapshot | null>(() => {
+  if (!verificationSnapshots.value.length) return null;
+  return (
+    verificationSnapshots.value[selectedSnapshotIndex.value] ??
+    verificationSnapshots.value[0] ??
+    null
+  );
+});
+
+const hasEmbeddedVerificationData = computed(() => {
+  return (
+    verificationSnapshots.value.length > 0 &&
+    activeSnapshot.value?.verificationData != null
+  );
+});
 
 // Parse verification data from API response
 const verificationItems = computed(() => {
+  if (hasEmbeddedVerificationData.value) {
+    let data = activeSnapshot.value?.verificationData;
+    if (!data) return [];
+    if (typeof data === "string") {
+      try {
+        data = JSON.parse(data);
+      } catch (e) {
+        console.error("Failed to parse embedded verification data:", e);
+        return [];
+      }
+    }
+    return Array.isArray(data) ? data : [];
+  }
+
   if (!apiResponse.value?.verificationData) return [];
 
   let data = apiResponse.value.verificationData;
@@ -58,8 +112,107 @@ const memberInfo = computed(() => {
 
 // Get verification status from API response
 const isValid = computed(() => {
-  return apiResponse.value?.isValid ?? props.verification?.isValid ?? false;
+  if (hasEmbeddedVerificationData.value) {
+    const value = activeSnapshot.value?.isValid;
+    return typeof value === "boolean" ? value : null;
+  }
+  const value = apiResponse.value?.isValid ?? (props.verification as any)?.isValid;
+  return typeof value === "boolean" ? value : null;
 });
+
+const statusBadge = computed(() => {
+  if (isValid.value === true) return { color: "success" as const, text: "Valid" };
+  if (isValid.value === false) return { color: "error" as const, text: "Invalid" };
+  return { color: "neutral" as const, text: "Recorded" };
+});
+
+const memberApplicationDocs = computed<any[]>(() => {
+  const docs = props.member?.userMember?.applicationDocs;
+  return Array.isArray(docs) ? docs : [];
+});
+
+function toTimestamp(value?: string | null): number {
+  if (!value) return Number.NaN;
+  const ts = new Date(value).getTime();
+  return Number.isNaN(ts) ? Number.NaN : ts;
+}
+
+const selectedApplicationDocForSnapshot = computed<any | null>(() => {
+  const docs = memberApplicationDocs.value;
+  const snapshot = activeSnapshot.value;
+  if (!docs.length || !snapshot) return null;
+
+  const snapshotApplicationDocId = Number(snapshot.applicationDocId);
+  if (Number.isFinite(snapshotApplicationDocId) && snapshotApplicationDocId > 0) {
+    const byId = docs.find((doc) => Number(doc?.id) === snapshotApplicationDocId);
+    if (byId) return byId;
+  }
+
+  const snapshotNumber = String(snapshot.applicationDoc?.number || "").trim();
+  if (snapshotNumber) {
+    const byNumber = docs.filter(
+      (doc) => String(doc?.number || "").trim() === snapshotNumber,
+    );
+    if (byNumber.length === 1) return byNumber[0];
+
+    if (byNumber.length > 1) {
+      const snapshotTs = toTimestamp(snapshot.updatedAt);
+      if (Number.isFinite(snapshotTs)) {
+        return [...byNumber].sort((a, b) => {
+          const aTs = toTimestamp(a?.updatedAt);
+          const bTs = toTimestamp(b?.updatedAt);
+          const aDiff = Number.isFinite(aTs) ? Math.abs(aTs - snapshotTs) : Number.MAX_SAFE_INTEGER;
+          const bDiff = Number.isFinite(bTs) ? Math.abs(bTs - snapshotTs) : Number.MAX_SAFE_INTEGER;
+          return aDiff - bDiff;
+        })[0];
+      }
+      return byNumber[0];
+    }
+  }
+
+  return docs[0];
+});
+
+const selectedApplicationDocRatings = computed<any[]>(() => {
+  const appRatings = selectedApplicationDocForSnapshot.value?.appRatings;
+  return Array.isArray(appRatings) ? appRatings : [];
+});
+
+const selectedRatingIdsForSnapshot = computed<number[]>(() => {
+  const ids = selectedApplicationDocRatings.value
+    .map((item) => Number(item?.ratingId ?? item?.rating?.id))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  return [...new Set(ids)];
+});
+
+const selectedCompetencesForSnapshot = computed<any[]>(() => {
+  const competences = Array.isArray(props.member?.userMember?.competences)
+    ? props.member.userMember.competences
+    : [];
+
+  if (!competences.length) return [];
+
+  const ratingIds = selectedRatingIdsForSnapshot.value;
+  if (!ratingIds.length) return competences;
+
+  return competences.filter((comp: any) => {
+    const compRatingId = Number(comp?.ratingId ?? comp?.rating?.id);
+    return Number.isFinite(compRatingId) && ratingIds.includes(compRatingId);
+  });
+});
+
+function formatDateTime(dateStr?: string | null): string {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 // Format boolean to text
 function formatBoolean(value: boolean | null | undefined): string {
@@ -77,6 +230,8 @@ function getStatusColor(value: boolean | null | undefined): string {
 
 // Fetch verification detail from API
 async function fetchVerificationDetail() {
+  if (hasEmbeddedVerificationData.value) return;
+
   // Get applicationDocId and groupMemberId from props
   const applicationDocId = props.verification?.applicationDocId;
   const groupMemberId = props.member?.id || props.verification?.groupMemberId;
@@ -120,9 +275,11 @@ async function fetchVerificationDetail() {
 
 // Watch for modal open and fetch data
 watch(
-  () => props.isOpen,
+  () => [props.isOpen, props.verification],
   (isOpen) => {
-    if (isOpen) {
+    const open = Array.isArray(isOpen) ? Boolean(isOpen[0]) : Boolean(isOpen);
+    if (open) {
+      selectedSnapshotIndex.value = 0;
       fetchVerificationDetail();
     } else {
       // Reset state when modal closes
@@ -172,6 +329,27 @@ function close() {
 
       <!-- Body -->
       <div class="flex-1 overflow-y-auto p-4">
+        <div v-if="verificationSnapshots.length > 1" class="mb-4 space-y-2">
+          <p class="text-xs font-semibold text-gray-600">
+            Verification Records
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              v-for="(snapshot, idx) in verificationSnapshots"
+              :key="`${snapshot.applicationDoc?.number || 'doc'}-${idx}`"
+              size="xs"
+              :color="selectedSnapshotIndex === idx ? 'primary' : 'neutral'"
+              :variant="selectedSnapshotIndex === idx ? 'solid' : 'soft'"
+              @click="selectedSnapshotIndex = idx"
+            >
+              {{
+                snapshot.applicationDoc?.number || `Record ${idx + 1}`
+              }}
+              ({{ formatDateTime(snapshot.updatedAt) }})
+            </UButton>
+          </div>
+        </div>
+
         <!-- Loading State -->
         <div v-if="loading" class="flex items-center justify-center py-8">
           <UIcon
@@ -195,11 +373,11 @@ function close() {
           <!-- Verification Status Badge -->
           <div class="mb-4">
             <UBadge
-              :color="isValid ? 'success' : 'error'"
+              :color="statusBadge.color"
               size="lg"
               class="text-sm"
             >
-              Status: {{ isValid ? "Valid" : "Invalid" }}
+              Status: {{ statusBadge.text }}
             </UBadge>
           </div>
 
@@ -262,7 +440,7 @@ function close() {
                     <div
                       v-if="
                         item.id === 4 &&
-                        props.member?.userMember?.competences?.length > 0
+                        selectedCompetencesForSnapshot.length > 0
                       "
                       class="mt-2 text-xs text-gray-600"
                     >
@@ -271,8 +449,7 @@ function close() {
                       </div>
                       <ul class="list-disc list-inside ml-2">
                         <li
-                          v-for="(comp, idx) in props.member.userMember
-                            .competences"
+                          v-for="(comp, idx) in selectedCompetencesForSnapshot"
                           :key="idx"
                         >
                           {{ comp.rating?.rating || "-" }}
@@ -283,29 +460,21 @@ function close() {
                     <div
                       v-if="
                         item.id === 8 &&
-                        props.member?.userMember?.applicationDocs?.length > 0
+                        selectedApplicationDocRatings.length > 0
                       "
                       class="mt-2 text-xs text-gray-600"
                     >
                       <div class="font-semibold text-primary">Ratings:</div>
                       <ul class="list-disc list-inside ml-2">
-                        <template
-                          v-for="(doc, idx) in props.member.userMember
-                            .applicationDocs"
-                          :key="idx"
+                        <li
+                          v-for="(appRating, arIdx) in selectedApplicationDocRatings"
+                          :key="arIdx"
                         >
-                          <li
-                            v-for="(appRating, arIdx) in doc.appRatings"
-                            :key="arIdx"
-                          >
-                            {{
-                              appRating.rating?.rating ||
-                              appRating.rating ||
-                              "-"
-                            }}
-                            : {{ appRating.controlHour || "-" }}
-                          </li>
-                        </template>
+                          {{
+                            appRating.rating?.rating || appRating.rating || "-"
+                          }}
+                          : {{ appRating.controlHour || "-" }}
+                        </li>
                       </ul>
                     </div>
                   </td>

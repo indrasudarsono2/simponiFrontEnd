@@ -34,6 +34,8 @@ const schema = z.object({
 });
 
 const open = ref(false);
+const isImagePreviewOpen = ref(false);
+const previewImageSrc = ref("");
 
 type Schema = z.output<typeof schema>;
 
@@ -47,6 +49,11 @@ const state = reactive<Partial<Schema>>({
   image: undefined,
 });
 
+// File upload handling
+const selectedFile = ref<File | null>(null);
+const imagePreview = ref<string>("");
+const fileInput = ref<HTMLInputElement | null>(null);
+
 // Watch for question prop changes to populate form
 watch(
   () => props.question,
@@ -59,6 +66,9 @@ watch(
       state.d = newQuestion.d;
       state.key = newQuestion.key as "A" | "B" | "C" | "D";
       state.image = newQuestion.image || undefined;
+      if (newQuestion.image && newQuestion.image.trim() !== "") {
+        imagePreview.value = resolveImagePreviewUrl(newQuestion.image);
+      }
       open.value = true;
     }
   },
@@ -77,6 +87,13 @@ watch(open, (isOpen) => {
       key: undefined,
       image: undefined,
     });
+    selectedFile.value = null;
+    imagePreview.value = "";
+    isImagePreviewOpen.value = false;
+    previewImageSrc.value = "";
+    if (fileInput.value) {
+      fileInput.value.value = "";
+    }
     emit("close");
   }
 });
@@ -84,25 +101,45 @@ watch(open, (isOpen) => {
 const toast = useToast();
 const loading = ref(false);
 
+function resolveImagePreviewUrl(imagePath?: string | null): string {
+  const trimmed = (imagePath || "").trim();
+  if (!trimmed) return "";
+  if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
+  if (/^(data|blob):/i.test(trimmed)) return trimmed;
+  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+}
+
+function openImagePreview(imagePath?: string | null) {
+  const previewUrl = resolveImagePreviewUrl(imagePath || imagePreview.value);
+  if (!previewUrl) return;
+  previewImageSrc.value = previewUrl;
+  isImagePreviewOpen.value = true;
+}
+
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!props.question) return;
 
   loading.value = true;
 
   try {
+    const formData = new FormData();
+    formData.append("question", event.data.question);
+    formData.append("a", event.data.a);
+    formData.append("b", event.data.b);
+    formData.append("c", event.data.c);
+    formData.append("d", event.data.d);
+    formData.append("key", event.data.key);
+    if (selectedFile.value) {
+      formData.append("image", selectedFile.value);
+    } else {
+      formData.append("image", state.image || "");
+    }
+
     await $fetch(
       `http://${ip.ipBackEnd}/api/multipleChoices/${props.question.id}`,
       {
         method: "PUT",
-        body: {
-          question: event.data.question,
-          a: event.data.a,
-          b: event.data.b,
-          c: event.data.c,
-          d: event.data.d,
-          image: event.data.image,
-          key: event.data.key,
-        },
+        body: formData,
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
         },
@@ -131,9 +168,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   }
 }
 
-// File upload handling
-const selectedFile = ref<File | null>(null);
-const imagePreview = ref<string>("");
 function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
@@ -175,6 +209,9 @@ function removeImage() {
   selectedFile.value = null;
   imagePreview.value = "";
   state.image = undefined;
+  if (fileInput.value) {
+    fileInput.value.value = "";
+  }
 }
 </script>
 
@@ -253,6 +290,7 @@ function removeImage() {
         <UFormField label="Image (Optional)" name="image">
           <div class="space-y-2">
             <input
+              ref="fileInput"
               type="file"
               accept="image/*"
               class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
@@ -264,16 +302,23 @@ function removeImage() {
 
             <!-- Image Preview -->
             <div v-if="imagePreview" class="relative mt-2">
-              <img
-                :src="imagePreview"
-                alt="Preview"
-                class="max-w-full h-auto max-h-48 rounded border border-default"
-              />
+              <button
+                type="button"
+                class="rounded focus:outline-none focus:ring-2 focus:ring-primary/60"
+                @click="openImagePreview(state.image || imagePreview)"
+              >
+                <img
+                  :src="imagePreview"
+                  alt="Preview"
+                  class="max-w-full h-auto max-h-48 rounded border border-default cursor-zoom-in"
+                />
+              </button>
               <UButton
                 icon="i-lucide-x"
                 color="error"
                 variant="solid"
                 size="xs"
+                type="button"
                 class="absolute top-2 right-2"
                 @click="removeImage"
               />
@@ -298,6 +343,22 @@ function removeImage() {
           />
         </div>
       </UForm>
+    </template>
+  </UModal>
+
+  <UModal
+    v-model:open="isImagePreviewOpen"
+    title="Image Preview"
+    :ui="{ content: 'max-w-4xl' }"
+  >
+    <template #body>
+      <div class="flex items-center justify-center">
+        <img
+          :src="previewImageSrc"
+          alt="Question image preview"
+          class="max-h-[75vh] w-auto rounded border border-default"
+        />
+      </div>
     </template>
   </UModal>
 </template>

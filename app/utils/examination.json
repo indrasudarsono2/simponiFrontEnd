@@ -1,0 +1,66 @@
+{
+  "event": {
+    "id": 10,
+    "event": "PERPANJANGAN SMT 2",
+    "passingGrade": 75,
+    "eventQuestions": [
+      {
+        "id": 4,
+        "quantity": 5,
+        "persentage": 0.4,
+        "minutes": 30,
+        "kindOfQuestion": {
+          "question": "ESSAY"
+        }
+      },
+      {
+        "id": 5,
+        "quantity": 45,
+        "persentage": 0.6,
+        "minutes": 90,
+        "kindOfQuestion": {
+          "question": "MULTIPLE CHOICE"
+        }
+      }
+    ],
+    "eventUsers": [
+      {
+        "id": 13,
+        "applicationDocs": [
+          {
+            "id": 34,
+            "appRatings": [
+              {
+                "id": 41,
+                "rating": {
+                  "id": 3,
+                  "professionId": 1,
+                  "rating": "TWR",
+                  "description": "Tower Control Rating",
+                  "createdAt": "2026-03-01T09:01:23.256Z",
+                  "updatedAt": "2026-03-01T09:36:58.408Z",
+                  "deletedAt": null
+                },
+                "statusId": 1,
+                "finalScores": []
+              }
+            ]
+          }
+        ],
+        "attendaces": {
+          "room": {
+            "id": 2,
+            "checker": "10077771",
+            "name": "NAKULA",
+            "startDate": "2026-04-14T00:00:00.000Z",
+            "finishDate": "2026-04-17T23:59:00.000Z",
+            "file": "/uploads/room/room-1775640700072-828256305.pdf",
+            "createdAt": "2026-04-08T09:31:40.158Z",
+            "updatedAt": "2026-04-16T00:57:35.595Z",
+            "deletedAt": null
+          }
+        }
+      }
+    ]
+  }
+}

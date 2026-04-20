@@ -18,8 +18,8 @@ interface ApplicationDocsItem {
 
 interface EventUserItem {
   id: number;
-  applicationDocs?: ApplicationDocsItem | null;
-  applicationDoc?: ApplicationDocsItem | null;
+  applicationDocs?: ApplicationDocsItem | ApplicationDocsItem[] | null;
+  applicationDoc?: ApplicationDocsItem | ApplicationDocsItem[] | null;
   attendances?: {
     room?: {
       startDate?: string | null;
@@ -78,6 +78,39 @@ interface ExaminationEssayResponse {
   } | null;
 }
 
+interface ExaminationMultipleChoiceResponse {
+  [key: string]: unknown;
+}
+
+interface SubmitFalseAnswerItem {
+  id?: number;
+  question?: string | null;
+  a?: string | null;
+  b?: string | null;
+  c?: string | null;
+  d?: string | null;
+}
+
+interface SubmitEssayCorrectionItem {
+  id?: number;
+  score?: number | null;
+  checkerUser?: {
+    name?: string | null;
+  } | null;
+  essay?: {
+    id?: number;
+    question?: string | null;
+    value?: number | null;
+  } | null;
+}
+
+interface ExaminationSubmitResponse {
+  finalValue?: number | null;
+  falseAnswer?: SubmitFalseAnswerItem[] | null;
+  essayCorrection?: SubmitEssayCorrectionItem[] | null;
+  [key: string]: unknown;
+}
+
 interface TableRow {
   no: number;
   appRatingId: number;
@@ -99,6 +132,23 @@ const examinationEssayMeta = useState<{
   eventId: number;
   appRatingId: number;
 } | null>("examinationEssayMeta", () => null);
+const EXAMINATION_ESSAY_META_STORAGE_KEY = "examinationEssayMeta";
+const examinationMultipleChoiceResponse =
+  useState<ExaminationMultipleChoiceResponse | null>(
+    "examinationMultipleChoiceResponse",
+    () => null,
+  );
+const examinationMultipleChoiceMeta = useState<{
+  eventId: number;
+  appRatingId: number;
+} | null>("examinationMultipleChoiceMeta", () => null);
+const EXAMINATION_MULTIPLE_CHOICE_META_STORAGE_KEY =
+  "examinationMultipleChoiceMeta";
+const EXAMINATION_SUBMIT_RESULT_STORAGE_KEY = "examinationSubmitResult";
+const isSubmitResultModalOpen = ref(false);
+const submitResultData = ref<ExaminationSubmitResponse | null>(null);
+const submitResultCountdown = ref(60);
+let submitResultTimer: ReturnType<typeof setInterval> | null = null;
 
 const { data, status, error, refresh } = await useFetch<ExaminationResponse>(
   `http://${ip.ipBackEnd}/api/examination`,
@@ -111,14 +161,98 @@ const { data, status, error, refresh } = await useFetch<ExaminationResponse>(
 
 const eventData = computed(() => data.value?.event || null);
 
+function toArray<T>(value: T | T[] | null | undefined): T[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
 const appRatings = computed<AppRatingItem[]>(() => {
   const eventUser = eventData.value?.eventUsers?.[0];
-  return (
-    eventUser?.applicationDocs?.appRatings ||
-    eventUser?.applicationDoc?.appRatings ||
-    []
-  );
+  const docs = [
+    ...toArray(eventUser?.applicationDocs),
+    ...toArray(eventUser?.applicationDoc),
+  ];
+
+  for (const doc of docs) {
+    const ratings = doc?.appRatings || [];
+    if (ratings.length) return ratings;
+  }
+
+  return [];
 });
+
+function clearSubmitResultTimer() {
+  if (submitResultTimer) {
+    clearInterval(submitResultTimer);
+    submitResultTimer = null;
+  }
+}
+
+function blockClipboardShortcuts(event: KeyboardEvent) {
+  const key = event.key.toLowerCase();
+  const hasPrimaryModifier = event.ctrlKey || event.metaKey;
+
+  const isCopy =
+    (hasPrimaryModifier && key === "c") || (event.ctrlKey && key === "insert");
+  const isCut = hasPrimaryModifier && key === "x";
+  const isPaste =
+    (hasPrimaryModifier && key === "v") || (event.shiftKey && key === "insert");
+  const isSelectAll = hasPrimaryModifier && key === "a";
+
+  if (isCopy || isCut || isPaste || isSelectAll) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}
+
+const submitFalseAnswers = computed(
+  () => submitResultData.value?.falseAnswer || [],
+);
+const submitEssayCorrections = computed(
+  () => submitResultData.value?.essayCorrection || [],
+);
+const formattedFinalValue = computed(() => {
+  const value = Number(submitResultData.value?.finalValue);
+  if (!Number.isFinite(value)) return "-";
+  return value.toFixed(2);
+});
+const formattedSubmitResultJson = computed(() => {
+  if (!submitResultData.value) return "";
+  try {
+    return JSON.stringify(submitResultData.value, null, 2);
+  } catch (_error) {
+    return "";
+  }
+});
+
+function openSubmitResultModal(payload: ExaminationSubmitResponse) {
+  submitResultData.value = payload;
+  submitResultCountdown.value = 60;
+  isSubmitResultModalOpen.value = true;
+  clearSubmitResultTimer();
+
+  submitResultTimer = setInterval(() => {
+    submitResultCountdown.value -= 1;
+    if (submitResultCountdown.value <= 0) {
+      clearSubmitResultTimer();
+      isSubmitResultModalOpen.value = false;
+    }
+  }, 1000);
+}
+
+function loadSubmitResultFromStorage() {
+  if (!import.meta.client) return;
+  const raw = sessionStorage.getItem(EXAMINATION_SUBMIT_RESULT_STORAGE_KEY);
+  if (!raw) return;
+  sessionStorage.removeItem(EXAMINATION_SUBMIT_RESULT_STORAGE_KEY);
+
+  try {
+    const parsed = JSON.parse(raw);
+    openSubmitResultModal(parsed || {});
+  } catch (_error) {
+    // Ignore malformed payload.
+  }
+}
 
 function formatDateTime(dateStr?: string | null): string {
   if (!dateStr) return "-";
@@ -210,15 +344,6 @@ function getRowsForQuestion(question: EventQuestionItem): TableRow[] {
 }
 
 async function handleAction(row: TableRow, question: EventQuestionItem) {
-  if (isMultipleChoiceQuestion(question)) {
-    toast.add({
-      title: "Not Available",
-      description: "Multiple choice examination action is not configured yet.",
-      color: "warning",
-    });
-    return;
-  }
-
   if (!roomTimeWindow.value.hasValidRange || !roomTimeWindow.value.isInRange) {
     toast.add({
       title: "Examination Not Available",
@@ -250,6 +375,38 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
   try {
     isActionSubmitting.value = true;
 
+    if (isMultipleChoiceQuestion(question)) {
+      const multipleChoicePayload =
+        await $fetch<ExaminationMultipleChoiceResponse>(
+          `http://${ip.ipBackEnd}/api/examinationMultipleChoice`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: token.value ? `Bearer ${token.value}` : "",
+            },
+            body: {
+              eventId,
+              appRatingId: row.appRatingId,
+            },
+          },
+        );
+
+      examinationMultipleChoiceResponse.value = multipleChoicePayload;
+      examinationMultipleChoiceMeta.value = {
+        eventId,
+        appRatingId: row.appRatingId,
+      };
+      if (import.meta.client) {
+        sessionStorage.setItem(
+          EXAMINATION_MULTIPLE_CHOICE_META_STORAGE_KEY,
+          JSON.stringify(examinationMultipleChoiceMeta.value),
+        );
+      }
+
+      await navigateTo("/examination/multipleChoice");
+      return;
+    }
+
     const essayPayload = await $fetch<ExaminationEssayResponse>(
       `http://${ip.ipBackEnd}/api/examinationEssay`,
       {
@@ -269,18 +426,23 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
       eventId,
       appRatingId: row.appRatingId,
     };
+    if (import.meta.client) {
+      sessionStorage.setItem(
+        EXAMINATION_ESSAY_META_STORAGE_KEY,
+        JSON.stringify(examinationEssayMeta.value),
+      );
+    }
 
-    await navigateTo({
-      path: "/examination/essay",
-      query: {
-        eventId: String(eventId),
-        appRatingId: String(row.appRatingId),
-      },
-    });
+    await navigateTo("/examination/essay");
   } catch (error: any) {
+    const isMultipleChoice = isMultipleChoiceQuestion(question);
     toast.add({
       title: "Error",
-      description: error?.data?.message || "Failed to start essay examination",
+      description:
+        error?.data?.message ||
+        (isMultipleChoice
+          ? "Failed to start multiple choice examination"
+          : "Failed to start essay examination"),
       color: "error",
     });
   } finally {
@@ -298,8 +460,16 @@ function canShowGoButton(question: EventQuestionItem, row: TableRow): boolean {
   if (isMultipleChoiceQuestion(question)) {
     return statusId === 4;
   }
-  return statusId === 1;
+  return statusId === 1 || statusId === 5;
 }
+
+onMounted(() => {
+  loadSubmitResultFromStorage();
+});
+
+onBeforeUnmount(() => {
+  clearSubmitResultTimer();
+});
 </script>
 
 <template>
@@ -459,4 +629,128 @@ function canShowGoButton(question: EventQuestionItem, row: TableRow): boolean {
       </span>
     </div>
   </div>
+
+  <UModal
+    v-model:open="isSubmitResultModalOpen"
+    title="Examination Result"
+    :dismissible="false"
+    :close="false"
+    :ui="{ content: 'max-w-4xl' }"
+  >
+    <template #body>
+      <div
+        class="submit-result-guard space-y-4"
+        @copy.capture.prevent
+        @cut.capture.prevent
+        @paste.capture.prevent
+        @keydown.capture="blockClipboardShortcuts"
+      >
+        <div
+          class="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-primary"
+        >
+          This result popup will close automatically in
+          <strong>{{ submitResultCountdown }}</strong> seconds.
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <UCard>
+            <p class="text-xs text-muted">Final Value</p>
+            <p class="text-xl font-semibold text-highlighted">
+              {{ formattedFinalValue }}
+            </p>
+          </UCard>
+          <UCard>
+            <p class="text-xs text-muted">False Answers</p>
+            <p class="text-xl font-semibold text-highlighted">
+              {{ submitFalseAnswers.length }}
+            </p>
+          </UCard>
+          <UCard>
+            <p class="text-xs text-muted">Essay Corrections</p>
+            <p class="text-xl font-semibold text-highlighted">
+              {{ submitEssayCorrections.length }}
+            </p>
+          </UCard>
+        </div>
+
+        <UCard v-if="submitFalseAnswers.length > 0">
+          <template #header>
+            <h3 class="text-sm font-semibold text-highlighted">
+              Incorrect Multiple Choice
+            </h3>
+          </template>
+          <div class="max-h-64 overflow-y-auto space-y-3 pr-1">
+            <div
+              v-for="(item, index) in submitFalseAnswers"
+              :key="item.id || `false-${index}`"
+              class="rounded-lg border p-3 space-y-2"
+            >
+              <div class="text-xs text-muted font-medium">
+                #{{ index + 1 }} - ID {{ item.id || "-" }}
+              </div>
+              <div
+                class="text-sm rich-preview [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1"
+                v-html="item.question || '-'"
+              />
+              <div
+                class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted"
+              >
+                <div><strong>A:</strong> {{ item.a || "-" }}</div>
+                <div><strong>B:</strong> {{ item.b || "-" }}</div>
+                <div><strong>C:</strong> {{ item.c || "-" }}</div>
+                <div><strong>D:</strong> {{ item.d || "-" }}</div>
+              </div>
+            </div>
+          </div>
+        </UCard>
+
+        <UCard v-if="submitEssayCorrections.length > 0">
+          <template #header>
+            <h3 class="text-sm font-semibold text-highlighted">
+              Essay Correction
+            </h3>
+          </template>
+          <div class="max-h-64 overflow-y-auto space-y-3 pr-1">
+            <div
+              v-for="(item, index) in submitEssayCorrections"
+              :key="item.id || `essay-${index}`"
+              class="rounded-lg border p-3 space-y-2"
+            >
+              <div class="text-xs text-muted font-medium">
+                #{{ index + 1 }} - Essay ID {{ item.essay?.id || "-" }}
+              </div>
+              <div
+                class="text-sm rich-preview [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1"
+                v-html="item.essay?.question || '-'"
+              />
+              <div class="text-xs text-muted">
+                Score: <strong>{{ item.score ?? "-" }}</strong> /
+                {{ item.essay?.value ?? "-" }} | Checker:
+                <strong>{{ item.checkerUser?.name || "-" }}</strong>
+              </div>
+            </div>
+          </div>
+        </UCard>
+
+        <UCard
+          v-if="submitFalseAnswers.length === 0 && submitEssayCorrections.length === 0"
+        >
+          <template #header>
+            <h3 class="text-sm font-semibold text-highlighted">Raw Response</h3>
+          </template>
+          <pre class="text-xs whitespace-pre-wrap break-words">{{
+            formattedSubmitResultJson || "-"
+          }}</pre>
+        </UCard>
+      </div>
+    </template>
+  </UModal>
 </template>
+
+<style scoped>
+.submit-result-guard {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+</style>

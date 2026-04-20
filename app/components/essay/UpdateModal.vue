@@ -7,7 +7,7 @@ interface Essay {
   id: number;
   question: string;
   answer: string;
-  image: string;
+  image?: string | null;
   value: number;
 }
 
@@ -56,12 +56,12 @@ watch(
     if (newEssay) {
       state.question = newEssay.question;
       state.answer = newEssay.answer;
-      state.image = newEssay.image;
+      state.image = newEssay.image || "";
       state.value = newEssay.value;
 
       // If there's an existing image, show it
       if (newEssay.image && newEssay.image.trim() !== "") {
-        imagePreview.value = newEssay.image; // In production, this would be the full URL
+        imagePreview.value = resolveImagePreviewUrl(newEssay.image);
       }
 
       open.value = true;
@@ -85,6 +85,14 @@ watch(open, (isOpen) => {
 
 const toast = useToast();
 const loading = ref(false);
+
+function resolveImagePreviewUrl(imagePath?: string | null): string {
+  const trimmed = (imagePath || "").trim();
+  if (!trimmed) return "";
+  if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
+  if (/^(data|blob):/i.test(trimmed)) return trimmed;
+  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+}
 
 function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
@@ -135,18 +143,20 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    // In production, you would upload the image first and get the URL
-    const imageUrl = state.image || "";
+    const formData = new FormData();
+    formData.append("question", event.data.question);
+    formData.append("answer", event.data.answer);
+    formData.append("value", String(event.data.value));
+    if (selectedFile.value) {
+      formData.append("image", selectedFile.value);
+    } else {
+      formData.append("image", state.image || "");
+    }
 
     // Call API to update essay
     await $fetch(`http://${ip.ipBackEnd}/api/essays/${props.essay.id}`, {
       method: "PUT",
-      body: {
-        question: event.data.question,
-        answer: event.data.answer,
-        image: imageUrl,
-        value: event.data.value,
-      },
+      body: formData,
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
       },

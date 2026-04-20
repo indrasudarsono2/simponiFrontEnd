@@ -39,7 +39,8 @@ export type ModuleKey =
   | "history"
   | "ratingCheckerAdmin"
   | "applicationDoc"
-  | "medicalTest";
+  | "medicalTest"
+  | "mandatoryQuestion";
 
 export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
   dashboard: { label: "Dashboard", icon: "i-lucide-home", to: "/" },
@@ -131,6 +132,18 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
       { label: "User List", to: "/userManagement/userBranchUnit" },
       { label: "User Role", to: "/userManagement/userRoleBranchUnit" }, ////buat mindahin user
       { label: "User Checker", to: "/userManagement/userCheckerGeneral" },
+    ],
+  },
+
+  mandatoryQuestion: {
+    label: "Mandatory Question",
+    icon: "i-lucide-message-square-warning",
+    to: "/mandatoryQuestion",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Mandatory Items", to: "/mandatoryQuestion/mandatory" },
+      { label: "Mandatory Rating", to: "/mandatoryQuestion/mandatoryRating" },
     ],
   },
   ///////////////////////////////////////////////GENERAL ADMIN////////////////////////////////////////////////////
@@ -237,25 +250,13 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
   },
   performanceCheck: {
     label: "Performance Check",
-    icon: "i-lucide-train-front-tunnel",
-    to: "/performanceCheck",
-    type: "trigger",
-    defaultOpen: true,
-    children: [
-      { label: "PENERBITAN", to: "/settings" },
-      { label: "PERPANJANGAN", to: "/settings/members" },
-    ],
+    icon: "i-lucide-notepad-text",
+    to: "/performanceCheck/correctionEssay",
   },
   practicalExam: {
     label: "Practical Exam",
     icon: "i-lucide-school",
-    to: "/practicalExam",
-    type: "trigger",
-    defaultOpen: true,
-    children: [
-      { label: "PENERBITAN", to: "/settings" },
-      { label: "PERPANJANGAN", to: "/settings/members" },
-    ],
+    to: "/practicalExam/practical",
   },
   history: {
     label: "History",

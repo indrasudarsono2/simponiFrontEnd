@@ -38,17 +38,20 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
+    const formData = new FormData();
+    formData.append("question", event.data.question);
+    formData.append("a", event.data.a);
+    formData.append("b", event.data.b);
+    formData.append("c", event.data.c);
+    formData.append("d", event.data.d);
+    formData.append("key", event.data.key);
+    if (selectedFile.value) {
+      formData.append("image", selectedFile.value);
+    }
+
     await $fetch(`http://${ip.ipBackEnd}/api/multipleChoices`, {
       method: "POST",
-      body: {
-        question: event.data.question,
-        a: event.data.a,
-        b: event.data.b,
-        c: event.data.c,
-        d: event.data.d,
-        image: event.data.image,
-        key: event.data.key,
-      },
+      body: formData,
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
       },
@@ -70,6 +73,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       key: undefined,
       image: undefined,
     });
+    selectedFile.value = null;
+    imagePreview.value = "";
+    if (fileInput.value) {
+      fileInput.value.value = "";
+    }
     open.value = false;
 
     emit("questionAdded");
@@ -90,6 +98,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 // File upload handling
 const selectedFile = ref<File | null>(null);
 const imagePreview = ref<string>("");
+const fileInput = ref<HTMLInputElement | null>(null);
 function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
@@ -131,6 +140,9 @@ function removeImage() {
   selectedFile.value = null;
   imagePreview.value = "";
   state.image = undefined;
+  if (fileInput.value) {
+    fileInput.value.value = "";
+  }
 }
 </script>
 
@@ -211,6 +223,7 @@ function removeImage() {
         <UFormField label="Image (Optional)" name="image">
           <div class="space-y-2">
             <input
+              ref="fileInput"
               type="file"
               accept="image/*"
               class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
@@ -232,6 +245,7 @@ function removeImage() {
                 color="error"
                 variant="solid"
                 size="xs"
+                type="button"
                 class="absolute top-2 right-2"
                 @click="removeImage"
               />

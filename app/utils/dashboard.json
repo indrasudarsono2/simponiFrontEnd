@@ -1,0 +1,111 @@
+{
+  "nik": "10077770",
+  "licenseUserId": "8880",
+  "professionInBranchId": 12,
+  "sectorId": 8,
+  "branchId": 6,
+  "branchUnitId": 17,
+  "name": "DAPOT",
+  "password": "$2b$10$VbRLO5CauFg3T1dYwJ/SBuLYISTr60a7MSTYkdnQO0sL55pd5Vphu",
+  "dateOfBirth": "1992-08-08T00:00:00.000Z",
+  "placeOfBirth": "PASURUAN",
+  "personalAddress": "JL.Kuta baru",
+  "nationality": "INDONESIA",
+  "phoneNumber": "081213518266",
+  "genderId": 1,
+  "email": "dapot@gmail.com",
+  "createdAt": "2026-04-08T02:18:44.628Z",
+  "updatedAt": "2026-04-08T07:40:02.129Z",
+  "deletedAt": null,
+  "medex": [
+    {
+      "id": 3,
+      "isConfirmed": true,
+      "institution": "HATPEN",
+      "userNik": "10077770",
+      "released": "2025-04-04T00:00:00.000Z",
+      "expired": "2027-04-04T23:59:59.000Z",
+      "examiner": "DR. INDAH",
+      "file": "/uploads/medex/medex-1775633247609-327308168.pdf",
+      "createdAt": "2026-04-08T07:27:27.611Z",
+      "updatedAt": "2026-04-08T07:27:27.611Z",
+      "deletedAt": null
+    }
+  ],
+  "ielp": [
+    {
+      "id": 4,
+      "isConfirmed": true,
+      "userNik": "10077770",
+      "released": "2025-04-04T00:00:00.000Z",
+      "expired": "2031-04-04T23:59:59.000Z",
+      "rater": "MASRIAN",
+      "institution": "PPI CURUG",
+      "level": "5",
+      "file": "/uploads/ielp/ielp-1775633195621-65861800.pdf",
+      "createdAt": "2026-04-08T07:26:35.626Z",
+      "updatedAt": "2026-04-08T07:26:35.626Z",
+      "deletedAt": null
+    }
+  ],
+  "eventUsers": [
+    {
+      "id": 13,
+      "eventId": 10,
+      "userNik": "10077770",
+      "createdAt": "2026-04-08T06:56:15.148Z",
+      "updatedAt": "2026-04-08T06:56:15.148Z",
+      "deletedAt": null,
+      "event": {
+        "id": 10,
+        "sessionId": 5,
+        "sectorId": 8,
+        "remarkDocId": 2,
+        "event": "PERPANJANGAN SMT 2",
+        "formFillingDate": "2026-04-17T00:00:00.000Z",
+        "startDate": "2026-04-10T00:00:00.000Z",
+        "finishDate": "2026-04-17T00:00:00.000Z",
+        "forExpiredDate": "2026-12-31T00:00:00.000Z",
+        "briefingFile": "/uploads/event/event-1775631338839-905025883.pdf",
+        "passingGrade": 75,
+        "isPractical": true,
+        "isSimulator": true,
+        "createdAt": "2026-04-08T06:55:38.848Z",
+        "updatedAt": "2026-04-16T02:17:59.652Z",
+        "deletedAt": null
+      },
+      "applicationDocs": [
+        {
+          "id": 34,
+          "doc": null,
+          "number": "ATC/PERPANJANGAN/8880-10",
+          "eventUserId": 13,
+          "userNik": "10077770",
+          "statusId": 2,
+          "medexId": 3,
+          "ielpId": 4,
+          "briefingDate": null,
+          "confirmRating": true,
+          "reason": "Perpanjangan Rating",
+          "location": "BALI",
+          "rating": "[\"TWR\"]",
+          "dateForExpired": "2026-06-30T23:59:59.999Z",
+          "confirmOjt": false,
+          "ojtNik": null,
+          "letterNumber": null,
+          "letterDate": null,
+          "controlHour": null,
+          "atsName": "BALI",
+          "address": "BALI",
+          "isDrugs": false,
+          "isFailed": false,
+          "licenseId": 8,
+          "logbookUserId": 4,
+          "createdAt": "2026-04-16T04:24:11.021Z",
+          "updatedAt": "2026-04-16T04:38:29.412Z",
+          "deletedAt": null
+        }
+      ]
+    }
+  ]
+}

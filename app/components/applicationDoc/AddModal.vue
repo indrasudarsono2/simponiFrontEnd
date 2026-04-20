@@ -579,6 +579,8 @@ function onDrugsPopupCancel() {
 }
 
 async function onSubmit() {
+  if (loading.value) return;
+
   if (!canSubmit.value) {
     toast.add({
       title: "Validasi Gagal",
@@ -1455,7 +1457,7 @@ async function onSubmit() {
             variant="solid"
             icon="i-lucide-send"
             :loading="loading"
-            :disabled="!canSubmit"
+            :disabled="loading || !canSubmit"
             @click="onSubmit"
           />
         </div>

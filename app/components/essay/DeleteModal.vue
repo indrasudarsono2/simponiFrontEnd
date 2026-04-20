@@ -5,7 +5,7 @@ interface Essay {
   id: number;
   question: string;
   answer: string;
-  image: string;
+  image?: string | null;
   value: number;
 }
 

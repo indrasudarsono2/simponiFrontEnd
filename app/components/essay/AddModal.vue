@@ -38,6 +38,7 @@ const loading = ref(false);
 // File upload handling
 const selectedFile = ref<File | null>(null);
 const imagePreview = ref<string>("");
+const fileInput = ref<HTMLInputElement | null>(null);
 
 function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
@@ -80,25 +81,27 @@ function removeImage() {
   selectedFile.value = null;
   imagePreview.value = "";
   state.image = undefined;
+  if (fileInput.value) {
+    fileInput.value.value = "";
+  }
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    // In production, you would upload the image first and get the URL
-    // For now, we'll just store the filename or empty string
-    const imageUrl = state.image || "";
+    const formData = new FormData();
+    formData.append("question", event.data.question);
+    formData.append("answer", event.data.answer);
+    formData.append("value", String(event.data.value));
+    if (selectedFile.value) {
+      formData.append("image", selectedFile.value);
+    }
 
     // Call API to create essay
     await $fetch(`http://${ip.ipBackEnd}/api/essays`, {
       method: "POST",
-      body: {
-        question: event.data.question,
-        answer: event.data.answer,
-        image: imageUrl,
-        value: event.data.value,
-      },
+      body: formData,
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
       },
@@ -117,6 +120,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.value = undefined;
     selectedFile.value = null;
     imagePreview.value = "";
+    if (fileInput.value) {
+      fileInput.value.value = "";
+    }
     open.value = false;
 
     // Emit event to refresh parent table
@@ -172,6 +178,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <UFormField label="Image (Optional)" name="image">
           <div class="space-y-2">
             <input
+              ref="fileInput"
               type="file"
               accept="image/*"
               class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
@@ -193,6 +200,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 color="error"
                 variant="solid"
                 size="xs"
+                type="button"
                 class="absolute top-2 right-2"
                 @click="removeImage"
               />

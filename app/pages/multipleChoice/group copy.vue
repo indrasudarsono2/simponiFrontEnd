@@ -53,17 +53,12 @@ interface QuestionGroup {
   subBranchUnitRating: SubBranchUnitRating;
 }
 
-interface GroupedMonitorQuestionGroupItem {
-  id?: number;
+interface GroupedMonitorItem {
+  id: number;
   group: string;
   quantity: number;
   selected: number;
-}
-
-interface GroupedMonitorEntry {
-  sector: string;
-  rating: string;
-  questionGroup: GroupedMonitorQuestionGroupItem[];
+  subBranchUnitRating?: SubBranchUnitRating;
 }
 
 interface MultipleChoiceQuestionGroupSector {
@@ -90,9 +85,7 @@ interface MultipleChoiceGroupResponse {
   questionGroups?: QuestionGroup[];
   multipleChoiceQuestionGroup: MultipleChoiceQuestionGroup[];
   multipleChoiceQuestionGroups?: MultipleChoiceQuestionGroup[];
-  grouped?:
-    | GroupedMonitorEntry[]
-    | Record<string, GroupedMonitorQuestionGroupItem[]>;
+  grouped?: Record<string, GroupedMonitorItem[]>;
   sector: {
     id: number;
     sector: string;
@@ -111,7 +104,6 @@ const table = useTemplateRef("table");
 
 // State for modals
 const multipleChoiceToUpdate = ref<MultipleChoice | null>(null);
-const showQuestionGroupMonitor = ref(false);
 
 // Table state
 const columnFilters = ref([{ id: "question", value: "" }]);
@@ -164,13 +156,13 @@ function deepFindArraysByKeys<T = any>(
   return results;
 }
 
-function deepFindGroupedData(
+function deepFindGroupedObject(
   source: unknown,
   maxDepth: number = 4,
-): unknown | null {
+): Record<string, unknown> | null {
   const visited = new Set<unknown>();
 
-  function walk(node: unknown, depth: number): unknown | null {
+  function walk(node: unknown, depth: number): Record<string, unknown> | null {
     if (node == null || depth > maxDepth || visited.has(node)) return null;
     if (typeof node !== "object") return null;
     visited.add(node);
@@ -185,8 +177,8 @@ function deepFindGroupedData(
 
     const obj = node as Record<string, unknown>;
     const grouped = obj.grouped;
-    if (grouped != null) {
-      return grouped;
+    if (grouped && typeof grouped === "object" && !Array.isArray(grouped)) {
+      return grouped as Record<string, unknown>;
     }
 
     for (const value of Object.values(obj)) {
@@ -235,14 +227,16 @@ const resolvedQuestionGroups = computed<QuestionGroup[]>(() => {
   ]);
 });
 
-const resolvedGroupedQuestionMonitor = computed<GroupedMonitorEntry[]>(() => {
+const resolvedGroupedQuestionMonitor = computed<
+  Record<string, GroupedMonitorItem[]>
+>(() => {
   const payload = data.value as any;
   let groupedCandidate: unknown =
     payload?.grouped ??
     payload?.data?.grouped ??
     payload?.result?.grouped ??
     (Array.isArray(payload) ? payload?.[0]?.grouped : undefined) ??
-    deepFindGroupedData(payload);
+    deepFindGroupedObject(payload);
 
   if (typeof groupedCandidate === "string") {
     try {
@@ -252,60 +246,46 @@ const resolvedGroupedQuestionMonitor = computed<GroupedMonitorEntry[]>(() => {
     }
   }
 
-  if (Array.isArray(groupedCandidate)) {
-    return groupedCandidate.map((item) => ({
-      sector: String((item as any)?.sector || "-"),
-      rating: normalizeRating((item as any)?.rating),
-      questionGroup: asArray<GroupedMonitorQuestionGroupItem>(
-        (item as any)?.questionGroup,
-      ).map((group) => ({
-        id: (group as any)?.id ? Number((group as any).id) : undefined,
-        group: String((group as any)?.group || "-"),
-        quantity: Number((group as any)?.quantity || 0),
-        selected: Number((group as any)?.selected || 0),
-      })),
-    }));
-  }
-
-  if (groupedCandidate && typeof groupedCandidate === "object") {
-    return Object.entries(groupedCandidate as Record<string, unknown>)
-      .filter(([, value]) => Array.isArray(value))
-      .map(([rating, value]) => ({
-        sector: "-",
-        rating: normalizeRating(rating),
-        questionGroup: asArray<GroupedMonitorQuestionGroupItem>(value).map(
-          (group) => ({
-            id: (group as any)?.id ? Number((group as any).id) : undefined,
-            group: String((group as any)?.group || "-"),
-            quantity: Number((group as any)?.quantity || 0),
-            selected: Number((group as any)?.selected || 0),
-          }),
-        ),
-      }));
-  }
-
-  const fallbackGroupedMap = new Map<string, GroupedMonitorEntry>();
-  for (const item of resolvedQuestionGroups.value) {
-    const sector = String(item.subBranchUnitRating?.sector?.sector || "-");
-    const rating = normalizeRating(item.subBranchUnitRating?.rating?.rating);
-    const key = `${sector}::${rating}`;
-    if (!fallbackGroupedMap.has(key)) {
-      fallbackGroupedMap.set(key, {
-        sector,
-        rating,
-        questionGroup: [],
+  if (
+    !groupedCandidate ||
+    typeof groupedCandidate !== "object" ||
+    Array.isArray(groupedCandidate)
+  ) {
+    const fallbackGrouped: Record<string, GroupedMonitorItem[]> = {};
+    for (const item of resolvedQuestionGroups.value) {
+      const rating = normalizeRating(item.subBranchUnitRating?.rating?.rating);
+      if (!rating || rating === "-") continue;
+      if (!fallbackGrouped[rating]) fallbackGrouped[rating] = [];
+      fallbackGrouped[rating].push({
+        id: Number(item.id || 0),
+        group: String(item.group || "-"),
+        quantity: Number(item.quantity || 0),
+        selected: Number((item as any).selected || 0),
+        subBranchUnitRating: item.subBranchUnitRating,
       });
     }
-
-    fallbackGroupedMap.get(key)?.questionGroup.push({
-      id: Number(item.id || 0),
-      group: String(item.group || "-"),
-      quantity: Number(item.quantity || 0),
-      selected: Number((item as any).selected || 0),
-    });
+    return fallbackGrouped;
   }
 
-  return Array.from(fallbackGroupedMap.values());
+  const normalizedEntries = Object.entries(
+    groupedCandidate as Record<string, unknown>,
+  )
+    .filter(([, value]) => Array.isArray(value))
+    .map(([rating, value]) => [
+      rating,
+      asArray<GroupedMonitorItem>(value).map((item) => ({
+        id: Number((item as any)?.id || 0),
+        group: String((item as any)?.group || "-"),
+        quantity: Number((item as any)?.quantity || 0),
+        selected: Number((item as any)?.selected || 0),
+        subBranchUnitRating: (item as any)?.subBranchUnitRating,
+      })),
+    ]);
+
+  return Object.fromEntries(normalizedEntries) as Record<
+    string,
+    GroupedMonitorItem[]
+  >;
 });
 
 const resolvedMultipleChoices = computed<MultipleChoice[]>(() => {
@@ -388,59 +368,11 @@ const currentBranchUnit = computed(
   () => resolvedSectors.value?.[0]?.branchUnit?.unit || "-",
 );
 
-const groupedMonitorSummary = computed(() => {
-  const entries = resolvedGroupedQuestionMonitor.value;
-  const cardCount = entries.length;
-  const groupCount = entries.reduce(
-    (acc, entry) => acc + (entry.questionGroup?.length || 0),
-    0,
-  );
-  return { cardCount, groupCount };
-});
-
 // Pagination state - declared before columns
 const pagination = ref({
   pageIndex: 0,
   pageSize: 10,
 });
-
-const pageSizeOptions = [
-  { label: "10 / page", value: 10 },
-  { label: "20 / page", value: 20 },
-  { label: "50 / page", value: 50 },
-  { label: "100 / page", value: 100 },
-];
-const pageSizeStorageKey = "multiple-choice-group-page-size";
-
-function sanitizePageSize(value: unknown): number {
-  const next = Number(value);
-  const allowed = pageSizeOptions.map((item) => item.value);
-  return allowed.includes(next) ? next : 10;
-}
-
-const selectedPageSize = computed({
-  get: () => pagination.value.pageSize,
-  set: (value: number) => {
-    const next = sanitizePageSize(value);
-    pagination.value.pageSize = next;
-    pagination.value.pageIndex = 0;
-    table.value?.tableApi?.setPageSize(next);
-    table.value?.tableApi?.setPageIndex(0);
-  },
-});
-
-onMounted(() => {
-  const saved = sanitizePageSize(localStorage.getItem(pageSizeStorageKey));
-  selectedPageSize.value = saved;
-});
-
-watch(
-  () => pagination.value.pageSize,
-  (size) => {
-    if (!import.meta.client) return;
-    localStorage.setItem(pageSizeStorageKey, String(sanitizePageSize(size)));
-  },
-);
 
 // Current page computed (1-based for UPagination, 0-based for table)
 const currentPage = computed({
@@ -478,11 +410,40 @@ const uniqueSectors = computed(() => {
   ].sort();
 });
 
+interface GroupMonitorItem {
+  questionGroupId: number;
+  group: string;
+  quantity: number;
+  selected: number;
+}
+
+interface RatingMonitorItem {
+  rating: string;
+  groups: GroupMonitorItem[];
+}
+
 function normalizeRating(value: unknown): string {
   return String(value || "-")
     .trim()
     .toUpperCase();
 }
+
+const questionGroupMonitorByRating = computed<RatingMonitorItem[]>(() => {
+  const groupedMonitor = resolvedGroupedQuestionMonitor.value;
+  return Object.entries(groupedMonitor)
+    .map(([rating, groups]) => ({
+      rating: normalizeRating(rating),
+      groups: (groups || [])
+        .map((group) => ({
+          questionGroupId: Number(group.id || 0),
+          group: group.group || "-",
+          quantity: Number(group.quantity || 0),
+          selected: Number(group.selected || 0),
+        }))
+        .sort((a, b) => a.group.localeCompare(b.group)),
+    }))
+    .sort((a, b) => a.rating.localeCompare(b.rating));
+});
 
 // Helper: get group names with ratings for a given multipleChoiceId and sector (as HTML list)
 function getGroupsForMCSector(mcId: number, sectorName: string): string {
@@ -602,23 +563,6 @@ function handleMultipleChoiceGroupUpdated() {
 function handleModalClose() {
   multipleChoiceToUpdate.value = null;
 }
-
-function getMonitorStatusColor(selected: number, quantity: number) {
-  if (selected > quantity) return "info";
-  if (selected < quantity) return "warning";
-  return "success";
-}
-
-function getMonitorStatusText(selected: number, quantity: number) {
-  if (selected > quantity) return "Better";
-  if (selected < quantity) return "Need More";
-  return "Complete";
-}
-
-function getMonitorProgress(selected: number, quantity: number): number {
-  if (quantity <= 0) return 0;
-  return Math.min(100, Math.round((selected / quantity) * 100));
-}
 </script>
 
 <template>
@@ -648,99 +592,104 @@ function getMonitorProgress(selected: number, quantity: number): number {
         </div>
       </div>
 
-      <div>
-        <div>
-          <UCard class="mb-4">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p class="text-sm text-muted">Question Group Monitor</p>
-                <p class="text-sm font-medium">
-                  {{ groupedMonitorSummary.cardCount }} sector-rating card(s),
-                  {{ groupedMonitorSummary.groupCount }} group item(s)
-                </p>
-              </div>
-              <UButton
-                label="Open Monitor"
-                icon="i-lucide-layout-grid"
-                color="primary"
-                variant="soft"
-                @click="showQuestionGroupMonitor = true"
-              />
-            </div>
-          </UCard>
+      <UCard class="mb-4">
+        <template #header>
+          <h2 class="text-base font-semibold">Question Group Monitor</h2>
+        </template>
+
+        <div
+          v-if="questionGroupMonitorByRating.length === 0"
+          class="text-sm text-muted"
+        >
+          No grouped monitor data found from API response.
         </div>
-        <div>
-          <div class="flex flex-wrap items-center justify-between gap-1.5 mb-4">
-            <UInput
-              v-model="searchQuery"
-              class="max-w-sm"
-              icon="i-lucide-search"
-              placeholder="Search questions..."
-            />
 
-            <div class="flex flex-wrap items-center gap-1.5">
-              <USelect
-                v-model="selectedPageSize"
-                :items="pageSizeOptions"
-                label-key="label"
-                value-key="value"
-                class="w-28"
-              />
-              <UButton
-                label="Refresh"
-                color="neutral"
-                variant="outline"
-                icon="i-lucide-refresh-cw"
-                @click="refresh"
-              />
-            </div>
-          </div>
-          <UTable
-            ref="table"
-            v-model:column-filters="columnFilters"
-            v-model:column-visibility="columnVisibility"
-            v-model:row-selection="rowSelection"
-            v-model:pagination="pagination"
-            :pagination-options="{
-              getPaginationRowModel: getPaginationRowModel(),
-            }"
-            class="shrink-0"
-            :data="resolvedMultipleChoices"
-            :columns="columns"
-            :loading="status === 'pending'"
-            :ui="{
-              base: 'table-auto border-separate border-spacing-0',
-              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-              tbody: '[&>tr]:last:[&>td]:border-b-0',
-              th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-              td: 'border-b border-default align-top',
-              separator: 'h-0',
-            }"
-          />
-
+        <div v-else class="grid gap-3 md:grid-cols-2">
           <div
-            class="flex items-center justify-between gap-3 border-t border-default pt-4"
+            v-for="ratingItem in questionGroupMonitorByRating"
+            :key="ratingItem.rating"
+            class="rounded-lg border border-default p-3"
           >
-            <div class="text-sm text-muted">
-              Showing {{ pagination.pageIndex * pagination.pageSize + 1 }} to
-              {{
-                Math.min(
-                  (pagination.pageIndex + 1) * pagination.pageSize,
-                  resolvedMultipleChoices.length || 0,
-                )
-              }}
-              of
-              {{ resolvedMultipleChoices.length || 0 }} questions
-            </div>
-
-            <div class="flex items-center gap-1.5">
-              <UPagination
-                v-model:page="currentPage"
-                :items-per-page="pagination.pageSize"
-                :total="table?.tableApi?.getFilteredRowModel().rows.length || 0"
-              />
-            </div>
+            <p class="text-sm text-muted">Rating</p>
+            <p class="text-base font-semibold text-highlighted mb-3">
+              {{ ratingItem.rating }}
+            </p>
+            <ul class="space-y-3 text-sm">
+              <li
+                v-for="groupItem in ratingItem.groups"
+                :key="groupItem.questionGroupId"
+                class="text-muted"
+              >
+                <p>{{ groupItem.group }}: {{ groupItem.quantity }}</p>
+                <p class="text-highlighted">Selected: {{ groupItem.selected }}</p>
+              </li>
+            </ul>
           </div>
+        </div>
+      </UCard>
+
+      <div class="flex flex-wrap items-center justify-between gap-1.5 mb-4">
+        <UInput
+          v-model="searchQuery"
+          class="max-w-sm"
+          icon="i-lucide-search"
+          placeholder="Search questions..."
+        />
+
+        <div class="flex flex-wrap items-center gap-1.5">
+          <UButton
+            label="Refresh"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-refresh-cw"
+            @click="refresh"
+          />
+        </div>
+      </div>
+      <UTable
+        ref="table"
+        v-model:column-filters="columnFilters"
+        v-model:column-visibility="columnVisibility"
+        v-model:row-selection="rowSelection"
+        v-model:pagination="pagination"
+        :pagination-options="{
+          getPaginationRowModel: getPaginationRowModel(),
+        }"
+        class="shrink-0"
+        :data="resolvedMultipleChoices"
+        :columns="columns"
+        :loading="status === 'pending'"
+        :ui="{
+          base: 'table-auto border-separate border-spacing-0',
+          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+          tbody: '[&>tr]:last:[&>td]:border-b-0',
+          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+          td: 'border-b border-default align-top',
+          separator: 'h-0',
+        }"
+      />
+
+      <div
+        class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
+      >
+        <div class="text-sm text-muted">
+          Showing {{ pagination.pageIndex * pagination.pageSize + 1 }} to
+          {{
+            Math.min(
+              (pagination.pageIndex + 1) * pagination.pageSize,
+              resolvedMultipleChoices.length || 0,
+            )
+          }}
+          of
+          {{ resolvedMultipleChoices.length || 0 }} questions
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <UPagination
+            v-model:page="currentPage"
+            :items-per-page="pagination.pageSize"
+            :total="table?.tableApi?.getFilteredRowModel().rows.length || 0"
+          />
         </div>
       </div>
       <!-- Update Modal -->
@@ -751,109 +700,6 @@ function getMonitorProgress(selected: number, quantity: number): number {
         @multiple-choice-group-updated="handleMultipleChoiceGroupUpdated"
         @close="handleModalClose"
       />
-
-      <UModal
-        :open="showQuestionGroupMonitor"
-        title="Question Group Monitor"
-        description="Monitor grouped question coverage by sector and rating"
-        :ui="{ content: 'max-w-6xl' }"
-        @update:open="(value) => (showQuestionGroupMonitor = value)"
-      >
-        <template #body>
-          <div
-            v-if="resolvedGroupedQuestionMonitor.length === 0"
-            class="rounded-lg border border-dashed border-default p-8 text-center text-sm text-muted"
-          >
-            No grouped monitor data found from API response.
-          </div>
-
-          <div v-else class="grid gap-4 md:grid-cols-2">
-            <UCard
-              v-for="(entry, entryIndex) in resolvedGroupedQuestionMonitor"
-              :key="`${entry.sector}-${entry.rating}-${entryIndex}`"
-              class="h-full"
-            >
-              <template #header>
-                <div class="flex items-center justify-between gap-2">
-                  <div>
-                    <p class="text-xs uppercase tracking-wide text-muted">
-                      Sector
-                    </p>
-                    <p class="text-base font-semibold">
-                      {{ entry.sector || "-" }}
-                    </p>
-                  </div>
-                  <UBadge color="neutral" variant="soft">
-                    Rating {{ entry.rating || "-" }}
-                  </UBadge>
-                </div>
-              </template>
-
-              <div class="space-y-3">
-                <div
-                  v-for="(groupItem, groupIndex) in entry.questionGroup"
-                  :key="groupItem.id || `${groupItem.group}-${groupIndex}`"
-                  class="rounded-lg border border-default p-3"
-                >
-                  <div class="flex items-start justify-between gap-3">
-                    <p class="text-sm font-medium leading-5">
-                      {{ groupItem.group }}
-                    </p>
-                    <UBadge
-                      :color="
-                        getMonitorStatusColor(
-                          Number(groupItem.selected || 0),
-                          Number(groupItem.quantity || 0),
-                        )
-                      "
-                      variant="subtle"
-                    >
-                      {{
-                        getMonitorStatusText(
-                          Number(groupItem.selected || 0),
-                          Number(groupItem.quantity || 0),
-                        )
-                      }}
-                    </UBadge>
-                  </div>
-
-                  <div
-                    class="mt-2 flex items-center justify-between text-xs text-muted"
-                  >
-                    <span>Selected {{ Number(groupItem.selected || 0) }}</span>
-                    <span>Quantity {{ Number(groupItem.quantity || 0) }}</span>
-                  </div>
-
-                  <div class="mt-2 h-2 w-full rounded-full bg-elevated">
-                    <div
-                      class="h-2 rounded-full"
-                      :class="
-                        getMonitorStatusColor(
-                          Number(groupItem.selected || 0),
-                          Number(groupItem.quantity || 0),
-                        ) === 'success'
-                          ? 'bg-green-500'
-                          : getMonitorStatusColor(
-                                Number(groupItem.selected || 0),
-                                Number(groupItem.quantity || 0),
-                              ) === 'warning'
-                            ? 'bg-amber-500'
-                            : 'bg-blue-500'
-                      "
-                      :style="{
-                        width: `${getMonitorProgress(
-                          Number(groupItem.selected || 0),
-                          Number(groupItem.quantity || 0),
-                        )}%`,
-                      }"
-                    />
-                  </div>
-                </div>
-              </div>
-            </UCard>
-          </div>
-        </template>
-      </UModal>
     </template>
   </UDashboardPanel>
 </template>

@@ -73,7 +73,7 @@ interface UserMember {
 interface GroupMember {
   id: number;
   userMember: UserMember;
-  verification?: any; // Verification data if member has been verified
+  verification?: any[] | any; // Verification data if member has been verified
 }
 
 interface EventDetail {
@@ -468,7 +468,13 @@ function handleVerificationSubmitSuccess() {
 }
 
 // View verification details - opens the detail modal
-function viewVerification(verification: any, member?: any) {
+function hasVerificationData(member: GroupMember): boolean {
+  const verification = member?.verification;
+  if (Array.isArray(verification)) return verification.length > 0;
+  return Boolean(verification);
+}
+
+function viewVerification(verification: any[] | any, member?: any) {
   // Store the verification data and member
   selectedVerificationData.value = verification;
   selectedVerificationMember.value = member || null;
@@ -625,7 +631,7 @@ function closeVerificationDetailModal() {
                         >
                         <!-- Checklist badge for members with verification -->
                         <UButton
-                          v-if="member.verification"
+                          v-if="hasVerificationData(member)"
                           type="button"
                           size="lg"
                           color="success"
