@@ -69,6 +69,41 @@ const attachmentFiles = computed(() => [
     path: props.applicationDoc?.license?.file || null,
   },
 ]);
+
+const ojtDisplayName = computed(() => {
+  return (
+    props.applicationDoc?.ojtUser?.name ||
+    props.applicationDoc?.ojtName ||
+    props.applicationDoc?.ojtiName ||
+    "-"
+  );
+});
+
+const ojtDisplayLicenseId = computed(() => {
+  return (
+    props.applicationDoc?.ojtUser?.licenseUserId ||
+    props.applicationDoc?.ojtLicenseId ||
+    props.applicationDoc?.ojtId ||
+    "-"
+  );
+});
+
+const genderDisplay = computed(() => {
+  const directGender =
+    props.applicationDoc?.gender?.gender ||
+    props.applicationDoc?.user?.gender?.gender ||
+    props.userData?.gender?.gender;
+  if (directGender) return directGender;
+
+  const genderId =
+    props.applicationDoc?.user?.genderId ??
+    props.applicationDoc?.genderId ??
+    props.userData?.genderId;
+
+  if (String(genderId) === "1") return "Laki-laki";
+  if (String(genderId) === "2") return "Perempuan";
+  return "-";
+});
 </script>
 
 <template>
@@ -241,13 +276,7 @@ const attachmentFiles = computed(() => [
               </td>
               <td colspan="2" class="border border-black p-2 align-top">
                 <span class="font-bold">8.</span> Jenis Kelamin<br />
-                {{
-                  userData.genderId === "1"
-                    ? "Laki-laki"
-                    : userData.genderId === "2"
-                      ? "Perempuan"
-                      : "-"
-                }}
+                {{ genderDisplay }}
               </td>
             </tr>
             <!-- Row 3: 9a-9e -->
@@ -382,11 +411,11 @@ const attachmentFiles = computed(() => [
             <tr>
               <td colspan="2" class="border border-black p-2 align-top">
                 <span class="font-bold">12e.</span> Nama OJTI<br />
-                {{ applicationDoc.ojtNik || "-" }}
+                {{ ojtDisplayName }}
               </td>
               <td colspan="3" class="border border-black p-2 align-top">
                 <span class="font-bold">12f.</span> Nomor Lisensi<br />
-                {{ applicationDoc.ojtNik || "-" }}
+                {{ ojtDisplayLicenseId }}
               </td>
             </tr>
             <!-- Row 7: 13 -->

@@ -106,6 +106,7 @@ interface SubmitEssayCorrectionItem {
 
 interface ExaminationSubmitResponse {
   finalValue?: number | null;
+  passingGrade?: number | null;
   falseAnswer?: SubmitFalseAnswerItem[] | null;
   essayCorrection?: SubmitEssayCorrectionItem[] | null;
   [key: string]: unknown;
@@ -215,6 +216,17 @@ const formattedFinalValue = computed(() => {
   const value = Number(submitResultData.value?.finalValue);
   if (!Number.isFinite(value)) return "-";
   return value.toFixed(2);
+});
+const isFinalValuePassed = computed<boolean | null>(() => {
+  const finalValue = Number(submitResultData.value?.finalValue);
+  const passingGrade = Number(submitResultData.value?.passingGrade);
+  if (!Number.isFinite(finalValue) || !Number.isFinite(passingGrade)) return null;
+  return finalValue >= passingGrade;
+});
+const finalValueTextClass = computed(() => {
+  if (isFinalValuePassed.value === true) return "text-green-600";
+  if (isFinalValuePassed.value === false) return "text-red-600";
+  return "text-highlighted";
 });
 const formattedSubmitResultJson = computed(() => {
   if (!submitResultData.value) return "";
@@ -655,7 +667,7 @@ onBeforeUnmount(() => {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <UCard>
             <p class="text-xs text-muted">Final Value</p>
-            <p class="text-xl font-semibold text-highlighted">
+            <p class="text-xl font-semibold" :class="finalValueTextClass">
               {{ formattedFinalValue }}
             </p>
           </UCard>

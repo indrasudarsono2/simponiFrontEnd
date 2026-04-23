@@ -1,160 +1,133 @@
 {
-  "rating": [
+  "event": [
     {
-      "id": 3,
-      "rating": "TWR",
-      "description": "Tower Control Rating",
-      "mandatoryRatings": [
-        {
-          "id": 1,
-          "mandatoryItem": {
-            "id": 1,
-            "mandatory": "AERODROME LAYOUT; PHYSICAL CHARACTERISTICS AND VISUAL AIDS"
-          }
-        },
-        {
-          "id": 2,
-          "mandatoryItem": {
-            "id": 2,
-            "mandatory": "AIRSPACE STRUCTURE"
-          }
-        },
-        {
-          "id": 3,
-          "mandatoryItem": {
-            "id": 3,
-            "mandatory": "APPLICABLE RULES, PROCEDURES AND SOURCE OF INFORMATION"
-          }
-        },
-        {
-          "id": 4,
-          "mandatoryItem": {
-            "id": 5,
-            "mandatory": "AIR NAVIGATION FACILITIES"
-          }
-        },
-        {
-          "id": 5,
-          "mandatoryItem": {
-            "id": 6,
-            "mandatory": "AIR TRAFFIC CONTROL EQUIPMENT AND ITS USE"
-          }
-        },
-        {
-          "id": 6,
-          "mandatoryItem": {
-            "id": 7,
-            "mandatory": "TERRAIN AND PROMINENT LANDMARKS"
-          }
-        },
+      "id": 11,
+      "event": "PENERBITAN ARMITA",
+      "sector": {
+        "sector": "BALI",
+        "branchUnit": {
+          "unit": "TWR-APP"
+        }
+      },
+      "remarkDoc": {
+        "remark": "PENERBITAN"
+      },
+      "session": {
+        "session": "2026 SMT 2"
+      },
+      "groups": [
         {
           "id": 7,
-          "mandatoryItem": {
-            "id": 8,
-            "mandatory": "CHARACTERISTICS OF AIR TRAFFIC"
-          }
-        },
+          "group": "PENERBITAN ARMITA",
+          "groupMembers": [
+            {
+              "id": 55,
+              "userMember": {
+                "name": "ARMITA"
+              },
+              "finalScores": [],
+              "essayCorrections": [
+                {
+                  "id": 96,
+                  "essay": {
+                    "question": "<p>Bali (WADD) serves as a primary hub for a diverse mix of traffic, from international heavy jets (A380/B777) to domestic turboprops and VFR general aviation.</p>",
+                    "value": 3
+                  },
+                  "answer": "<p>bALI <u>primarua</u></p>",
+                  "score": 3
+                },
+                {
+                  "id": 97,
+                  "essay": {
+                    "question": "<p>To the north of Ngurah Rai Airport, the terrain rises significantly toward Mount Agung and the central mountain range.</p>",
+                    "value": 3
+                  },
+                  "answer": "<p><strong><em><u>North ngra-haaw</u></em></strong></p>",
+                  "score": 3
+                },
+                {
+                  "id": 98,
+                  "essay": {
+                    "question": "<p>The Bali TMA is subject to sudden weather changes, including heavy tropical rain and volcanic ash activity from nearby volcanoes.</p>",
+                    "value": 6
+                  },
+                  "answer": "<p><em>Bali TMA</em></p>",
+                  "score": 6
+                },
+                {
+                  "id": 99,
+                  "essay": {
+                    "question": "<p>Bali is a popular destination for scenic VFR flights and helicopter transfers.</p>",
+                    "value": 5
+                  },
+                  "answer": "<p><u>Popular</u></p>",
+                  "score": 5
+                },
+                {
+                  "id": 100,
+                  "essay": {
+                    "question": "<p>Modern Air Traffic Management in Indonesia increasingly relies on Performance-Based Navigation (PBN) and ADS-B surveillance.</p>",
+                    "value": 6
+                  },
+                  "answer": "<p>M<strong>oderabra</strong></p>",
+                  "score": 6
+                },
+                {
+                  "id": 101,
+                  "essay": {
+                    "question": "<p>Bali (WADD) serves as a primary hub for a diverse mix of traffic, from international heavy jets (A380/B777) to domestic turboprops and VFR general aviation.</p>",
+                    "value": 3
+                  },
+                  "answer": "<p>Bali wadd</p>",
+                  "score": 3
+                },
+                {
+                  "id": 102,
+                  "essay": {
+                    "question": "<p>To the north of Ngurah Rai Airport, the terrain rises significantly toward Mount Agung and the central mountain range.</p>",
+                    "value": 3
+                  },
+                  "answer": "<p>To the north ngurah rai</p>",
+                  "score": 3
+                },
+                {
+                  "id": 103,
+                  "essay": {
+                    "question": "<p>Modern Air Traffic Management in Indonesia increasingly relies on Performance-Based Navigation (PBN) and ADS-B surveillance.</p>",
+                    "value": 6
+                  },
+                  "answer": "<p>Modern Air Traffic</p>",
+                  "score": 6
+                },
+                {
+                  "id": 104,
+                  "essay": {
+                    "question": "<p>afawgawgawgwgwgwaa</p>",
+                    "value": 6
+                  },
+                  "answer": "<p>Auanawuaobfaga</p>",
+                  "score": 6
+                },
+                {
+                  "id": 105,
+                  "essay": {
+                    "question": "<p>The Bali TMA is subject to sudden weather changes, including heavy tropical rain and volcanic ash activity from nearby volcanoes.</p>",
+                    "value": 6
+                  },
+                  "answer": "<p>Ioanwuaneafagagaafafa</p>",
+                  "score": 6
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "eventQuestions": [
         {
           "id": 8,
-          "mandatoryItem": {
-            "id": 9,
-            "mandatory": "WEATHER PHENOMENA"
-          }
-        },
-        {
-          "id": 9,
-          "mandatoryItem": {
-            "id": 10,
-            "mandatory": "EMERGENCY AND SEARCH AND RESCUE PLANS"
-          }
+          "persentage": 0.4
         }
       ]
-    },
-    {
-      "id": 4,
-      "rating": "APP",
-      "description": "Approach Control Procedural",
-      "mandatoryRatings": []
-    },
-    {
-      "id": 5,
-      "rating": "APS",
-      "description": "Approach Control Surveillance",
-      "mandatoryRatings": []
-    },
-    {
-      "id": 6,
-      "rating": "ACP",
-      "description": "Area Control Procedural",
-      "mandatoryRatings": []
-    },
-    {
-      "id": 7,
-      "rating": "ACS",
-      "description": "Area Control Surveillance",
-      "mandatoryRatings": []
-    },
-    {
-      "id": 9,
-      "rating": "COM",
-      "description": "Communication",
-      "mandatoryRatings": []
-    },
-    {
-      "id": 10,
-      "rating": "KARTO",
-      "description": "Kartografi",
-      "mandatoryRatings": []
-    }
-  ],
-  "mandatoryItem": [
-    {
-      "id": 1,
-      "mandatory": "AERODROME LAYOUT; PHYSICAL CHARACTERISTICS AND VISUAL AIDS"
-    },
-    {
-      "id": 2,
-      "mandatory": "AIRSPACE STRUCTURE"
-    },
-    {
-      "id": 3,
-      "mandatory": "APPLICABLE RULES, PROCEDURES AND SOURCE OF INFORMATION"
-    },
-    {
-      "id": 5,
-      "mandatory": "AIR NAVIGATION FACILITIES"
-    },
-    {
-      "id": 6,
-      "mandatory": "AIR TRAFFIC CONTROL EQUIPMENT AND ITS USE"
-    },
-    {
-      "id": 7,
-      "mandatory": "TERRAIN AND PROMINENT LANDMARKS"
-    },
-    {
-      "id": 8,
-      "mandatory": "CHARACTERISTICS OF AIR TRAFFIC"
-    },
-    {
-      "id": 9,
-      "mandatory": "WEATHER PHENOMENA"
-    },
-    {
-      "id": 10,
-      "mandatory": "EMERGENCY AND SEARCH AND RESCUE PLANS"
-    },
-    {
-      "id": 15,
-      "mandatory": "CHARACTERISTICS OF AIR TRAFFIC AND TRAFFIC FLOW"
-    },
-    {
-      "id": 16,
-      "mandatory": "PRINCIPLES, USE AND LIMITATIONS OF APPLICABLE ATS SURVEILLANCE SYSTEMS AND ASSOCIATED EQUIPMENT"
-    },
-    {
-      "id": 17,
-      "mandatory": "PROCEDURES FOR THE PROVISION OF ATS SURVEILLANCE SERVICE, AS APPROPRIATE, INCLUDING PROCEDURES TO ENSURE APPROPRIATE TERRAIN CLEARANCE"
     }
   ]
 }

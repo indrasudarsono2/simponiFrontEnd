@@ -18,8 +18,33 @@ interface Sector {
   subBranchUnitRatings: SubBranchUnitRating[];
 }
 
+interface MandatoryRatingItem {
+  id: number;
+  rating: {
+    id: number;
+    rating: string;
+  };
+  mandatoryItem: {
+    id: number;
+    mandatory: string;
+  };
+}
+
+interface ExistingQuestionGroup {
+  id: number;
+  mandatoryRatingId?: number | null;
+  group: string;
+  quantity: number;
+  subBranchUnitRating: {
+    rating: { id: number };
+    sector: { id: number };
+  };
+}
+
 const props = defineProps<{
   sectors: Sector[];
+  mandatoryRatings: MandatoryRatingItem[];
+  questionGroups: ExistingQuestionGroup[];
 }>();
 
 const emit = defineEmits<{
@@ -29,8 +54,6 @@ const emit = defineEmits<{
 const schema = z.object({
   sectorId: z.coerce.number().min(1, "Sector is required"),
   ratingId: z.coerce.number().min(1, "Rating is required"),
-  group: z.string().min(1, "Group name is required"),
-  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
 });
 
 const open = ref(false);
@@ -40,9 +63,15 @@ type Schema = z.output<typeof schema>;
 const state = reactive<Partial<Schema>>({
   sectorId: undefined,
   ratingId: undefined,
-  group: undefined,
-  quantity: undefined,
 });
+
+const groupQuantities = reactive<Record<number, number | undefined>>({});
+const additionalGroupName = ref("");
+const additionalQuantity = ref<number | undefined>(undefined);
+const additionalGroupTouched = ref(false);
+const additionalQuantityTouched = ref(false);
+const quantityTouched = reactive<Record<number, boolean>>({});
+const submitAttempted = ref(false);
 
 // Available ratings derived from the selected sector's subBranchUnitRatings
 const availableRatings = computed(() => {
@@ -61,6 +90,34 @@ watch(
   () => state.sectorId,
   () => {
     state.ratingId = undefined;
+    submitAttempted.value = false;
+    additionalGroupName.value = "";
+    additionalQuantity.value = undefined;
+    additionalGroupTouched.value = false;
+    additionalQuantityTouched.value = false;
+    Object.keys(groupQuantities).forEach((key) => {
+      delete groupQuantities[Number(key)];
+    });
+    Object.keys(quantityTouched).forEach((key) => {
+      delete quantityTouched[Number(key)];
+    });
+  },
+);
+
+watch(
+  () => state.ratingId,
+  () => {
+    submitAttempted.value = false;
+    additionalGroupName.value = "";
+    additionalQuantity.value = undefined;
+    additionalGroupTouched.value = false;
+    additionalQuantityTouched.value = false;
+    Object.keys(groupQuantities).forEach((key) => {
+      delete groupQuantities[Number(key)];
+    });
+    Object.keys(quantityTouched).forEach((key) => {
+      delete quantityTouched[Number(key)];
+    });
   },
 );
 
@@ -76,22 +133,144 @@ const selectedRating = computed(() => {
   return availableRatings.value.find((r) => r.id === state.ratingId);
 });
 
+const selectedMandatoryRatings = computed<MandatoryRatingItem[]>(() => {
+  if (!state.ratingId) return [];
+  return props.mandatoryRatings.filter(
+    (item) => item.rating.id === state.ratingId,
+  );
+});
+
+const selectedExistingGroups = computed<ExistingQuestionGroup[]>(() => {
+  if (!state.sectorId || !state.ratingId) return [];
+  return props.questionGroups.filter(
+    (item) =>
+      item.subBranchUnitRating?.sector?.id === state.sectorId &&
+      item.subBranchUnitRating?.rating?.id === state.ratingId,
+  );
+});
+
+const hasExistingGroups = computed(() => selectedExistingGroups.value.length > 0);
+
+const totalConfiguredQuantity = computed(() => {
+  if (hasExistingGroups.value) {
+    const next = Number(additionalQuantity.value);
+    return Number.isFinite(next) && next > 0 ? next : 0;
+  }
+
+  return selectedMandatoryRatings.value.reduce((sum, item) => {
+    const value = Number(groupQuantities[item.id]);
+    if (!Number.isFinite(value) || value < 1) return sum;
+    return sum + value;
+  }, 0);
+});
+
+const existingTotalQuantity = computed(() => {
+  return selectedExistingGroups.value.reduce(
+    (sum, item) => sum + Number(item.quantity || 0),
+    0,
+  );
+});
+
+function getQuantityError(mandatoryRatingId: number): string {
+  const shouldValidate =
+    submitAttempted.value || Boolean(quantityTouched[mandatoryRatingId]);
+  if (!shouldValidate) return "";
+
+  const value = Number(groupQuantities[mandatoryRatingId]);
+  if (!Number.isFinite(value) || value < 1) {
+    return "Quantity is required and must be at least 1.";
+  }
+
+  return "";
+}
+
+function getAdditionalGroupNameError(): string {
+  const shouldValidate = submitAttempted.value || additionalGroupTouched.value;
+  if (!shouldValidate) return "";
+  if (!additionalGroupName.value.trim()) return "Group name is required.";
+  return "";
+}
+
+function getAdditionalQuantityError(): string {
+  const shouldValidate =
+    submitAttempted.value || additionalQuantityTouched.value;
+  if (!shouldValidate) return "";
+
+  const value = Number(additionalQuantity.value);
+  if (!Number.isFinite(value) || value < 1) {
+    return "Quantity is required and must be at least 1.";
+  }
+  return "";
+}
+
 const toast = useToast();
 const loading = ref(false);
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
+  submitAttempted.value = true;
+  if (hasExistingGroups.value) {
+    additionalGroupTouched.value = true;
+    additionalQuantityTouched.value = true;
+  } else {
+    selectedMandatoryRatings.value.forEach((item) => {
+      quantityTouched[item.id] = true;
+    });
+  }
+
   loading.value = true;
 
   try {
+    let body: Record<string, unknown> = {
+      sectorId: event.data.sectorId,
+      ratingId: event.data.ratingId,
+    };
+
+    if (hasExistingGroups.value) {
+      const groupName = additionalGroupName.value.trim();
+      const quantity = Number(additionalQuantity.value);
+      if (!groupName) {
+        throw new Error("Group name is required.");
+      }
+      if (!Number.isFinite(quantity) || quantity < 1) {
+        throw new Error("Quantity must be at least 1.");
+      }
+      body = {
+        ...body,
+        group: [
+          {
+            mandatoryRatingId: null,
+            mandatory: groupName,
+            quantity,
+          },
+        ],
+      };
+    } else {
+      const group = selectedMandatoryRatings.value.map((item) => ({
+        mandatoryRatingId: item.id,
+        mandatory: item.mandatoryItem.mandatory,
+        quantity: Number(groupQuantities[item.id] || 0),
+      }));
+
+      if (group.length === 0) {
+        throw new Error("No mandatory rating found for selected rating.");
+      }
+
+      const invalidGroup = group.find(
+        (item) => !Number.isFinite(item.quantity) || item.quantity < 1,
+      );
+      if (invalidGroup) {
+        throw new Error(
+          "All mandatory quantities must be filled with value at least 1.",
+        );
+      }
+
+      body = { ...body, group };
+    }
+
     // Call API to create question group
     await $fetch(`http://${ip.ipBackEnd}/api/questionGroupsMultipleChoice`, {
       method: "POST",
-      body: {
-        sectorId: event.data.sectorId,
-        ratingId: event.data.ratingId,
-        group: event.data.group,
-        quantity: event.data.quantity,
-      },
+      body,
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
       },
@@ -99,15 +278,24 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     toast.add({
       title: "Success",
-      description: `Question group "${event.data.group}" has been created successfully`,
+      description: "Question group has been created successfully",
       color: "success",
     });
 
     // Reset form and close modal
     state.sectorId = undefined;
     state.ratingId = undefined;
-    state.group = undefined;
-    state.quantity = undefined;
+    submitAttempted.value = false;
+    additionalGroupName.value = "";
+    additionalQuantity.value = undefined;
+    additionalGroupTouched.value = false;
+    additionalQuantityTouched.value = false;
+    Object.keys(groupQuantities).forEach((key) => {
+      delete groupQuantities[Number(key)];
+    });
+    Object.keys(quantityTouched).forEach((key) => {
+      delete quantityTouched[Number(key)];
+    });
     open.value = false;
 
     // Emit event to refresh parent table
@@ -132,7 +320,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <UModal
     v-model:open="open"
     title="Add New Question Group"
-    description="Create a new question group with sector, rating, kind of question, group name, and quantity"
+    description="Create question groups from mandatory items or add extra non-mandatory group"
   >
     <UButton label="Add Question Group" icon="i-lucide-plus" color="primary" />
 
@@ -169,29 +357,103 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </template>
         </UFormField>
 
-        <UFormField label="Group Name" name="group" required>
-          <UInput
-            v-model="state.group"
-            class="w-full"
-            placeholder="e.g., PENDEK, PANJANG, STRUKTUR RUANG UDARA"
-          />
-        </UFormField>
+        <div
+          v-if="state.ratingId && !hasExistingGroups"
+          class="rounded-lg border border-default overflow-hidden"
+        >
+          <div
+            class="flex items-center justify-between px-3 py-2 border-b border-default bg-elevated/40 text-sm"
+          >
+            <span class="text-muted">Total Questions Set</span>
+            <span class="font-semibold text-primary">
+              {{ totalConfiguredQuantity }}
+            </span>
+          </div>
+          <table class="w-full text-sm">
+            <thead class="bg-elevated/60">
+              <tr>
+                <th class="text-left px-3 py-2 font-medium">Mandatory</th>
+                <th class="text-left px-3 py-2 font-medium w-40">Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="item in selectedMandatoryRatings"
+                :key="item.id"
+                class="border-t border-default"
+              >
+                <td class="px-3 py-2 align-top">
+                  {{ item.mandatoryItem.mandatory }}
+                </td>
+                <td class="px-3 py-2">
+                  <UInput
+                    v-model.number="groupQuantities[item.id]"
+                    type="number"
+                    min="1"
+                    class="w-full"
+                    placeholder="0"
+                    @blur="quantityTouched[item.id] = true"
+                  />
+                  <p
+                    v-if="getQuantityError(item.id)"
+                    class="mt-1 text-xs text-error"
+                  >
+                    {{ getQuantityError(item.id) }}
+                  </p>
+                </td>
+              </tr>
+              <tr v-if="selectedMandatoryRatings.length === 0">
+                <td colspan="2" class="px-3 py-4 text-center text-muted">
+                  No mandatory items found for this rating.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <UFormField label="Quantity" name="quantity" required>
-          <UInput
-            v-model="state.quantity"
-            type="number"
-            min="1"
-            class="w-full"
-            placeholder="Enter quantity"
-          />
-        </UFormField>
+        <div v-if="state.ratingId && hasExistingGroups" class="space-y-3">
+          <div class="rounded-lg border border-default p-3 bg-elevated/40">
+            <div class="text-sm">
+              Mandatory groups for this sector-rating already exist
+              ({{ selectedExistingGroups.length }} group(s), total
+              {{ existingTotalQuantity }} question(s)).
+            </div>
+          </div>
+
+          <UFormField label="Group Name" required>
+            <UInput
+              v-model="additionalGroupName"
+              class="w-full"
+              placeholder="Enter additional group name"
+              @blur="additionalGroupTouched = true"
+            />
+            <template v-if="getAdditionalGroupNameError()" #hint>
+              <span class="text-xs text-error">{{
+                getAdditionalGroupNameError()
+              }}</span>
+            </template>
+          </UFormField>
+
+          <UFormField label="Quantity" required>
+            <UInput
+              v-model.number="additionalQuantity"
+              type="number"
+              min="1"
+              class="w-full"
+              placeholder="Enter quantity"
+              @blur="additionalQuantityTouched = true"
+            />
+            <template v-if="getAdditionalQuantityError()" #hint>
+              <span class="text-xs text-error">{{
+                getAdditionalQuantityError()
+              }}</span>
+            </template>
+          </UFormField>
+        </div>
 
         <!-- Show summary when all fields are filled -->
         <div
-          v-if="
-            selectedSector && selectedRating && state.group && state.quantity
-          "
+          v-if="selectedSector && selectedRating"
           class="p-3 bg-elevated/50 rounded border border-default space-y-2"
         >
           <div class="text-sm font-medium">Summary:</div>
@@ -212,12 +474,26 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             }}</span>
           </div>
           <div class="text-sm flex items-center gap-2">
-            <span class="text-muted">Group:</span>
-            <span class="font-medium">{{ state.group }}</span>
+            <span class="text-muted">
+              {{ hasExistingGroups ? "Existing Groups:" : "Mandatory Items:" }}
+            </span>
+            <span class="font-medium">
+              {{
+                hasExistingGroups
+                  ? selectedExistingGroups.length
+                  : selectedMandatoryRatings.length
+              }}
+            </span>
+          </div>
+          <div v-if="hasExistingGroups" class="text-sm flex items-center gap-2">
+            <span class="text-muted">Existing Questions:</span>
+            <span class="font-medium">{{ existingTotalQuantity }}</span>
           </div>
           <div class="text-sm flex items-center gap-2">
-            <span class="text-muted">Quantity:</span>
-            <span class="font-medium">{{ state.quantity }}</span>
+            <span class="text-muted">Total Questions Set:</span>
+            <span class="font-medium text-primary">{{
+              totalConfiguredQuantity
+            }}</span>
           </div>
         </div>
 

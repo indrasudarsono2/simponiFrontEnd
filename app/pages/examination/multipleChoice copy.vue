@@ -39,7 +39,6 @@ interface ExaminationMultipleChoiceResponse {
   monitorTime?: {
     time?: number;
   } | null;
-  randomNumbers?: number[] | null;
 }
 interface SubmitFalseAnswerItem {
   id?: number;
@@ -100,17 +99,8 @@ const remainingSeconds = ref(0);
 const isTimeUpToastShown = ref(false);
 const isSubmittingAnswers = ref(false);
 const hasSubmittedAnswers = ref(false);
-const cameraVideoRef = ref<HTMLVideoElement | null>(null);
-const cameraStream = ref<MediaStream | null>(null);
-const isCameraInitializing = ref(false);
-const isCameraReady = ref(false);
-const cameraError = ref<string | null>(null);
-const isCameraObstructed = ref(false);
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 let postTimeInterval: ReturnType<typeof setInterval> | null = null;
-let randomSnapshotTimeouts: Array<ReturnType<typeof setTimeout>> = [];
-let cameraObstructionInterval: ReturnType<typeof setInterval> | null = null;
-let lastCameraWarningAt = 0;
 
 const requestMeta = ref<{ eventId: number; appRatingId: number } | null>(null);
 
@@ -314,9 +304,6 @@ const isAllQuestionsAnswered = computed(
 );
 
 const isTimeUp = computed(() => remainingSeconds.value <= 0);
-const canContinueExam = computed(
-  () => isCameraReady.value && !isCameraObstructed.value,
-);
 const isLessThanTenMinutes = computed(
   () => remainingSeconds.value > 300 && remainingSeconds.value < 600,
 );
@@ -348,282 +335,6 @@ function clearPostTimeInterval() {
     clearInterval(postTimeInterval);
     postTimeInterval = null;
   }
-}
-
-function clearRandomSnapshotTimeouts() {
-  randomSnapshotTimeouts.forEach((timer) => clearTimeout(timer));
-  randomSnapshotTimeouts = [];
-}
-
-function clearCameraObstructionMonitor() {
-  if (cameraObstructionInterval) {
-    clearInterval(cameraObstructionInterval);
-    cameraObstructionInterval = null;
-  }
-}
-
-function stopCameraStream() {
-  clearCameraObstructionMonitor();
-  if (cameraStream.value) {
-    cameraStream.value.getTracks().forEach((track) => track.stop());
-    cameraStream.value = null;
-  }
-  if (cameraVideoRef.value) {
-    cameraVideoRef.value.srcObject = null;
-  }
-  isCameraReady.value = false;
-  isCameraObstructed.value = false;
-}
-
-function getCameraErrorMessage(error: unknown): string {
-  const message = String((error as any)?.message || "").toLowerCase();
-  const name = String((error as any)?.name || "").toLowerCase();
-
-  if (name.includes("notallowed") || message.includes("permission")) {
-    return "Camera permission is required. Please allow camera access to continue the examination.";
-  }
-  if (name.includes("notfound") || name.includes("devicesnotfound")) {
-    return "No camera device found. Please connect a camera to continue the examination.";
-  }
-  if (name.includes("notreadable") || message.includes("in use")) {
-    return "Camera is currently used by another app. Close the other app and try again.";
-  }
-
-  return "Unable to access camera. Please check device permission and try again.";
-}
-
-async function startCamera() {
-  if (!import.meta.client) return;
-  if (!navigator.mediaDevices?.getUserMedia) {
-    cameraError.value =
-      "This browser does not support camera access. Unable to continue examination.";
-    isCameraReady.value = false;
-    return;
-  }
-
-  isCameraInitializing.value = true;
-  cameraError.value = null;
-  stopCameraStream();
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "user",
-      },
-      audio: false,
-    });
-
-    cameraStream.value = stream;
-    isCameraReady.value = true;
-
-    const videoTrack = stream.getVideoTracks()[0];
-    if (videoTrack) {
-      videoTrack.onended = () => {
-        isCameraReady.value = false;
-        isCameraObstructed.value = false;
-        cameraError.value =
-          "Camera stream was stopped. Please reopen camera to continue.";
-      };
-    }
-
-    if (cameraVideoRef.value) {
-      cameraVideoRef.value.srcObject = stream;
-      await cameraVideoRef.value.play().catch(() => null);
-    }
-
-    startCameraObstructionMonitor();
-  } catch (error) {
-    isCameraReady.value = false;
-    cameraError.value = getCameraErrorMessage(error);
-  } finally {
-    isCameraInitializing.value = false;
-  }
-}
-
-function detectCameraObstruction(): boolean {
-  const video = cameraVideoRef.value;
-  if (!video || !cameraStream.value || !isCameraReady.value) return false;
-
-  const sampleWidth = 64;
-  const sampleHeight = 48;
-  const canvas = document.createElement("canvas");
-  canvas.width = sampleWidth;
-  canvas.height = sampleHeight;
-  const context = canvas.getContext("2d");
-  if (!context) return false;
-
-  context.drawImage(video, 0, 0, sampleWidth, sampleHeight);
-  const imageData = context.getImageData(0, 0, sampleWidth, sampleHeight).data;
-
-  let sum = 0;
-  let sumSquared = 0;
-  let count = 0;
-  for (let i = 0; i < imageData.length; i += 4) {
-    const r = imageData[i] || 0;
-    const g = imageData[i + 1] || 0;
-    const b = imageData[i + 2] || 0;
-    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-    sum += luminance;
-    sumSquared += luminance * luminance;
-    count += 1;
-  }
-
-  if (!count) return false;
-  const mean = sum / count;
-  const variance = sumSquared / count - mean * mean;
-  const stdDev = Math.sqrt(Math.max(variance, 0));
-
-  const tooDark = mean < 20;
-  const tooFlat = stdDev < 10;
-  return tooDark || tooFlat;
-}
-
-function startCameraObstructionMonitor() {
-  clearCameraObstructionMonitor();
-
-  cameraObstructionInterval = setInterval(() => {
-    const obstructed = detectCameraObstruction();
-    isCameraObstructed.value = obstructed;
-
-    if (!obstructed) return;
-    const now = Date.now();
-    if (now - lastCameraWarningAt < 30000) return;
-    lastCameraWarningAt = now;
-
-    toast.add({
-      title: "Camera Warning",
-      description:
-        "Camera appears obstructed (covered or too dark). Please adjust camera.",
-      color: "warning",
-    });
-  }, 5000);
-}
-
-function captureCameraSnapshotBlob(): Promise<Blob | null> {
-  return new Promise((resolve) => {
-    const video = cameraVideoRef.value;
-    if (!video || !cameraStream.value || !isCameraReady.value) {
-      resolve(null);
-      return;
-    }
-
-    const sourceWidth = video.videoWidth || 640;
-    const sourceHeight = video.videoHeight || 360;
-    const maxWidth = 960;
-    const scale = sourceWidth > maxWidth ? maxWidth / sourceWidth : 1;
-    const width = Math.max(1, Math.round(sourceWidth * scale));
-    const height = Math.max(1, Math.round(sourceHeight * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-
-    const context = canvas.getContext("2d");
-    if (!context) {
-      resolve(null);
-      return;
-    }
-
-    context.drawImage(video, 0, 0, width, height);
-    canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.7);
-  });
-}
-
-async function postCameraSnapshot(
-  payload: ExaminationMultipleChoiceResponse,
-  targetMinute: number,
-) {
-  const currentEventId = Number(payload.eventId ?? requestMeta.value?.eventId);
-  const currentAppRatingId = Number(
-    payload.appRatingId ?? requestMeta.value?.appRatingId,
-  );
-  const currentGroupMemberId = Number(payload.groupMemberId);
-
-  if (
-    !Number.isFinite(currentEventId) ||
-    currentEventId <= 0 ||
-    !Number.isFinite(currentAppRatingId) ||
-    currentAppRatingId <= 0 ||
-    !Number.isFinite(currentGroupMemberId) ||
-    currentGroupMemberId <= 0
-  ) {
-    return;
-  }
-
-  const snapshotBlob = await captureCameraSnapshotBlob();
-  if (!snapshotBlob) {
-    toast.add({
-      title: "Camera Snapshot Failed",
-      description: `Unable to capture photo at minute ${targetMinute}.`,
-      color: "warning",
-    });
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("eventId", String(currentEventId));
-  formData.append("appRatingId", String(currentAppRatingId));
-  formData.append("groupMemberId", String(currentGroupMemberId));
-  formData.append(
-    "file",
-    snapshotBlob,
-    `mc-${currentEventId}-${currentGroupMemberId}-m${targetMinute}.jpg`,
-  );
-
-  try {
-    await $fetch(`http://${ip.ipBackEnd}/api/preview`, {
-      method: "POST",
-      headers: {
-        Authorization: token.value ? `Bearer ${token.value}` : "",
-      },
-      body: formData,
-    });
-  } catch (_error) {
-    toast.add({
-      title: "Upload Failed",
-      description: `Failed to upload camera snapshot at minute ${targetMinute}.`,
-      color: "error",
-    });
-  }
-}
-
-function scheduleRandomSnapshots(payload: ExaminationMultipleChoiceResponse) {
-  clearRandomSnapshotTimeouts();
-
-  const totalMinutes = Number(
-    payload.eventQuestion?.minutes ?? payload.eventShort?.minutes ?? 0,
-  );
-  const remainingMinutes = getCountdownMinutes(payload);
-  const elapsedMinutes = Math.max(0, totalMinutes - remainingMinutes);
-  const randomMinutes = Array.from(
-    new Set(
-      (payload.randomNumbers || [])
-        .map((item) => Number(item))
-        .filter((item) => Number.isFinite(item) && item > 0),
-    ),
-  ).sort((a, b) => a - b);
-
-  if (
-    !Number.isFinite(totalMinutes) ||
-    totalMinutes <= 0 ||
-    !randomMinutes.length
-  ) {
-    return;
-  }
-
-  randomMinutes.forEach((minuteMark) => {
-    if (minuteMark <= elapsedMinutes || minuteMark > totalMinutes) {
-      return;
-    }
-
-    const delayMs = Math.max(
-      0,
-      Math.round((minuteMark - elapsedMinutes) * 60 * 1000),
-    );
-    const timer = setTimeout(() => {
-      void postCameraSnapshot(payload, minuteMark);
-    }, delayMs);
-    randomSnapshotTimeouts.push(timer);
-  });
 }
 
 function startCountdown(minutes: number) {
@@ -757,14 +468,6 @@ function buildMultipleChoiceAnswersPayload(
 
 async function submitAnswers(isAutoSubmit = false) {
   if (isSubmittingAnswers.value || hasSubmittedAnswers.value) return;
-  if (!isAutoSubmit && !canContinueExam.value) {
-    toast.add({
-      title: "Camera Required",
-      description: "Please enable camera before continuing the examination.",
-      color: "error",
-    });
-    return;
-  }
   const payload = multipleChoiceData.value;
   if (!payload) return;
 
@@ -828,7 +531,6 @@ async function submitAnswers(isAutoSubmit = false) {
     hasSubmittedAnswers.value = true;
     clearCountdown();
     clearPostTimeInterval();
-    clearRandomSnapshotTimeouts();
     examinationMultipleChoiceResponse.value = null;
     examinationMultipleChoiceMeta.value = null;
     requestMeta.value = null;
@@ -875,7 +577,6 @@ async function submitAnswers(isAutoSubmit = false) {
 
 function handleManualSubmit() {
   if (
-    !canContinueExam.value ||
     !isAllQuestionsAnswered.value ||
     isSubmittingAnswers.value ||
     hasSubmittedAnswers.value
@@ -976,7 +677,6 @@ async function loadMultipleChoiceData() {
 
     startCountdown(getCountdownMinutes(payload));
     startPostTimeInterval(payload);
-    scheduleRandomSnapshots(payload);
     if (isTimeUp.value) {
       void submitAnswers(true);
     }
@@ -990,16 +690,7 @@ async function loadMultipleChoiceData() {
   }
 }
 
-watch(cameraVideoRef, async (videoEl) => {
-  if (!videoEl || !cameraStream.value) return;
-  videoEl.srcObject = cameraStream.value;
-  await videoEl.play().catch(() => null);
-});
-
-onMounted(async () => {
-  await loadMultipleChoiceData();
-  await startCamera();
-});
+onMounted(loadMultipleChoiceData);
 watch(
   multipleChoiceGroups,
   (groups) => {
@@ -1025,8 +716,6 @@ watch(isTimeUp, (value) => {
 onBeforeUnmount(() => {
   clearCountdown();
   clearPostTimeInterval();
-  clearRandomSnapshotTimeouts();
-  stopCameraStream();
 });
 </script>
 
@@ -1103,84 +792,22 @@ onBeforeUnmount(() => {
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-                <div class="flex justify-center lg:justify-start">
-                  <div
-                    class="px-8 py-4 rounded-xl border text-3xl font-bold tracking-wide text-center min-w-[260px] p-[30px]"
-                    :class="
-                      isTimeUp || isLessThanFiveMinutes
-                        ? 'border-error/40 bg-error/10 text-error'
-                        : isLessThanTenMinutes
-                          ? 'border-orange-400/40 bg-orange-400/10 text-orange-600'
-                          : 'border-primary/30 bg-primary/10 text-primary'
-                    "
-                  >
-                    Time Left: {{ countdownText }}
-                  </div>
-                </div>
-
-                <div class="rounded-xl border border-default p-3 bg-muted/20">
-                  <div class="flex items-center justify-between mb-2">
-                    <p class="text-sm font-medium text-highlighted">
-                      Camera Monitoring
-                    </p>
-                    <UBadge
-                      :color="isCameraReady ? 'success' : 'error'"
-                      :label="isCameraReady ? 'Active' : 'Inactive'"
-                    />
-                  </div>
-
-                  <video
-                    ref="cameraVideoRef"
-                    autoplay
-                    muted
-                    playsinline
-                    class="w-full h-100 rounded-lg bg-black object-cover"
-                  />
-
-                  <p v-if="cameraError" class="text-xs text-error mt-2">
-                    {{ cameraError }}
-                  </p>
-                  <p v-else-if="isCameraObstructed" class="text-xs text-warning mt-2">
-                    Camera looks obstructed (too dark/covered). Please adjust camera.
-                  </p>
-                  <p
-                    v-else-if="isCameraInitializing"
-                    class="text-xs text-muted mt-2"
-                  >
-                    Initializing camera...
-                  </p>
-
-                  <div class="mt-2 flex justify-end">
-                    <UButton
-                      label="Retry Camera"
-                      size="xs"
-                      color="neutral"
-                      variant="outline"
-                      icon="i-lucide-camera"
-                      :loading="isCameraInitializing"
-                      @click="startCamera"
-                    />
-                  </div>
+              <div class="flex justify-center">
+                <div
+                  class="px-8 py-4 rounded-xl border text-3xl font-bold tracking-wide text-center min-w-[260px] p-[30px]"
+                  :class="
+                    isTimeUp || isLessThanFiveMinutes
+                      ? 'border-error/40 bg-error/10 text-error'
+                      : isLessThanTenMinutes
+                        ? 'border-orange-400/40 bg-orange-400/10 text-orange-600'
+                        : 'border-primary/30 bg-primary/10 text-primary'
+                  "
+                >
+                  Time Left: {{ countdownText }}
                 </div>
               </div>
             </div>
           </UCard>
-
-          <div
-            v-if="!canContinueExam"
-            class="rounded-lg border border-error/30 bg-error/10 p-3 text-sm text-error"
-          >
-            Camera is required to continue examination. Please enable camera
-            access.
-          </div>
-
-          <div
-            v-if="isCameraReady && isCameraObstructed"
-            class="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
-          >
-            Camera warning: view appears obstructed. Please uncover camera lens.
-          </div>
 
           <div
             v-if="isTimeUp"
@@ -1196,7 +823,6 @@ onBeforeUnmount(() => {
               icon="i-lucide-send"
               :loading="isSubmittingAnswers"
               :disabled="
-                !canContinueExam ||
                 isSubmittingAnswers ||
                 hasSubmittedAnswers ||
                 !isAllQuestionsAnswered
@@ -1262,11 +888,7 @@ onBeforeUnmount(() => {
 
                 <div
                   v-if="item.multipleChoice?.id"
-                  :class="
-                    isTimeUp || !canContinueExam
-                      ? 'pointer-events-none opacity-70'
-                      : ''
-                  "
+                  :class="isTimeUp ? 'pointer-events-none opacity-70' : ''"
                   class="space-y-2"
                 >
                   <label
@@ -1307,6 +929,7 @@ onBeforeUnmount(() => {
       </div>
     </template>
   </UDashboardPanel>
+
 </template>
 
 <style scoped>

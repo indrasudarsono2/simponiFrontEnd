@@ -1,202 +1,633 @@
-[
-  {
-    "id": "1",
-    "question": "Which is the adjacent unit of Upper Natuna ACC on Natuna vertically?",
-    "a": "Matak CTR",
-    "b": "Tanjung Pinang North TMA",
-    "c": "Natuna CTR",
-    "d": "Tanjung Pinang South TMA",
-    "image": "",
-    "key": "B"
+{
+  "multipleChoice": [
+    {
+      "id": 51,
+      "quantity": 4,
+      "group": "AERODROME LAYOUT; PHYSICAL CHARACTERISTICS AND VISUAL AIDS",
+      "multipleChoice": [
+        {
+          "multipleChoice": {
+            "id": 7,
+            "branchUnitId": 17,
+            "question": "<p>What is the primary purpose of the Minimum Sector Altitude (MSA) in the Bali TMA?</p>",
+            "a": "To define the maximum holding speed.",
+            "b": "To provide at least 1,000ft of obstacle clearance within a 25nm radius.",
+            "c": "To dictate the transition level for all arriving aircraft.",
+            "d": "To restrict VFR aircraft from entering the CTR.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 8,
+            "branchUnitId": 17,
+            "question": "<p>Which mountain peak poses the most significant terrain clearance challenge for the northern sector of the Bali TMA?</p>",
+            "a": "Mount Batur",
+            "b": "Mount Agung",
+            "c": "Mount Abang",
+            "d": "Mount Batukaru",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 9,
+            "branchUnitId": 17,
+            "question": "<p>The transition altitude at I Gusti Ngurah Rai International Airport <strong>(WADD) </strong>is set at:</p>",
+            "a": "11,000 ft",
+            "b": "13,000 ft",
+            "c": "10,000 ft",
+            "d": "8,000 ft",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 10,
+            "branchUnitId": 17,
+            "question": "<p>When an aircraft is being vectored, the controller must ensure terrain clearance until:</p>",
+            "a": "The aircraft reaches the destination.",
+            "b": "The aircraft is established on a pilot-interpreted signal (like ILS) or a cleared approach.",
+            "c": "The pilot reports \"field in sight.\"",
+            "d": "The aircraft is within 5nm of the runway.",
+            "image": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "quantity": 5,
+      "group": "AIRSPACE STRUCTURE",
+      "multipleChoice": [
+        {
+          "multipleChoice": {
+            "id": 11,
+            "branchUnitId": 17,
+            "question": "<p>Which document contains the detailed VFR reporting points for the Bali Control Zone?</p>",
+            "a": "AIP Indonesia",
+            "b": "International Notams",
+            "c": "ICAO Doc 4444",
+            "d": "Airline Operations Manual",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 12,
+            "branchUnitId": 17,
+            "question": "<p>The Bali TMA lateral boundaries are primarily designed to:</p>",
+            "a": "Include all islands in the Nusa Tenggara chain.",
+            "b": "Protect IFR arrival/departure paths and facilitate handovers with Makassar ACC.",
+            "c": "Mandate that all aircraft fly below 5,000 ft.",
+            "d": "Separate military aircraft from civil aircraft.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 13,
+            "branchUnitId": 17,
+            "question": "<p>Which adjacent unit coordinates directly with Bali Approach for high-level traffic?</p>",
+            "a": "Jakarta ACC",
+            "b": "Ujung Pandang (Makassar) ACC",
+            "c": "Darwin Center",
+            "d": "Singapore Approach",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 14,
+            "branchUnitId": 17,
+            "question": "<p>If an aircraft is flying via a Standard Terminal Arrival Route (STAR), the controller should:</p>",
+            "a": "Always vector them off the STAR immediately.",
+            "b": "Maintain the aircraft on the profile unless tactical intervention is required.",
+            "c": "Let the pilot choose their own waypoints.",
+            "d": "Cancel the STAR once the aircraft descends below 15,000 ft.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 15,
+            "branchUnitId": 17,
+            "question": "<p>Why are \"Prohibited\" or \"Restricted\" areas strictly monitored in the Bali TMA?</p>",
+            "a": "To save fuel for the airlines.",
+            "b": "To protect ground installations, VIP areas, or sensitive airspace.",
+            "c": "To make the radar screen look organized.",
+            "d": "To limit the speed of incoming jets.",
+            "image": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "quantity": 5,
+      "group": "APPLICABLE RULES, PROCEDURES AND SOURCE OF INFORMATION",
+      "multipleChoice": [
+        {
+          "multipleChoice": {
+            "id": 25,
+            "branchUnitId": 17,
+            "question": "<p>When vectoring, a controller's \"Minimum Vectoring Altitude\" (MVA) is:</p>",
+            "a": "Higher than the MSA.",
+            "b": "The lowest altitude a controller can assign while ensuring terrain clearance.",
+            "c": "Always 2,000 ft.",
+            "d": "Determined by the pilot.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 26,
+            "branchUnitId": 17,
+            "question": "<p>Vertical separation for IFR aircraft below FL290 is usually:</p>",
+            "a": "500 ft",
+            "b": "1,000 ft",
+            "c": "2,000 ft",
+            "d": "3,000 ft",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 27,
+            "branchUnitId": 17,
+            "question": "<p>Coordination for an aircraft's descent from Cruise to TMA entry is done by:</p>",
+            "a": "Bali Tower.",
+            "b": "Makassar ACC and Bali Approach.",
+            "c": "The pilot and the airline dispatcher.",
+            "d": "The Ground controller.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 28,
+            "branchUnitId": 17,
+            "question": "<p>A \"Continuous Descent Operation\" (CDO) is a technique that minimizes:</p>",
+            "a": "Aircraft speed.",
+            "b": "Level flight segments, reducing noise and fuel burn.",
+            "c": "Radar visibility.",
+            "d": "Pilot workload but increases fuel burn.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 29,
+            "branchUnitId": 17,
+            "question": "<p>If the \"BALI\" holding pattern is at capacity, the Approach controller must:</p>",
+            "a": "Force planes to land on the grass.",
+            "b": "Coordinate with ACC for \"linear holding\" or speed control further out.",
+            "c": "Turn off the radio.",
+            "d": "Tell pilots to orbit over the volcano.",
+            "image": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "quantity": 4,
+      "group": "AIR NAVIGATION FACILITIES",
+      "multipleChoice": [
+        {
+          "multipleChoice": {
+            "id": 16,
+            "branchUnitId": 17,
+            "question": "<p>In an emergency descent situation, the 25nm MSA circle is used as:</p>",
+            "a": "A recommendation for the best landing spot.",
+            "b": "A safety buffer to ensure the aircraft does not hit terrain while descending blindly.",
+            "c": "The maximum range for the aircraft's transponder.",
+            "d": "The location where all aircraft must dump fuel.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 17,
+            "branchUnitId": 17,
+            "question": "<p>What is the standard horizontal radar separation minima used within the Bali TMA?</p>",
+            "a": "3 NM",
+            "b": "5 NM",
+            "c": "10 NM",
+            "d": "2 NM",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 18,
+            "branchUnitId": 17,
+            "question": "<p>When a \"Heavy\" aircraft (e.g., B777) precedes a \"Medium\" aircraft (e.g., A320), the wake turbulence separation on final is:</p>",
+            "a": "3 NM",
+            "b": "5 NM",
+            "c": "8 NM",
+            "d": "10 NM",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 19,
+            "branchUnitId": 17,
+            "question": "<p>A \"Super\" wake turbulence category is specifically applied to which aircraft at WADD?</p>",
+            "a": "Boeing 747-8",
+            "b": "Airbus A380-800",
+            "c": "Antonov An-124",
+            "d": "Boeing 777-9",
+            "image": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "quantity": 5,
+      "group": "AIR TRAFFIC CONTROL EQUIPMENT AND ITS USE",
+      "multipleChoice": [
+        {
+          "multipleChoice": {
+            "id": 20,
+            "branchUnitId": 17,
+            "question": "<p>When can \"Reduced Runway Separation\" be applied by a controller?</p>",
+            "a": "Only at night.",
+            "b": "When the runway is wet.",
+            "c": "When the preceding aircraft has passed the threshold or started its takeoff roll.",
+            "d": "Never in the Bali TMA.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 21,
+            "branchUnitId": 17,
+            "question": "<p>RVSM (Reduced Vertical Separation Minimum) applies between which flight levels?</p>",
+            "a": "FL100 and FL200",
+            "b": "FL290 and FL410 inclusive",
+            "c": "FL130 and FL250",
+            "d": "FL410 and FL600",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 22,
+            "branchUnitId": 17,
+            "question": "<p>If two aircraft are departing on the same SID, what is the standard time separation if radar is not used?</p>",
+            "a": "1 minute",
+            "b": "2 minutes",
+            "c": "5 minutes",
+            "d": "10 minutes",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 23,
+            "branchUnitId": 17,
+            "question": "<p>\"Essential Traffic Information\" is provided to pilots to:</p>",
+            "a": "Promote a specific airline.",
+            "b": "Inform them of other aircraft that may constitute a collision hazard.",
+            "c": "Tell them about the weather in Jakarta.",
+            "d": "Give them the gate number for arrival.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 24,
+            "branchUnitId": 17,
+            "question": "<p>What is the standard maximum speed for aircraft below 10,000ft in Class C/D airspace?</p><p></p>",
+            "a": "210 KIAS",
+            "b": "250 KIAS",
+            "c": "280 KIAS",
+            "d": "300 KIAS",
+            "image": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "quantity": 6,
+      "group": "TERRAIN AND PROMINENT LANDMARKS",
+      "multipleChoice": [
+        {
+          "multipleChoice": {
+            "id": 42,
+            "branchUnitId": 17,
+            "question": "<p>A \"MAYDAY FUEL\" declaration requires the controller to:</p>",
+            "a": "Tell the aircraft to hold for 20 minutes.",
+            "b": "Provide immediate priority to the nearest suitable airport.",
+            "c": "Check if the pilot has a credit card for fuel.",
+            "d": "Ask the aircraft to fly at a higher altitude.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 43,
+            "branchUnitId": 17,
+            "question": "<p>In the event of a \"Bird Strike\" on departure, the controller should:</p>",
+            "a": "Ask the pilot to bring the bird to the office.",
+            "b": "Coordinate an immediate return or standby for emergency instructions.",
+            "c": "Clear a second aircraft to take off immediately.",
+            "d": "Do nothing unless the engine stops.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 44,
+            "branchUnitId": 17,
+            "question": "<p>An \"Emergency Descent\" by a jet aircraft usually involves:</p>",
+            "a": "A slow, gradual climb.",
+            "b": "A rapid descent to 10,000 ft or the lowest safe altitude.",
+            "c": "Turning off the transponder.",
+            "d": "Flying to a different country.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 45,
+            "branchUnitId": 17,
+            "question": "<p>If an aircraft \"strays\" into a Prohibited Area, the controller must:</p>",
+            "a": "Warn the aircraft and give instructions to clear the area immediately.",
+            "b": "Delete the aircraft from the radar.",
+            "c": "Call the pilot's family.",
+            "d": "Wait for the military to take over.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 46,
+            "branchUnitId": 17,
+            "question": "<p>If the main radar system fails, the controller must transition to:</p>",
+            "a": "Procedural (non-radar) separation.",
+            "b": "Visual separation by looking out the window.",
+            "c": "Asking pilots to use their cell phones.",
+            "d": "Closing the entire FIR.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 47,
+            "branchUnitId": 17,
+            "question": "<p>During the Northwest Monsoon, the prevailing wind at WADD usually favors:</p>",
+            "a": "Runway 09",
+            "b": "Runway 27",
+            "c": "Runway 13",
+            "d": "Runway 31",
+            "image": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 57,
+      "quantity": 6,
+      "group": "CHARACTERISTICS OF AIR TRAFFIC",
+      "multipleChoice": [
+        {
+          "multipleChoice": {
+            "id": 30,
+            "branchUnitId": 17,
+            "question": "<p>An \"Expected Approach Time\" (EAT) must be issued to an aircraft if the delay is expected to exceed:</p>",
+            "a": "5 minutes",
+            "b": "10 minutes",
+            "c": "30 minutes",
+            "d": "60 minutes",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 31,
+            "branchUnitId": 17,
+            "question": "<p>Granting a \"Direct To\" (Short-cut) request in the Bali TMA requires the controller to first check:</p>",
+            "a": "The aircraft's fuel price.",
+            "b": "The Minimum Vectoring Altitude (MVA) for that specific area.",
+            "c": "The passenger count.",
+            "d": "If the pilot is friendly.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 32,
+            "branchUnitId": 17,
+            "question": "<p>The \"Point Merge\" system (if used) helps controllers by:</p>",
+            "a": "Eliminating the need for a runway.",
+            "b": "Providing a structured way to sequence arrivals using arcs.",
+            "c": "Forcing all planes to fly at the same altitude.",
+            "d": "Making the pilots navigate using only stars.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 33,
+            "branchUnitId": 17,
+            "question": "<p>The primary objective of an Approach Controller is:</p>",
+            "a": "To sell duty-free items.",
+            "b": "To achieve a safe, orderly, and expeditious flow of air traffic.",
+            "c": "To guide aircraft to the parking gate.",
+            "d": "To manage the airport's lighting system.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 34,
+            "branchUnitId": 17,
+            "question": "<p>Following a \"Missed Approach,\" the controller's first priority is:</p>",
+            "a": "To ask why the pilot missed.",
+            "b": "To ensure the aircraft is climbing and separated from other traffic.",
+            "c": "To fill out an incident report.",
+            "d": "To cancel the flight plan.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 35,
+            "branchUnitId": 17,
+            "question": "<p>At what point does the Approach controller typically hand off an arriving aircraft to the Tower?</p>",
+            "a": "At the Top of Descent.",
+            "b": "When the aircraft is established on final and at a specified distance/fix.",
+            "c": "After the aircraft has landed.",
+            "d": "When the pilot sees the beach.",
+            "image": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "quantity": 4,
+      "group": "WEATHER PHENOMENA",
+      "multipleChoice": [
+        {
+          "multipleChoice": {
+            "id": 51,
+            "branchUnitId": 17,
+            "question": "<p>What information is <em>not</em> typically found on the ATIS (Automatic Terminal Information Service)?</p>",
+            "a": "Current weather (METAR).",
+            "b": "Runway in use.",
+            "c": "Captain's name and age.",
+            "d": "Transition level.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 50,
+            "branchUnitId": 17,
+            "question": "<p>To \"Identify\" an aircraft using the \"Squawk Ident\" method, the controller looks for:</p>",
+            "a": "The aircraft to turn 90 degrees.",
+            "b": "The data block or target to flash or change appearance on the radar.",
+            "c": "The pilot to wave their wings.",
+            "d": "The altitude to change.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 52,
+            "branchUnitId": 17,
+            "question": "<p>APA ARtimya Multiple CHoice Question</p>",
+            "a": "A",
+            "b": "B",
+            "c": "C",
+            "d": "D",
+            "image": "/uploads/multipleChoice/multipleChoice-1776224682358-499192163.jpg"
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 48,
+            "branchUnitId": 17,
+            "question": "<p>Why must the \"ILS Critical Area\" be clear when an aircraft is on auto-land?</p>",
+            "a": "To keep the runway clean.",
+            "b": "To prevent interference with the localizer and glide slope signals.",
+            "c": "To allow ground vehicles to race.",
+            "d": "To save electricity.",
+            "image": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 59,
+      "quantity": 6,
+      "group": "EMERGENCY AND SEARCH AND RESCUE PLANS",
+      "multipleChoice": [
+        {
+          "multipleChoice": {
+            "id": 36,
+            "branchUnitId": 17,
+            "question": "<p>Standard hand-off sequence for a departing aircraft at WADD is:</p>",
+            "a": "GND -> TWR -> APP -> ACC",
+            "b": "TWR -> GND -> ACC -> APP",
+            "c": "APP -> TWR -> GND -> ACC",
+            "d": "ACC -> APP -> TWR -> GND",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 37,
+            "branchUnitId": 17,
+            "question": "<p>Which transponder code indicates a complete \"Loss of Communication\"?</p>",
+            "a": "7500",
+            "b": "7600",
+            "c": "7700",
+            "d": "2000",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 38,
+            "branchUnitId": 17,
+            "question": "<p>Which transponder code is used for an \"Unlawful Interference\" (Hijack)?</p>",
+            "a": "7500",
+            "b": "7600",
+            "c": "7700",
+            "d": "7000",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 39,
+            "branchUnitId": 17,
+            "question": "<p>If an aircraft declares a \"MAYDAY,\" the controller should:</p>",
+            "a": "Tell the pilot to wait.",
+            "b": "Give that aircraft priority over all other traffic.",
+            "c": "Ask them to switch to a different frequency immediately.",
+            "d": "Inform the airline that the flight is cancelled.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 40,
+            "branchUnitId": 17,
+            "question": "<p>A \"Safety Alert\" is issued by ATC when:</p>",
+            "a": "The weather is sunny.",
+            "b": "An aircraft is in unsafe proximity to terrain, obstacles, or other aircraft.",
+            "c": "The pilot's license is about to expire.",
+            "d": "A flight is arriving early.",
+            "image": null
+          }
+        },
+        {
+          "multipleChoice": {
+            "id": 41,
+            "branchUnitId": 17,
+            "question": "<p>If volcanic ash from Mt. Agung is reported in the TMA, the controller should:</p>",
+            "a": "Direct all aircraft into the ash cloud to test it.",
+            "b": "Provide the latest reports and assist pilots in avoiding the affected areas.",
+            "c": "Ignore it unless a pilot complains.",
+            "d": "Close the tower and go home.",
+            "image": null
+          }
+        }
+      ]
+    }
+  ],
+  "eventQuestion": {
+    "id": 5,
+    "sectorId": 8,
+    "eventId": 10,
+    "kindOfQuestionId": 2,
+    "quantity": 45,
+    "persentage": 0.6,
+    "minutes": 90,
+    "createdAt": "2026-04-08T06:58:20.464Z",
+    "updatedAt": "2026-04-08T06:58:20.464Z",
+    "deletedAt": null
   },
-  {
-    "id": "2",
-    "question": "Which is the adjacent unit of Upper Tanjungpinang horizontally to the east?",
-    "a": "Singapore Sector 5",
-    "b": "Singapore Sector 4",
-    "c": "Kuching ACC Sector 1",
-    "d": "A and C correct",
-    "image": "",
-    "key": "C"
+  "appRatingId": 43,
+  "monitorTime": {
+    "id": 5,
+    "appRatingId": 43,
+    "eventQuestionId": 5,
+    "time": 10,
+    "createdAt": "2026-04-23T05:51:58.658Z",
+    "updatedAt": "2026-04-23T05:56:58.663Z",
+    "deletedAt": null
   },
-  {
-    "id": "3",
-    "question": "Which adjacent unit is not the adjacent unit of Upper Tanjungpinang horizontally to the west?",
-    "a": "Singapore Sector 1",
-    "b": "Singapore Sector 6",
-    "c": "Singapore Sector 4",
-    "d": "Kuching ACC Sector 1",
-    "image": "",
-    "key": "D"
-  },
-  {
-    "id": "4",
-    "question": "Which is the adjacent unit of Upper Tanjungpinang horizontally to the south?",
-    "a": "Ujung Pandang",
-    "b": "Upper Pangkalpinang",
-    "c": "Singapore Sector 4",
-    "d": "A and B correct",
-    "image": "",
-    "key": "D"
-  },
-  {
-    "id": "5",
-    "question": "Which is the adjacent unit of Upper Tanjungpinang horizontally to the north?",
-    "a": "Singapore Sector 4",
-    "b": "Kuching ACC Sector 1",
-    "c": "Upper Natuna",
-    "d": "Singapore Sector 6",
-    "image": "",
-    "key": "C"
-  },
-  {
-    "id": "6",
-    "question": "Which is the adjacent unit of Upper Tanjungpinang vertically?",
-    "a": "Tanjung Pinang North TMA",
-    "b": "Tanjung Pinang South TMA",
-    "c": "Kuching ACC Sector 1",
-    "d": "A and B correct",
-    "image": "",
-    "key": "D"
-  },
-  {
-    "id": "7",
-    "question": "Which ATS unit that has responsibility providing ATS for aircraft on route L644 segment LIGVU - OMLIV at FL130?",
-    "a": "Tanjung Pinang South TMA",
-    "b": "Jakarta ACC",
-    "c": "Jakarta FIC Jakarta Sector",
-    "d": "Tanjung Pinang North TMA",
-    "image": "",
-    "key": "D"
-  },
-  {
-    "id": "8",
-    "question": "Which one of this route published as unidirectional route?",
-    "a": "M646",
-    "b": "M767",
-    "c": "G580",
-    "d": "M761",
-    "image": "",
-    "key": "B"
-  },
-  {
-    "id": "9",
-    "question": "Which one of this route are not published as unidirectional route?",
-    "a": "L625",
-    "b": "L644",
-    "c": "N875",
-    "d": "N884",
-    "image": "",
-    "key": "C"
-  },
-  {
-    "id": "10",
-    "question": "Which one of these TCP are between Jakarta ACC and Singapore ACC on route L625?",
-    "a": "NIXEB and RILRI",
-    "b": "UXED and GULGU",
-    "c": "UXED and GUTUP",
-    "d": "VERIN and GULGU",
-    "image": "",
-    "key": "C"
-  },
-  {
-    "id": "11",
-    "question": "Which one of these TCP are between Jakarta ACC and Singapore ACC on route M758?",
-    "a": "ELGOR and GUTUP",
-    "b": "ELGOR and GULGU",
-    "c": "UPVUN and GULGU",
-    "d": "UPVUN and GUTUP",
-    "image": "",
-    "key": "B"
-  },
-  {
-    "id": "12",
-    "question": "Which one of these TCP are between Jakarta ACC and Singapore ACC on route M767?",
-    "a": "UKLIS and VENUN",
-    "b": "OSERU and ATETI",
-    "c": "UKLIS and UXEDA",
-    "d": "UKLIS and NIXEB",
-    "image": "",
-    "key": "D"
-  },
-  {
-    "id": "13",
-    "question": "Which one of this TCP is between Jakarta ACC and Singapore ACC on route M646?",
-    "a": "TOMAN",
-    "b": "KAMIN",
-    "c": "VENUN",
-    "d": "B and C correct",
-    "image": "",
-    "key": "C"
-  },
-  {
-    "id": "14",
-    "question": "Which one of this TCP is between Jakarta ACC and Singapore ACC on route G580?",
-    "a": "TOMAN",
-    "b": "DODSO",
-    "c": "ATETI",
-    "d": "AGOBA",
-    "image": "",
-    "key": "B"
-  },
-  {
-    "id": "15",
-    "question": "Which one of these TCP are between Jakarta ACC and Kuching ACC?",
-    "a": "ATETI, KAMIN, AGOBA",
-    "b": "ATETI, OSERU, AGOBA",
-    "c": "ARUPA, ATETI, AGOBA",
-    "d": "KAMIN, SABIP, AGOBA",
-    "image": "",
-    "key": "A"
-  },
-  {
-    "id": "16",
-    "question": "Waypoint OTLAL and INVUB are the TCI between Upper Tanjungpinang with...",
-    "a": "Singapore Sector 4",
-    "b": "Kuching ACC Sector 1",
-    "c": "Singapore Sector 1",
-    "d": "Singapore Sector 2",
-    "image": "",
-    "key": "A"
-  },
-  {
-    "id": "17",
-    "question": "Which one of this TCI between Jakarta ACC and Singapore ACC on route G579 at FL400?",
-    "a": "ANITO",
-    "b": "OLNUB",
-    "c": "PARDI",
-    "d": "ENVUM",
-    "image": "",
-    "key": "C"
-  },
-  {
-    "id": "18",
-    "question": "Which one of this TCI is between Jakarta ACC and Singapore ACC at route B338 at FL390?",
-    "a": "OLNUB",
-    "b": "PARDI",
-    "c": "ENVUM",
-    "d": "ANITO",
-    "image": "",
-    "key": "D"
-  },
-  {
-    "id": "19",
-    "question": "TCP between Jakarta ACC and Singapore ACC on route G579 at FL400 is ......",
-    "a": "ANITO",
-    "b": "OLNUB",
-    "c": "PARDI",
-    "d": "ENVUM",
-    "image": "",
-    "key": "B"
-  },
-  {
-    "id": "20",
-    "question": "TCP between Jakarta ACC and Singapore ACC on route B338 at FL390 is ......",
-    "a": "OLNUB",
-    "b": "PARDI",
-    "c": "ENVUM",
-    "d": "ANITO",
-    "image": "",
-    "key": "C"
-  }
-]
+  "eventUserId": 16,
+  "groupMemberId": 54,
+  "eventId": 10,
+  "randomNumbers": [24, 58, 59]
+}

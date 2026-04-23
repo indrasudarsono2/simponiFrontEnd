@@ -10,6 +10,7 @@ interface QuestionGroup {
   id: number;
   kindOfQuestionId: number;
   subBranchUnitRatingId: number;
+  mandatoryRatingId?: number | null;
   group: string;
   quantity: number;
   createdAt?: string;
@@ -59,6 +60,18 @@ interface SectorItem {
   subBranchUnitRatings: SubBranchUnitRating[];
 }
 
+interface MandatoryRatingItem {
+  id: number;
+  rating: {
+    id: number;
+    rating: string;
+  };
+  mandatoryItem: {
+    id: number;
+    mandatory: string;
+  };
+}
+
 const toast = useToast();
 const table = useTemplateRef("table");
 
@@ -88,6 +101,7 @@ const targetQuestions = ref(45);
 interface ApiResponse {
   sector: SectorItem[];
   questionGroups: QuestionGroup[];
+  mandatoryRating?: MandatoryRatingItem[];
 }
 // Fetch question groups data
 const { data, status, refresh } = await useFetch<ApiResponse>(
@@ -124,6 +138,14 @@ const availableRatings = computed(() => {
     });
   });
   return Array.from(ratingsMap.values());
+});
+
+const mandatoryRatings = computed<MandatoryRatingItem[]>(() => {
+  return data.value?.mandatoryRating || [];
+});
+
+const questionGroups = computed<QuestionGroup[]>(() => {
+  return data.value?.questionGroups || [];
 });
 
 // Context derived from API response
@@ -420,7 +442,7 @@ function handleModalClose() {
 <template>
   <UDashboardPanel id="essay-category">
     <template #header>
-      <UDashboardNavbar title="Essay Category">
+      <UDashboardNavbar title="Multiple Choice Category">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -428,6 +450,8 @@ function handleModalClose() {
         <template #right>
           <MultipleChoiceCategoryAddModal
             :sectors="availableSectors"
+            :mandatory-ratings="mandatoryRatings"
+            :question-groups="questionGroups"
             @question-group-added="handleQuestionGroupAdded"
           />
         </template>

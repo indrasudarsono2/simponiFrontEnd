@@ -13,6 +13,11 @@ interface KindOfQuestion {
   id: number;
   question: string;
 }
+
+interface EventQuestionAssignment {
+  eventId: number;
+  kindOfQuestionId: number;
+}
 const schema = z.object({
   eventId: z.number().min(1, "Event is required"),
   kindOfQuestionId: z.number().min(1, "Kind of Question is required"),
@@ -27,6 +32,7 @@ const schema = z.object({
 const props = defineProps<{
   events: Event[];
   kindOfQuestions: KindOfQuestion[];
+  eventQuestions: EventQuestionAssignment[];
 }>();
 
 const open = ref(false);
@@ -41,6 +47,25 @@ const state = reactive<Partial<Schema>>({
   minutes: undefined,
 });
 
+const availableKindOfQuestions = computed(() => {
+  if (!state.eventId) return [];
+
+  const assignedKindIds = new Set(
+    props.eventQuestions
+      .filter((item) => item.eventId === state.eventId)
+      .map((item) => item.kindOfQuestionId),
+  );
+
+  return props.kindOfQuestions.filter((kind) => !assignedKindIds.has(kind.id));
+});
+
+watch(
+  () => state.eventId,
+  () => {
+    state.kindOfQuestionId = undefined;
+  },
+);
+
 const toast = useToast();
 const loading = ref(false);
 
@@ -50,9 +75,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     const selectedEvent = props.events?.find(
       (e) => e.id === event.data.eventId,
-    );
-    const selectedKind = props.kindOfQuestions?.find(
-      (k) => k.id === event.data.kindOfQuestionId,
     );
 
     // Call API to create event question
@@ -137,14 +159,24 @@ const emit = defineEmits<{
           <USelect
             v-model="state.kindOfQuestionId"
             :items="
-              props.kindOfQuestions?.map((k) => ({
+              availableKindOfQuestions?.map((k) => ({
                 label: k.question,
                 value: k.id,
               })) || []
             "
             placeholder="Select kind of question"
             class="w-full"
+            :disabled="!state.eventId || availableKindOfQuestions.length === 0"
           />
+          <p v-if="!state.eventId" class="text-xs text-muted mt-1">
+            Please select an event first
+          </p>
+          <p
+            v-else-if="availableKindOfQuestions.length === 0"
+            class="text-xs text-warning mt-1"
+          >
+            All kinds of question are already set for this event.
+          </p>
         </UFormField>
 
         <UFormField label="Quantity" name="quantity" required>
@@ -191,6 +223,7 @@ const emit = defineEmits<{
             variant="solid"
             type="submit"
             :loading="loading"
+            :disabled="!state.eventId || availableKindOfQuestions.length === 0"
           />
         </div>
       </UForm>

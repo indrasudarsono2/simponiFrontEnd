@@ -33,6 +33,11 @@ interface EventQuestion {
   minutes: number;
 }
 
+interface EventQuestionAssignment {
+  eventId: number;
+  kindOfQuestionId: number;
+}
+
 interface Event {
   id: number;
   event: string;
@@ -142,6 +147,13 @@ const eventQuestionsData = computed((): EventQuestion[] => {
     quantity: item.quantity ?? 0,
     persentage: item.persentage ?? 0,
     minutes: item.minutes ?? 0,
+  }));
+});
+
+const eventQuestionAssignments = computed<EventQuestionAssignment[]>(() => {
+  return eventQuestionsData.value.map((item) => ({
+    eventId: item.eventId,
+    kindOfQuestionId: item.kindOfQuestionId,
   }));
 });
 
@@ -460,6 +472,7 @@ const columns = computed((): TableColumn<EventQuestion>[] => [
         <EventQuestionAddModal
           :events="events"
           :kind-of-questions="kindOfQuestions"
+          :event-questions="eventQuestionAssignments"
           @event-question-added="handleEventQuestionAdded"
         />
         <UButton

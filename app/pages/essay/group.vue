@@ -77,8 +77,8 @@ interface EssayQuestionGroupDetail {
 
 interface EssayQuestionGroup {
   essayId: number;
-  sector: EssayQuestionGroupSector;
-  questionGroup: EssayQuestionGroupDetail;
+  sector: EssayQuestionGroupSector | null;
+  questionGroup: EssayQuestionGroupDetail | null;
 }
 
 interface EssayGroupResponse {
@@ -466,17 +466,23 @@ const uniqueSectors = computed(() => {
 
 function getGroupsForEssaySector(essayId: number, sectorName: string): string {
   const matches = resolvedEssayQuestionGroups.value.filter(
-    (eqg) => eqg.essayId === essayId && eqg.sector.sector === sectorName,
+    (eqg) => eqg.essayId === essayId && eqg.sector?.sector === sectorName,
   );
   if (!matches || matches.length === 0) return "-";
 
   const listItems = matches
-    .map(
-      (m) =>
-        `<li>${m.questionGroup.group} (${m.questionGroup.subBranchUnitRating.rating.rating})</li>`,
-    )
+    .map((m) => {
+      const groupName = m.questionGroup?.group;
+      const ratingName = m.questionGroup?.subBranchUnitRating?.rating?.rating;
+      if (!groupName) return null;
+
+      const ratingText = ratingName ? ` (${ratingName})` : "";
+      return `<li>${groupName}${ratingText}</li>`;
+    })
+    .filter((item): item is string => item !== null)
     .join("");
 
+  if (!listItems) return "-";
   return `<ul class="list-disc list-inside space-y-0.5">${listItems}</ul>`;
 }
 

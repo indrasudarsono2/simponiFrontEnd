@@ -55,8 +55,8 @@ interface EssayQuestionGroupDetail {
 
 interface EssayQuestionGroup {
   essayId: number;
-  sector: EssayQuestionGroupSector;
-  questionGroup: EssayQuestionGroupDetail;
+  sector: EssayQuestionGroupSector | null;
+  questionGroup: EssayQuestionGroupDetail | null;
 }
 
 interface SectorRatingGroupOption {
@@ -123,8 +123,8 @@ watch(
             // Find matching questionGroup to get the id
             const match = props.questionGroups?.find(
               (qg) =>
-                qg.group === eqg.questionGroup.group &&
-                qg.subBranchUnitRating.sector.sector === eqg.sector.sector,
+                qg.group === eqg.questionGroup?.group &&
+                qg.subBranchUnitRating.sector.sector === eqg.sector?.sector,
             );
             return match?.id;
           })

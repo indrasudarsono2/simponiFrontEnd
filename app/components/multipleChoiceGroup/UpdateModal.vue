@@ -58,8 +58,8 @@ interface MultipleChoiceQuestionGroupDetail {
 
 interface MultipleChoiceQuestionGroup {
   multipleChoiceId: number;
-  sector: MultipleChoiceQuestionGroupSector;
-  questionGroup: MultipleChoiceQuestionGroupDetail;
+  sector: MultipleChoiceQuestionGroupSector | null;
+  questionGroup: MultipleChoiceQuestionGroupDetail | null;
 }
 
 interface SectorRatingGroupOption {
@@ -126,8 +126,8 @@ watch(
             // Find matching questionGroup to get the id
             const match = props.questionGroups?.find(
               (qg) =>
-                qg.group === mcqg.questionGroup.group &&
-                qg.subBranchUnitRating.sector.sector === mcqg.sector.sector,
+                qg.group === mcqg.questionGroup?.group &&
+                qg.subBranchUnitRating.sector.sector === mcqg.sector?.sector,
             );
             return match?.id;
           })

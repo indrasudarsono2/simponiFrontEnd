@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ip from "../../utils/config.json";
 import EssayCorrectionModal from "../../components/performanceCheck/EssayCorrectionModal.vue";
+import EssayCorrectionHistoryModal from "../../components/performanceCheck/EssayCorrectionHistoryModal.vue";
 
 interface FinalScoreItem {
   id?: number;
@@ -23,12 +24,36 @@ interface GroupMemberItem {
     name?: string | null;
   } | null;
   finalScores?: FinalScoreItem[] | null;
+  essayCorrections?: Array<{
+    id?: number;
+    answer?: string | null;
+    score?: number | null;
+    essay?: {
+      id?: number;
+      image?: string | null;
+      question?: string | null;
+      answer?: string | null;
+      value?: number | null;
+    } | null;
+  }> | null;
 }
 
 interface GroupItem {
   id: number;
   group?: string | null;
   groupMembers?: GroupMemberItem[] | null;
+  essayCorrections?: Array<{
+    id?: number;
+    answer?: string | null;
+    score?: number | null;
+    essay?: {
+      id?: number;
+      image?: string | null;
+      question?: string | null;
+      answer?: string | null;
+      value?: number | null;
+    } | null;
+  }> | null;
 }
 
 interface EventItem {
@@ -51,17 +76,46 @@ interface PerformanceCheckResponse {
 interface TableRowItem {
   id: string;
   no: number;
+  eventId: number;
   event: string;
   remarkDocument: string;
   persentage: number | null;
   groupMembers: GroupMemberItem[];
+  groupEssayCorrections: Array<{
+    id?: number;
+    answer?: string | null;
+    score?: number | null;
+    essay?: {
+      id?: number;
+      image?: string | null;
+      question?: string | null;
+      answer?: string | null;
+      value?: number | null;
+    } | null;
+  }>;
 }
 
 const { token } = useAuth();
 const isEssayCorrectionModalOpen = ref(false);
+const isEssayCorrectionHistoryModalOpen = ref(false);
 const selectedMemberName = ref("");
 const selectedMemberFinalScores = ref<FinalScoreItem[]>([]);
 const selectedPersentage = ref<number | null>(null);
+const selectedHistoryEssayCorrections = ref<
+  Array<{
+    id?: number;
+    answer?: string | null;
+    score?: number | null;
+    essay?: {
+      id?: number;
+      image?: string | null;
+      question?: string | null;
+      answer?: string | null;
+      value?: number | null;
+    } | null;
+  }>
+>([]);
+const selectedEventFilter = ref<number | null>(null);
 
 const { data, status, error, refresh } =
   await useFetch<PerformanceCheckResponse>(
@@ -84,6 +138,7 @@ const tableRows = computed<TableRowItem[]>(() => {
         {
           id: `${eventItem.id}-0`,
           no: eventIndex + 1,
+          eventId: Number(eventItem.id || 0),
           event: eventItem.event || "-",
           remarkDocument: eventItem.remarkDoc?.remark || "-",
           persentage: Number.isFinite(
@@ -92,6 +147,7 @@ const tableRows = computed<TableRowItem[]>(() => {
             ? Number(eventItem.eventQuestions?.[0]?.persentage)
             : null,
           groupMembers: [],
+          groupEssayCorrections: [],
         },
       ];
     }
@@ -99,6 +155,7 @@ const tableRows = computed<TableRowItem[]>(() => {
     return groups.map((group, groupIndex) => ({
       id: `${eventItem.id}-${group.id ?? groupIndex}`,
       no: eventIndex + 1,
+      eventId: Number(eventItem.id || 0),
       event: eventItem.event || "-",
       remarkDocument: eventItem.remarkDoc?.remark || "-",
       persentage: Number.isFinite(
@@ -107,12 +164,41 @@ const tableRows = computed<TableRowItem[]>(() => {
         ? Number(eventItem.eventQuestions?.[0]?.persentage)
         : null,
       groupMembers: group.groupMembers || [],
+      groupEssayCorrections: group.essayCorrections || [],
     }));
   });
 });
 
+const eventFilterOptions = computed(() => {
+  const events = data.value?.event || [];
+  return events.map((eventItem) => ({
+    label: eventItem.event || "-",
+    value: Number(eventItem.id || 0),
+  }));
+});
+
+const filteredTableRows = computed(() => {
+  if (!selectedEventFilter.value) return tableRows.value;
+  return tableRows.value.filter(
+    (row) => row.eventId === selectedEventFilter.value,
+  );
+});
+
 function hasFinalScore(member: GroupMemberItem): boolean {
   return (member.finalScores?.length || 0) !== 0;
+}
+
+function getEssayCorrectionsForMember(
+  row: TableRowItem,
+  member: GroupMemberItem,
+) {
+  const memberCorrections = member.essayCorrections || [];
+  if (memberCorrections.length > 0) return memberCorrections;
+  return row.groupEssayCorrections || [];
+}
+
+function hasEssayCorrectionHistory(row: TableRowItem, member: GroupMemberItem) {
+  return getEssayCorrectionsForMember(row, member).length > 0;
 }
 
 function openEssayCorrectionModal(
@@ -125,11 +211,29 @@ function openEssayCorrectionModal(
   isEssayCorrectionModalOpen.value = true;
 }
 
+function openEssayCorrectionHistoryModal(
+  row: TableRowItem,
+  member: GroupMemberItem,
+) {
+  selectedMemberName.value = member.userMember?.name || "-";
+  selectedHistoryEssayCorrections.value = getEssayCorrectionsForMember(
+    row,
+    member,
+  );
+  isEssayCorrectionHistoryModalOpen.value = true;
+}
+
 function closeEssayCorrectionModal() {
   isEssayCorrectionModalOpen.value = false;
   selectedMemberName.value = "";
   selectedMemberFinalScores.value = [];
   selectedPersentage.value = null;
+}
+
+function closeEssayCorrectionHistoryModal() {
+  isEssayCorrectionHistoryModalOpen.value = false;
+  selectedMemberName.value = "";
+  selectedHistoryEssayCorrections.value = [];
 }
 
 const errorMessage = computed(() => {
@@ -162,12 +266,13 @@ const errorMessage = computed(() => {
 
     <template #body>
       <div class="space-y-6">
-        <div
-          v-if="status === 'pending'"
-          class="flex items-center justify-center py-10 text-muted"
-        >
-          <UIcon name="i-lucide-loader-2" class="size-6 animate-spin mr-2" />
-          Loading performance check data...
+        <div v-if="status === 'pending'" class="py-10">
+          <div
+            class="flex flex-col items-center justify-center gap-3 text-muted"
+          >
+            <UIcon name="i-lucide-loader-2" class="size-8 animate-spin" />
+            <span class="text-sm">Loading performance check data...</span>
+          </div>
         </div>
 
         <div
@@ -186,7 +291,20 @@ const errorMessage = computed(() => {
 
         <UCard v-else>
           <template #header>
-            <h2 class="text-lg font-semibold">Performance Check</h2>
+            <div
+              class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+            >
+              <h2 class="text-lg font-semibold">Performance Check</h2>
+              <USelect
+                v-model="selectedEventFilter"
+                :items="[
+                  { label: 'All Events', value: null },
+                  ...eventFilterOptions,
+                ]"
+                class="w-full md:w-72"
+                placeholder="Filter by event"
+              />
+            </div>
           </template>
 
           <div class="overflow-x-auto rounded-lg border">
@@ -203,7 +321,7 @@ const errorMessage = computed(() => {
               </thead>
               <tbody>
                 <tr
-                  v-for="row in tableRows"
+                  v-for="row in filteredTableRows"
                   :key="row.id"
                   class="border-t align-top"
                 >
@@ -229,13 +347,22 @@ const errorMessage = computed(() => {
                             openEssayCorrectionModal(member, row.persentage)
                           "
                         />
+                        <UButton
+                          label="History"
+                          size="xs"
+                          color="primary"
+                          variant="soft"
+                          icon="i-lucide-history"
+                          :disabled="!hasEssayCorrectionHistory(row, member)"
+                          @click="openEssayCorrectionHistoryModal(row, member)"
+                        />
                       </li>
                     </ul>
                     <span v-else class="text-muted">-</span>
                   </td>
                 </tr>
 
-                <tr v-if="tableRows.length === 0" class="border-t">
+                <tr v-if="filteredTableRows.length === 0" class="border-t">
                   <td class="px-3 py-3 text-muted" colspan="4">
                     No performance check data available.
                   </td>
@@ -254,5 +381,12 @@ const errorMessage = computed(() => {
     :final-scores="selectedMemberFinalScores"
     :persentage="selectedPersentage"
     @close="closeEssayCorrectionModal"
+  />
+
+  <EssayCorrectionHistoryModal
+    :is-open="isEssayCorrectionHistoryModalOpen"
+    :member-name="selectedMemberName"
+    :essay-corrections="selectedHistoryEssayCorrections"
+    @close="closeEssayCorrectionHistoryModal"
   />
 </template>
