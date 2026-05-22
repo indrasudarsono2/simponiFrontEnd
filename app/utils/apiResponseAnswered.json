@@ -1,77 +1,360 @@
 {
-  "event": {
-    "id": 10,
-    "event": "PERPANJANGAN SMT 2",
-    "passingGrade": 75,
-    "eventQuestions": [
+  "all": {
+    "rating": [
       {
-        "id": 4,
-        "quantity": 5,
-        "persentage": 0.4,
-        "minutes": 30,
-        "kindOfQuestion": {
-          "question": "ESSAY"
-        }
-      },
-      {
-        "id": 5,
-        "quantity": 45,
-        "persentage": 0.6,
-        "minutes": 90,
-        "kindOfQuestion": {
-          "question": "MULTIPLE CHOICE"
-        }
-      }
-    ],
-    "eventUsers": [
-      {
-        "id": 13,
-        "applicationDocs": {
-          "id": 33,
-          "appRatings": [
-            {
-              "id": 40,
-              "rating": {
-                "id": 3,
-                "professionId": 1,
-                "rating": "TWR",
-                "description": "Tower Control Rating",
-                "createdAt": "2026-03-01T09:01:23.256Z",
-                "updatedAt": "2026-03-01T09:36:58.408Z",
-                "deletedAt": null
-              },
-              "statusId": 3,
-              "finalScores": [
-                {
-                  "id": 5,
-                  "eventId": null,
-                  "appRatingId": 40,
-                  "statusId": 3,
-                  "essayScore": 0,
-                  "finalScore": 0,
-                  "multipleChoiceScore": 0,
-                  "createdAt": "2026-04-11T07:03:28.801Z",
-                  "updatedAt": "2026-04-11T07:03:28.801Z",
-                  "deletedAt": null
-                }
-              ]
-            }
-          ]
-        },
-        "attendaces": {
-          "room": {
-            "id": 2,
-            "checker": "10077771",
-            "name": "NAKULA",
-            "startDate": "2026-04-08T00:00:00.000Z",
-            "finishDate": "2026-04-12T23:59:00.000Z",
-            "file": "/uploads/room/room-1775640700072-828256305.pdf",
-            "createdAt": "2026-04-08T09:31:40.158Z",
-            "updatedAt": "2026-04-10T06:49:47.921Z",
-            "deletedAt": null
+        "rating": "TWR",
+        "statistic": [
+          {
+            "group": "AERODROME LAYOUT; PHYSICAL CHARACTERISTICS AND VISUAL AIDS",
+            "isTrue": 13,
+            "isFalse": 19,
+            "total": 32,
+            "percentageTrue": 40.625
+          },
+          {
+            "group": "AIRSPACE STRUCTURE",
+            "isTrue": 9,
+            "isFalse": 31,
+            "total": 40,
+            "percentageTrue": 22.5
+          },
+          {
+            "group": "AIR NAVIGATION FACILITIES",
+            "isTrue": 12,
+            "isFalse": 20,
+            "total": 32,
+            "percentageTrue": 37.5
+          },
+          {
+            "group": "AIR TRAFFIC CONTROL EQUIPMENT AND ITS USE",
+            "isTrue": 13,
+            "isFalse": 27,
+            "total": 40,
+            "percentageTrue": 32.5
+          },
+          {
+            "group": "APPLICABLE RULES, PROCEDURES AND SOURCE OF INFORMATION",
+            "isTrue": 7,
+            "isFalse": 33,
+            "total": 40,
+            "percentageTrue": 17.5
+          },
+          {
+            "group": "CHARACTERISTICS OF AIR TRAFFIC",
+            "isTrue": 7,
+            "isFalse": 41,
+            "total": 48,
+            "percentageTrue": 14.583333333333334
+          },
+          {
+            "group": "EMERGENCY AND SEARCH AND RESCUE PLANS",
+            "isTrue": 12,
+            "isFalse": 34,
+            "total": 46,
+            "percentageTrue": 26.08695652173913
+          },
+          {
+            "group": "TERRAIN AND PROMINENT LANDMARKS",
+            "isTrue": 11,
+            "isFalse": 34,
+            "total": 45,
+            "percentageTrue": 24.444444444444443
+          },
+          {
+            "group": "WEATHER PHENOMENA",
+            "isTrue": 12,
+            "isFalse": 25,
+            "total": 37,
+            "percentageTrue": 32.432432432432435
           }
-        }
+        ]
       }
     ]
-  }
+  },
+  "detail": [
+    {
+      "finalScoreId": 11,
+      "createdAt": "2026-04-13T00:55:45.100Z",
+      "number": "ATC/PERPANJANGAN/8880-10",
+      "rating": "TWR",
+      "groupStatistics": [
+        {
+          "group": "AERODROME LAYOUT; PHYSICAL CHARACTERISTICS AND VISUAL AIDS",
+          "isTrue": 3,
+          "isFalse": 5,
+          "total": 8,
+          "percentageTrue": 37.5
+        },
+        {
+          "group": "AIRSPACE STRUCTURE",
+          "isTrue": 2,
+          "isFalse": 8,
+          "total": 10,
+          "percentageTrue": 20
+        },
+        {
+          "group": "AIR NAVIGATION FACILITIES",
+          "isTrue": 2,
+          "isFalse": 6,
+          "total": 8,
+          "percentageTrue": 25
+        },
+        {
+          "group": "AIR TRAFFIC CONTROL EQUIPMENT AND ITS USE",
+          "isTrue": 2,
+          "isFalse": 8,
+          "total": 10,
+          "percentageTrue": 20
+        },
+        {
+          "group": "APPLICABLE RULES, PROCEDURES AND SOURCE OF INFORMATION",
+          "isTrue": 1,
+          "isFalse": 9,
+          "total": 10,
+          "percentageTrue": 10
+        },
+        {
+          "group": "CHARACTERISTICS OF AIR TRAFFIC",
+          "isTrue": 2,
+          "isFalse": 10,
+          "total": 12,
+          "percentageTrue": 16.666666666666664
+        },
+        {
+          "group": "EMERGENCY AND SEARCH AND RESCUE PLANS",
+          "isTrue": 4,
+          "isFalse": 7,
+          "total": 11,
+          "percentageTrue": 36.36363636363637
+        },
+        {
+          "group": "TERRAIN AND PROMINENT LANDMARKS",
+          "isTrue": 2,
+          "isFalse": 9,
+          "total": 11,
+          "percentageTrue": 18.181818181818183
+        },
+        {
+          "group": "WEATHER PHENOMENA",
+          "isTrue": 4,
+          "isFalse": 6,
+          "total": 10,
+          "percentageTrue": 40
+        }
+      ]
+    },
+    {
+      "finalScoreId": 12,
+      "createdAt": "2026-04-16T00:59:15.765Z",
+      "number": "ATC/PERPANJANGAN/8880-10",
+      "rating": "TWR",
+      "groupStatistics": [
+        {
+          "group": "AERODROME LAYOUT; PHYSICAL CHARACTERISTICS AND VISUAL AIDS",
+          "isTrue": 2,
+          "isFalse": 6,
+          "total": 8,
+          "percentageTrue": 25
+        },
+        {
+          "group": "AIRSPACE STRUCTURE",
+          "isTrue": 4,
+          "isFalse": 6,
+          "total": 10,
+          "percentageTrue": 40
+        },
+        {
+          "group": "AIR NAVIGATION FACILITIES",
+          "isTrue": 4,
+          "isFalse": 4,
+          "total": 8,
+          "percentageTrue": 50
+        },
+        {
+          "group": "AIR TRAFFIC CONTROL EQUIPMENT AND ITS USE",
+          "isTrue": 2,
+          "isFalse": 8,
+          "total": 10,
+          "percentageTrue": 20
+        },
+        {
+          "group": "APPLICABLE RULES, PROCEDURES AND SOURCE OF INFORMATION",
+          "isTrue": 2,
+          "isFalse": 8,
+          "total": 10,
+          "percentageTrue": 20
+        },
+        {
+          "group": "CHARACTERISTICS OF AIR TRAFFIC",
+          "isTrue": 0,
+          "isFalse": 12,
+          "total": 12,
+          "percentageTrue": 0
+        },
+        {
+          "group": "TERRAIN AND PROMINENT LANDMARKS",
+          "isTrue": 2,
+          "isFalse": 8,
+          "total": 10,
+          "percentageTrue": 20
+        },
+        {
+          "group": "WEATHER PHENOMENA",
+          "isTrue": 4,
+          "isFalse": 6,
+          "total": 10,
+          "percentageTrue": 40
+        },
+        {
+          "group": "EMERGENCY AND SEARCH AND RESCUE PLANS",
+          "isTrue": 6,
+          "isFalse": 6,
+          "total": 12,
+          "percentageTrue": 50
+        }
+      ]
+    },
+    {
+      "finalScoreId": 15,
+      "createdAt": "2026-04-16T06:39:15.609Z",
+      "number": "ATC/PERPANJANGAN/8880-10",
+      "rating": "TWR",
+      "groupStatistics": [
+        {
+          "group": "AERODROME LAYOUT; PHYSICAL CHARACTERISTICS AND VISUAL AIDS",
+          "isTrue": 2,
+          "isFalse": 2,
+          "total": 4,
+          "percentageTrue": 50
+        },
+        {
+          "group": "AIRSPACE STRUCTURE",
+          "isTrue": 0,
+          "isFalse": 5,
+          "total": 5,
+          "percentageTrue": 0
+        },
+        {
+          "group": "AIR NAVIGATION FACILITIES",
+          "isTrue": 0,
+          "isFalse": 4,
+          "total": 4,
+          "percentageTrue": 0
+        },
+        {
+          "group": "AIR TRAFFIC CONTROL EQUIPMENT AND ITS USE",
+          "isTrue": 3,
+          "isFalse": 2,
+          "total": 5,
+          "percentageTrue": 60
+        },
+        {
+          "group": "APPLICABLE RULES, PROCEDURES AND SOURCE OF INFORMATION",
+          "isTrue": 1,
+          "isFalse": 4,
+          "total": 5,
+          "percentageTrue": 20
+        },
+        {
+          "group": "CHARACTERISTICS OF AIR TRAFFIC",
+          "isTrue": 2,
+          "isFalse": 4,
+          "total": 6,
+          "percentageTrue": 33.33333333333333
+        },
+        {
+          "group": "EMERGENCY AND SEARCH AND RESCUE PLANS",
+          "isTrue": 2,
+          "isFalse": 3,
+          "total": 5,
+          "percentageTrue": 40
+        },
+        {
+          "group": "TERRAIN AND PROMINENT LANDMARKS",
+          "isTrue": 1,
+          "isFalse": 5,
+          "total": 6,
+          "percentageTrue": 16.666666666666664
+        },
+        {
+          "group": "WEATHER PHENOMENA",
+          "isTrue": 1,
+          "isFalse": 4,
+          "total": 5,
+          "percentageTrue": 20
+        }
+      ]
+    },
+    {
+      "finalScoreId": 16,
+      "createdAt": "2026-04-16T07:21:47.637Z",
+      "number": "ATC/PERPANJANGAN/8880-10",
+      "rating": "TWR",
+      "groupStatistics": [
+        {
+          "group": "AERODROME LAYOUT; PHYSICAL CHARACTERISTICS AND VISUAL AIDS",
+          "isTrue": 6,
+          "isFalse": 6,
+          "total": 12,
+          "percentageTrue": 50
+        },
+        {
+          "group": "AIRSPACE STRUCTURE",
+          "isTrue": 3,
+          "isFalse": 12,
+          "total": 15,
+          "percentageTrue": 20
+        },
+        {
+          "group": "AIR NAVIGATION FACILITIES",
+          "isTrue": 6,
+          "isFalse": 6,
+          "total": 12,
+          "percentageTrue": 50
+        },
+        {
+          "group": "AIR TRAFFIC CONTROL EQUIPMENT AND ITS USE",
+          "isTrue": 6,
+          "isFalse": 9,
+          "total": 15,
+          "percentageTrue": 40
+        },
+        {
+          "group": "APPLICABLE RULES, PROCEDURES AND SOURCE OF INFORMATION",
+          "isTrue": 3,
+          "isFalse": 12,
+          "total": 15,
+          "percentageTrue": 20
+        },
+        {
+          "group": "CHARACTERISTICS OF AIR TRAFFIC",
+          "isTrue": 3,
+          "isFalse": 15,
+          "total": 18,
+          "percentageTrue": 16.666666666666664
+        },
+        {
+          "group": "WEATHER PHENOMENA",
+          "isTrue": 3,
+          "isFalse": 9,
+          "total": 12,
+          "percentageTrue": 25
+        },
+        {
+          "group": "EMERGENCY AND SEARCH AND RESCUE PLANS",
+          "isTrue": 0,
+          "isFalse": 18,
+          "total": 18,
+          "percentageTrue": 0
+        },
+        {
+          "group": "TERRAIN AND PROMINENT LANDMARKS",
+          "isTrue": 6,
+          "isFalse": 12,
+          "total": 18,
+          "percentageTrue": 33.33333333333333
+        }
+      ]
+    }
+  ]
 }

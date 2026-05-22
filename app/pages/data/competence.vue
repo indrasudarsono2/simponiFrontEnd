@@ -1,24 +1,37 @@
 <script setup lang="ts">
 import ip from "../../utils/config.json";
 
-interface IelpItem {
+interface CompetenceItem {
   id?: number;
-  expired?: string | null;
+  released?: string | null;
+  institution?: string | null;
   file?: string | null;
+  rating?: {
+    id?: number;
+    rating?: string | null;
+  } | null;
 }
 
-interface IelpApiItem {
+interface CompetenceApiItem {
   nik?: string | null;
   name?: string | null;
-  ielp?: IelpItem[] | null;
+  competences?: CompetenceItem[] | null;
 }
 
-interface IelpRow {
+interface CompetenceRow {
+  id: string;
   no: number;
+  showNo: boolean;
+  noRowSpan: number;
   nik: string;
+  showNik: boolean;
+  nikRowSpan: number;
   name: string;
-  expired: string;
-  expiredRaw: string | null;
+  showName: boolean;
+  nameRowSpan: number;
+  competenceRating: string;
+  released: string;
+  institution: string;
   file: string | null;
 }
 
@@ -29,8 +42,8 @@ const searchQuery = ref("");
 const isFileModalOpen = ref(false);
 const selectedFilePath = ref<string | null>(null);
 
-const { data, status, error, refresh } = await useFetch<IelpApiItem[]>(
-  `http://${ip.ipBackEnd}/api/dataCheckerIelp`,
+const { data, status, error, refresh } = await useFetch<CompetenceApiItem[]>(
+  `http://${ip.ipBackEnd}/api/dataCheckerCompetence`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -38,15 +51,6 @@ const { data, status, error, refresh } = await useFetch<IelpApiItem[]>(
     default: () => [],
   },
 );
-
-function getLatestIelp(ielpList?: IelpItem[] | null): IelpItem | null {
-  if (!ielpList || ielpList.length === 0) return null;
-  return [...ielpList].sort((a, b) => {
-    const aTime = a.expired ? new Date(a.expired).getTime() : -Infinity;
-    const bTime = b.expired ? new Date(b.expired).getTime() : -Infinity;
-    return bTime - aTime;
-  })[0] || null;
-}
 
 function formatDate(dateString?: string | null): string {
   if (!dateString) return "-";
@@ -57,38 +61,6 @@ function formatDate(dateString?: string | null): string {
     month: "2-digit",
     year: "numeric",
   });
-}
-
-function daysUntil(expiredDate?: string | null): number | null {
-  if (!expiredDate) return null;
-  const expired = new Date(expiredDate);
-  if (Number.isNaN(expired.getTime())) return null;
-
-  const now = new Date();
-  const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const expiredStart = new Date(
-    expired.getFullYear(),
-    expired.getMonth(),
-    expired.getDate(),
-  );
-  const diffTime = expiredStart.getTime() - nowStart.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-}
-
-function getExpiredCellClass(expiredDate?: string | null): string {
-  const days = daysUntil(expiredDate);
-  if (days === null) return "";
-  if (days < 30) return "bg-red-100 text-red-800";
-  if (days <= 60) return "bg-orange-100 text-orange-800";
-  return "";
-}
-
-function getPrintExpiredCellStyle(expiredDate?: string | null): string {
-  const days = daysUntil(expiredDate);
-  if (days === null) return "";
-  if (days < 30) return "background:#fee2e2;color:#991b1b;";
-  if (days <= 60) return "background:#ffedd5;color:#9a3412;";
-  return "";
 }
 
 function resolveFileUrl(filePath?: string | null): string | null {
@@ -123,39 +95,68 @@ function closeFileModal() {
   selectedFilePath.value = null;
 }
 
-const rows = computed<IelpRow[]>(() => {
+const filteredData = computed(() => {
   const payload = data.value || [];
+  const keyword = searchQuery.value.trim().toLowerCase();
+  if (!keyword) return payload;
 
-  return payload.map((item, index) => {
-    const latestIelp = getLatestIelp(item.ielp);
-
-    return {
-      no: index + 1,
-      nik: item.nik || "-",
-      name: item.name || "-",
-      expired: formatDate(latestIelp?.expired || null),
-      expiredRaw: latestIelp?.expired || null,
-      file: latestIelp?.file || null,
-    };
+  return payload.filter((item) => {
+    const nik = (item.nik || "").toLowerCase();
+    const name = (item.name || "").toLowerCase();
+    return nik.includes(keyword) || name.includes(keyword);
   });
 });
 
-const filteredRows = computed(() => {
-  const keyword = searchQuery.value.trim().toLowerCase();
-  if (!keyword) return rows.value;
+const rows = computed<CompetenceRow[]>(() => {
+  const payload = filteredData.value;
+  const result: CompetenceRow[] = [];
 
-  return rows.value.filter((row) => {
-    return (
-      row.nik.toLowerCase().includes(keyword) ||
-      row.name.toLowerCase().includes(keyword)
-    );
+  payload.forEach((item, index) => {
+    const nik = item.nik || "-";
+    const name = item.name || "-";
+    const competences = item.competences || [];
+    const safeCompetences =
+      competences.length > 0
+        ? competences
+        : [
+            {
+              id: undefined,
+              released: null,
+              institution: null,
+              file: null,
+              rating: { rating: "-" },
+            },
+          ];
+
+    const rowSpan = Math.max(1, safeCompetences.length);
+
+    safeCompetences.forEach((competence, competenceIndex) => {
+      result.push({
+        id: `${nik}-${competence.id || competenceIndex}`,
+        no: index + 1,
+        showNo: competenceIndex === 0,
+        noRowSpan: rowSpan,
+        nik,
+        showNik: competenceIndex === 0,
+        nikRowSpan: rowSpan,
+        name,
+        showName: competenceIndex === 0,
+        nameRowSpan: rowSpan,
+        competenceRating: competence.rating?.rating || "-",
+        released: formatDate(competence.released),
+        institution: competence.institution || "-",
+        file: competence.file || null,
+      });
+    });
   });
+
+  return result;
 });
 
 const errorMessage = computed(() => {
   if (!error.value) return "";
   const err = error.value as { data?: { message?: string }; message?: string };
-  return err.data?.message || err.message || "Failed to load IELP data.";
+  return err.data?.message || err.message || "Failed to load competence data.";
 });
 
 function escapeHtml(value: string): string {
@@ -168,23 +169,34 @@ function escapeHtml(value: string): string {
 }
 
 function handlePrintPdf() {
-  const printableRows = filteredRows.value;
+  const printRows = rows.value;
 
-  const tableRowsHtml = printableRows
+  const tableRowsHtml = printRows
     .map((row) => {
-      const style = getPrintExpiredCellStyle(row.expiredRaw);
+      const noCell = row.showNo
+        ? `<td rowspan="${row.noRowSpan}">${row.no}</td>`
+        : "";
+      const nikCell = row.showNik
+        ? `<td rowspan="${row.nikRowSpan}">${escapeHtml(row.nik)}</td>`
+        : "";
+      const nameCell = row.showName
+        ? `<td rowspan="${row.nameRowSpan}">${escapeHtml(row.name)}</td>`
+        : "";
+
       return `
         <tr>
-          <td>${row.no}</td>
-          <td>${escapeHtml(row.nik)}</td>
-          <td>${escapeHtml(row.name)}</td>
-          <td style="${style}">${escapeHtml(row.expired)}</td>
+          ${noCell}
+          ${nikCell}
+          ${nameCell}
+          <td>${escapeHtml(row.competenceRating)}</td>
+          <td>${escapeHtml(row.released)}</td>
+          <td>${escapeHtml(row.institution)}</td>
         </tr>
       `;
     })
     .join("");
 
-  const printWindow = window.open("", "_blank", "width=1000,height=700");
+  const printWindow = window.open("", "_blank", "width=1100,height=750");
   if (!printWindow) {
     toast.add({
       title: "Error",
@@ -199,30 +211,33 @@ function handlePrintPdf() {
     <html>
       <head>
         <meta charset="UTF-8" />
-        <title>IELP Data</title>
+        <title>Competence Data</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 16px; color: #111827; }
           h2 { margin: 0 0 12px 0; }
           table { width: 100%; border-collapse: collapse; }
           th, td { border: 1px solid #d1d5db; padding: 8px; font-size: 12px; }
           th { background: #f3f4f6; text-align: center; }
-          td:nth-child(1), td:nth-child(2), td:nth-child(4) { text-align: center; }
-          @page { size: A4 portrait; margin: 12mm; }
+          td { vertical-align: middle; }
+          td:nth-child(1), td:nth-child(2), td:nth-child(4), td:nth-child(5) { text-align: center; }
+          @page { size: A4 landscape; margin: 12mm; }
         </style>
       </head>
       <body>
-        <h2>IELP Data</h2>
+        <h2>Competence Data</h2>
         <table>
           <thead>
             <tr>
               <th>No</th>
               <th>NIK</th>
               <th>Name</th>
-              <th>Expired Date</th>
+              <th>Competence Rating</th>
+              <th>Released</th>
+              <th>Institution</th>
             </tr>
           </thead>
           <tbody>
-            ${tableRowsHtml || '<tr><td colspan="4" style="text-align:center;">No data</td></tr>'}
+            ${tableRowsHtml || '<tr><td colspan="6" style="text-align:center;">No data</td></tr>'}
           </tbody>
         </table>
       </body>
@@ -240,7 +255,7 @@ function handlePrintPdf() {
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar title="IELP Data">
+      <UDashboardNavbar title="Competence Data">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -258,13 +273,13 @@ function handlePrintPdf() {
           />
 
           <div class="flex items-center gap-2">
-          <UButton
-            label="Refresh"
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-refresh-cw"
-            @click="() => refresh()"
-          />
+            <UButton
+              label="Refresh"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-refresh-cw"
+              @click="() => refresh()"
+            />
             <UButton
               label="Print PDF"
               color="primary"
@@ -280,7 +295,7 @@ function handlePrintPdf() {
           class="flex items-center gap-2 text-muted py-4"
         >
           <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
-          Loading IELP data...
+          Loading competence data...
         </div>
 
         <div
@@ -304,20 +319,43 @@ function handlePrintPdf() {
                 <th class="px-3 py-2 text-center font-medium border border-default">No</th>
                 <th class="px-3 py-2 text-center font-medium border border-default">NIK</th>
                 <th class="px-3 py-2 text-center font-medium border border-default">Name</th>
-                <th class="px-3 py-2 text-center font-medium border border-default">Expired Date</th>
+                <th class="px-3 py-2 text-center font-medium border border-default">Competence Rating</th>
+                <th class="px-3 py-2 text-center font-medium border border-default">Released</th>
+                <th class="px-3 py-2 text-center font-medium border border-default">Institution</th>
                 <th class="px-3 py-2 text-center font-medium border border-default">File</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in filteredRows" :key="`${row.nik}-${row.no}`">
-                <td class="px-3 py-2 border border-default text-center">{{ row.no }}</td>
-                <td class="px-3 py-2 border border-default text-center">{{ row.nik }}</td>
-                <td class="px-3 py-2 border border-default">{{ row.name }}</td>
+              <tr v-for="row in rows" :key="row.id">
                 <td
-                  class="px-3 py-2 border border-default text-center"
-                  :class="getExpiredCellClass(row.expiredRaw)"
+                  v-if="row.showNo"
+                  class="px-3 py-2 border border-default text-center align-middle"
+                  :rowspan="row.noRowSpan"
                 >
-                  {{ row.expired }}
+                  {{ row.no }}
+                </td>
+                <td
+                  v-if="row.showNik"
+                  class="px-3 py-2 border border-default text-center align-middle"
+                  :rowspan="row.nikRowSpan"
+                >
+                  {{ row.nik }}
+                </td>
+                <td
+                  v-if="row.showName"
+                  class="px-3 py-2 border border-default align-middle"
+                  :rowspan="row.nameRowSpan"
+                >
+                  {{ row.name }}
+                </td>
+                <td class="px-3 py-2 border border-default text-center">
+                  {{ row.competenceRating }}
+                </td>
+                <td class="px-3 py-2 border border-default text-center">
+                  {{ row.released }}
+                </td>
+                <td class="px-3 py-2 border border-default">
+                  {{ row.institution }}
                 </td>
                 <td class="px-3 py-2 border border-default text-center">
                   <UButton
@@ -331,9 +369,9 @@ function handlePrintPdf() {
                 </td>
               </tr>
 
-              <tr v-if="filteredRows.length === 0">
-                <td class="px-3 py-3 text-muted border border-default text-center" colspan="5">
-                  No IELP data available.
+              <tr v-if="rows.length === 0">
+                <td class="px-3 py-3 text-muted border border-default text-center" colspan="7">
+                  No competence data available.
                 </td>
               </tr>
             </tbody>
@@ -342,7 +380,7 @@ function handlePrintPdf() {
 
         <UModal
           :open="isFileModalOpen"
-          title="IELP File"
+          title="Competence File"
           :ui="{ content: 'max-w-4xl w-full h-full' }"
           @update:open="(value) => (!value ? closeFileModal() : null)"
         >
@@ -354,7 +392,7 @@ function handlePrintPdf() {
               >
                 <img
                   :src="resolveFileUrl(selectedFilePath) || ''"
-                  alt="IELP file"
+                  alt="Competence file"
                   class="h-full w-full rounded object-contain"
                 />
               </div>
@@ -366,7 +404,7 @@ function handlePrintPdf() {
                 <iframe
                   :src="resolveFileUrl(selectedFilePath) || ''"
                   style="height: 100%; width: 100%"
-                  title="IELP file"
+                  title="Competence file"
                 />
               </div>
 

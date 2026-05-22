@@ -1,117 +1,45 @@
-{
-  "event": [
-    {
-      "id": 10,
-      "event": "PERPANJANGAN SMT 2",
-      "sector": {
-        "sector": "BALI",
-        "branchUnit": {
-          "unit": "TWR-APP"
+[
+  {
+    "id": 1,
+    "remark": "PENERBITAN",
+    "events": []
+  },
+  {
+    "id": 2,
+    "remark": "PERPANJANGAN",
+    "events": [
+      {
+        "id": 1,
+        "event": "WEST SMT 2 2026",
+        "session": {
+          "id": 3,
+          "session": "Semester 2 tahun 2026"
         }
       },
-      "remarkDoc": {
-        "remark": "PERPANJANGAN"
-      },
-      "session": {
-        "session": "2026 SMT 2"
-      },
-      "groups": [
-        {
-          "id": 6,
-          "group": "CITTA GROUP",
-          "groupMembers": [
-            {
-              "id": 52,
-              "userMember": {
-                "name": "DAPOT"
-              },
-              "finalScores": [
-                {
-                  "id": 11,
-                  "essayScore": 0,
-                  "essayCorrections": [
-                    {
-                      "id": 66,
-                      "answer": "<p><em><u>BALI WADD</u></em></p>",
-                      "essay": {
-                        "id": 10,
-                        "question": "<p>Bali (WADD) serves as a primary hub for a diverse mix of traffic, from international heavy jets (A380/B777) to domestic turboprops and VFR general aviation.</p>",
-                        "answer": "<p><strong>Discuss</strong> the specific challenges of managing the sequencing of aircraft with significantly different performance characteristics (speed and wake turbulence categories) arriving via the Standard Terminal Arrival Routes (STARs).</p>",
-                        "image": "",
-                        "value": 3
-                      }
-                    },
-                    {
-                      "id": 67,
-                      "answer": "<p><strong><em><u>To The Nor</u></em></strong>ht</p>",
-                      "essay": {
-                        "id": 11,
-                        "question": "<p>To the north of Ngurah Rai Airport, the terrain rises significantly toward Mount Agung and the central mountain range.</p>",
-                        "answer": "<p><strong>Describe</strong> your immediate actions as an Approach Controller if an aircraft under your radar surveillance deviates from its assigned heading and tracks toward high terrain while descending to an assigned altitude. Include the specific phraseology you would use for a <strong>Terrain Alert</strong>.</p>",
-                        "image": "",
-                        "value": 3
-                      }
-                    },
-                    {
-                      "id": 68,
-                      "answer": "<p><u>Modern</u></p>",
-                      "essay": {
-                        "id": 14,
-                        "question": "<p>Modern Air Traffic Management in Indonesia increasingly relies on Performance-Based Navigation (PBN) and ADS-B surveillance.</p>",
-                        "answer": "<p><strong>Explain</strong> your procedure for handling an \"ADS-B Failure\" or \"Radar Hand-off\" communication breakdown with the Ujung Pandang (Makassar) ACC.</p>",
-                        "image": "",
-                        "value": 6
-                      }
-                    },
-                    {
-                      "id": 69,
-                      "answer": "<p><em>MESJID</em></p>",
-                      "essay": {
-                        "id": 16,
-                        "question": "<p>afawgawgawgwgwgwaa</p>",
-                        "answer": "<p>wawagawgweggewcc</p>",
-                        "image": "/uploads/essay/essay-1776033123662-685828586.jpeg",
-                        "value": 6
-                      }
-                    },
-                    {
-                      "id": 70,
-                      "answer": "<p><strong>Bali TMA</strong></p>",
-                      "essay": {
-                        "id": 12,
-                        "question": "<p>The Bali TMA is subject to sudden weather changes, including heavy tropical rain and volcanic ash activity from nearby volcanoes.</p>",
-                        "answer": "<p><strong>Outline</strong> the coordination steps required between the Approach Control Unit (APP) and the Aerodrome Control Tower (TWR) when a \"Missed Approach\" is executed by multiple aircraft simultaneously due to a sudden drop in visibility.</p>",
-                        "image": "",
-                        "value": 6
-                      }
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "id": 53,
-              "userMember": {
-                "name": "ARMITA"
-              },
-              "finalScores": []
-            },
-            {
-              "id": 54,
-              "userMember": {
-                "name": "I WAYAN INDRA"
-              },
-              "finalScores": []
-            }
-          ]
+      {
+        "id": 5,
+        "event": "EAST SMT 2026",
+        "session": {
+          "id": 3,
+          "session": "Semester 2 tahun 2026"
         }
-      ],
-      "eventQuestions": [
-        {
-          "id": 4,
-          "persentage": 0.4
+      },
+      {
+        "id": 6,
+        "event": "NORTH SMT 2026",
+        "session": {
+          "id": 3,
+          "session": "Semester 2 tahun 2026"
         }
-      ]
-    }
-  ]
-}
+      },
+      {
+        "id": 7,
+        "event": "TEST",
+        "session": {
+          "id": 3,
+          "session": "Semester 2 tahun 2026"
+        }
+      }
+    ]
+  }
+]

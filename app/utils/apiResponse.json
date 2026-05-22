@@ -1,133 +1,830 @@
-{
-  "event": [
-    {
-      "id": 11,
-      "event": "PENERBITAN ARMITA",
-      "sector": {
-        "sector": "BALI",
-        "branchUnit": {
-          "unit": "TWR-APP"
-        }
-      },
-      "remarkDoc": {
-        "remark": "PENERBITAN"
-      },
-      "session": {
-        "session": "2026 SMT 2"
-      },
-      "groups": [
-        {
-          "id": 7,
-          "group": "PENERBITAN ARMITA",
-          "groupMembers": [
-            {
-              "id": 55,
-              "userMember": {
-                "name": "ARMITA"
-              },
-              "finalScores": [],
-              "essayCorrections": [
-                {
-                  "id": 96,
-                  "essay": {
-                    "question": "<p>Bali (WADD) serves as a primary hub for a diverse mix of traffic, from international heavy jets (A380/B777) to domestic turboprops and VFR general aviation.</p>",
-                    "value": 3
-                  },
-                  "answer": "<p>bALI <u>primarua</u></p>",
-                  "score": 3
-                },
-                {
-                  "id": 97,
-                  "essay": {
-                    "question": "<p>To the north of Ngurah Rai Airport, the terrain rises significantly toward Mount Agung and the central mountain range.</p>",
-                    "value": 3
-                  },
-                  "answer": "<p><strong><em><u>North ngra-haaw</u></em></strong></p>",
-                  "score": 3
-                },
-                {
-                  "id": 98,
-                  "essay": {
-                    "question": "<p>The Bali TMA is subject to sudden weather changes, including heavy tropical rain and volcanic ash activity from nearby volcanoes.</p>",
-                    "value": 6
-                  },
-                  "answer": "<p><em>Bali TMA</em></p>",
-                  "score": 6
-                },
-                {
-                  "id": 99,
-                  "essay": {
-                    "question": "<p>Bali is a popular destination for scenic VFR flights and helicopter transfers.</p>",
-                    "value": 5
-                  },
-                  "answer": "<p><u>Popular</u></p>",
-                  "score": 5
-                },
-                {
-                  "id": 100,
-                  "essay": {
-                    "question": "<p>Modern Air Traffic Management in Indonesia increasingly relies on Performance-Based Navigation (PBN) and ADS-B surveillance.</p>",
-                    "value": 6
-                  },
-                  "answer": "<p>M<strong>oderabra</strong></p>",
-                  "score": 6
-                },
-                {
-                  "id": 101,
-                  "essay": {
-                    "question": "<p>Bali (WADD) serves as a primary hub for a diverse mix of traffic, from international heavy jets (A380/B777) to domestic turboprops and VFR general aviation.</p>",
-                    "value": 3
-                  },
-                  "answer": "<p>Bali wadd</p>",
-                  "score": 3
-                },
-                {
-                  "id": 102,
-                  "essay": {
-                    "question": "<p>To the north of Ngurah Rai Airport, the terrain rises significantly toward Mount Agung and the central mountain range.</p>",
-                    "value": 3
-                  },
-                  "answer": "<p>To the north ngurah rai</p>",
-                  "score": 3
-                },
-                {
-                  "id": 103,
-                  "essay": {
-                    "question": "<p>Modern Air Traffic Management in Indonesia increasingly relies on Performance-Based Navigation (PBN) and ADS-B surveillance.</p>",
-                    "value": 6
-                  },
-                  "answer": "<p>Modern Air Traffic</p>",
-                  "score": 6
-                },
-                {
-                  "id": 104,
-                  "essay": {
-                    "question": "<p>afawgawgawgwgwgwaa</p>",
-                    "value": 6
-                  },
-                  "answer": "<p>Auanawuaobfaga</p>",
-                  "score": 6
-                },
-                {
-                  "id": 105,
-                  "essay": {
-                    "question": "<p>The Bali TMA is subject to sudden weather changes, including heavy tropical rain and volcanic ash activity from nearby volcanoes.</p>",
-                    "value": 6
-                  },
-                  "answer": "<p>Ioanwuaneafagagaafafa</p>",
-                  "score": 6
-                }
-              ]
-            }
-          ]
-        }
-      ],
-      "eventQuestions": [
-        {
-          "id": 8,
-          "persentage": 0.4
-        }
-      ]
+[
+  {
+    "id": 7,
+    "question": "<p>What is the primary purpose of the Minimum Sector Altitude (MSA) in the Bali TMA?</p>",
+    "a": "To define the maximum holding speed.",
+    "b": "To provide at least 1,000ft of obstacle clearance within a 25nm radius.",
+    "c": "To dictate the transition level for all arriving aircraft.",
+    "d": "To restrict VFR aircraft from entering the CTR.",
+    "isTrue": 8,
+    "isFalse": 3,
+    "total": 11,
+    "percentageTrue": 72.72727272727273,
+    "answerSummary": {
+      "A": 2,
+      "B": 8,
+      "C": 1,
+      "D": 0
     }
-  ]
-}
+  },
+  {
+    "id": 8,
+    "question": "<p>Which mountain peak poses the most significant terrain clearance challenge for the northern sector of the Bali TMA?</p>",
+    "a": "Mount Batur",
+    "b": "Mount Agung",
+    "c": "Mount Abang",
+    "d": "Mount Batukaru",
+    "isTrue": 5,
+    "isFalse": 6,
+    "total": 11,
+    "percentageTrue": 45.45454545454545,
+    "answerSummary": {
+      "A": 2,
+      "B": 5,
+      "C": 4,
+      "D": 0
+    }
+  },
+  {
+    "id": 9,
+    "question": "<p>The transition altitude at I Gusti Ngurah Rai International Airport <strong>(WADD) </strong>is set at:</p>",
+    "a": "11,000 ft",
+    "b": "13,000 ft",
+    "c": "10,000 ft",
+    "d": "8,000 ft",
+    "isTrue": 3,
+    "isFalse": 8,
+    "total": 11,
+    "percentageTrue": 27.27272727272727,
+    "answerSummary": {
+      "A": 3,
+      "B": 3,
+      "C": 0,
+      "D": 5
+    }
+  },
+  {
+    "id": 10,
+    "question": "<p>When an aircraft is being vectored, the controller must ensure terrain clearance until:</p>",
+    "a": "The aircraft reaches the destination.",
+    "b": "The aircraft is established on a pilot-interpreted signal (like ILS) or a cleared approach.",
+    "c": "The pilot reports \"field in sight.\"",
+    "d": "The aircraft is within 5nm of the runway.",
+    "isTrue": 0,
+    "isFalse": 11,
+    "total": 11,
+    "percentageTrue": 0,
+    "answerSummary": {
+      "A": 0,
+      "B": 0,
+      "C": 5,
+      "D": 6
+    }
+  },
+  {
+    "id": 11,
+    "question": "<p>Which document contains the detailed VFR reporting points for the Bali Control Zone?</p>",
+    "a": "AIP Indonesia",
+    "b": "International Notams",
+    "c": "ICAO Doc 4444",
+    "d": "Airline Operations Manual",
+    "isTrue": 4,
+    "isFalse": 7,
+    "total": 11,
+    "percentageTrue": 36.36363636363637,
+    "answerSummary": {
+      "A": 1,
+      "B": 4,
+      "C": 5,
+      "D": 1
+    }
+  },
+  {
+    "id": 12,
+    "question": "<p>The Bali TMA lateral boundaries are primarily designed to:</p>",
+    "a": "Include all islands in the Nusa Tenggara chain.",
+    "b": "Protect IFR arrival/departure paths and facilitate handovers with Makassar ACC.",
+    "c": "Mandate that all aircraft fly below 5,000 ft.",
+    "d": "Separate military aircraft from civil aircraft.",
+    "isTrue": 4,
+    "isFalse": 7,
+    "total": 11,
+    "percentageTrue": 36.36363636363637,
+    "answerSummary": {
+      "A": 4,
+      "B": 4,
+      "C": 0,
+      "D": 3
+    }
+  },
+  {
+    "id": 13,
+    "question": "<p>Which adjacent unit coordinates directly with Bali Approach for high-level traffic?</p>",
+    "a": "Jakarta ACC",
+    "b": "Ujung Pandang (Makassar) ACC",
+    "c": "Darwin Center",
+    "d": "Singapore Approach",
+    "isTrue": 4,
+    "isFalse": 7,
+    "total": 11,
+    "percentageTrue": 36.36363636363637,
+    "answerSummary": {
+      "A": 0,
+      "B": 4,
+      "C": 7,
+      "D": 0
+    }
+  },
+  {
+    "id": 14,
+    "question": "<p>If an aircraft is flying via a Standard Terminal Arrival Route (STAR), the controller should:</p>",
+    "a": "Always vector them off the STAR immediately.",
+    "b": "Maintain the aircraft on the profile unless tactical intervention is required.",
+    "c": "Let the pilot choose their own waypoints.",
+    "d": "Cancel the STAR once the aircraft descends below 15,000 ft.",
+    "isTrue": 1,
+    "isFalse": 10,
+    "total": 11,
+    "percentageTrue": 9.090909090909092,
+    "answerSummary": {
+      "A": 3,
+      "B": 1,
+      "C": 4,
+      "D": 3
+    }
+  },
+  {
+    "id": 15,
+    "question": "<p>Why are \"Prohibited\" or \"Restricted\" areas strictly monitored in the Bali TMA?</p>",
+    "a": "To save fuel for the airlines.",
+    "b": "To protect ground installations, VIP areas, or sensitive airspace.",
+    "c": "To make the radar screen look organized.",
+    "d": "To limit the speed of incoming jets.",
+    "isTrue": 0,
+    "isFalse": 11,
+    "total": 11,
+    "percentageTrue": 0,
+    "answerSummary": {
+      "A": 6,
+      "B": 0,
+      "C": 3,
+      "D": 2
+    }
+  },
+  {
+    "id": 16,
+    "question": "<p>In an emergency descent situation, the 25nm MSA circle is used as:</p>",
+    "a": "A recommendation for the best landing spot.",
+    "b": "A safety buffer to ensure the aircraft does not hit terrain while descending blindly.",
+    "c": "The maximum range for the aircraft's transponder.",
+    "d": "The location where all aircraft must dump fuel.",
+    "isTrue": 6,
+    "isFalse": 5,
+    "total": 11,
+    "percentageTrue": 54.54545454545454,
+    "answerSummary": {
+      "A": 2,
+      "B": 6,
+      "C": 0,
+      "D": 3
+    }
+  },
+  {
+    "id": 17,
+    "question": "<p>What is the standard horizontal radar separation minima used within the Bali TMA?</p>",
+    "a": "3 NM",
+    "b": "5 NM",
+    "c": "10 NM",
+    "d": "2 NM",
+    "isTrue": 0,
+    "isFalse": 11,
+    "total": 11,
+    "percentageTrue": 0,
+    "answerSummary": {
+      "A": 0,
+      "B": 0,
+      "C": 8,
+      "D": 3
+    }
+  },
+  {
+    "id": 18,
+    "question": "<p>When a \"Heavy\" aircraft (e.g., B777) precedes a \"Medium\" aircraft (e.g., A320), the wake turbulence separation on final is:</p>",
+    "a": "3 NM",
+    "b": "5 NM",
+    "c": "8 NM",
+    "d": "10 NM",
+    "isTrue": 6,
+    "isFalse": 5,
+    "total": 11,
+    "percentageTrue": 54.54545454545454,
+    "answerSummary": {
+      "A": 2,
+      "B": 6,
+      "C": 0,
+      "D": 3
+    }
+  },
+  {
+    "id": 19,
+    "question": "<p>A \"Super\" wake turbulence category is specifically applied to which aircraft at WADD?</p>",
+    "a": "Boeing 747-8",
+    "b": "Airbus A380-800",
+    "c": "Antonov An-124",
+    "d": "Boeing 777-9",
+    "isTrue": 1,
+    "isFalse": 10,
+    "total": 11,
+    "percentageTrue": 9.090909090909092,
+    "answerSummary": {
+      "A": 3,
+      "B": 1,
+      "C": 0,
+      "D": 7
+    }
+  },
+  {
+    "id": 20,
+    "question": "<p>When can \"Reduced Runway Separation\" be applied by a controller?</p>",
+    "a": "Only at night.",
+    "b": "When the runway is wet.",
+    "c": "When the preceding aircraft has passed the threshold or started its takeoff roll.",
+    "d": "Never in the Bali TMA.",
+    "isTrue": 1,
+    "isFalse": 10,
+    "total": 11,
+    "percentageTrue": 9.090909090909092,
+    "answerSummary": {
+      "A": 2,
+      "B": 1,
+      "C": 3,
+      "D": 5
+    }
+  },
+  {
+    "id": 21,
+    "question": "<p>RVSM (Reduced Vertical Separation Minimum) applies between which flight levels?</p>",
+    "a": "FL100 and FL200",
+    "b": "FL290 and FL410 inclusive",
+    "c": "FL130 and FL250",
+    "d": "FL410 and FL600",
+    "isTrue": 5,
+    "isFalse": 6,
+    "total": 11,
+    "percentageTrue": 45.45454545454545,
+    "answerSummary": {
+      "A": 1,
+      "B": 5,
+      "C": 2,
+      "D": 3
+    }
+  },
+  {
+    "id": 22,
+    "question": "<p>If two aircraft are departing on the same SID, what is the standard time separation if radar is not used?</p>",
+    "a": "1 minute",
+    "b": "2 minutes",
+    "c": "5 minutes",
+    "d": "10 minutes",
+    "isTrue": 4,
+    "isFalse": 7,
+    "total": 11,
+    "percentageTrue": 36.36363636363637,
+    "answerSummary": {
+      "A": 1,
+      "B": 4,
+      "C": 1,
+      "D": 5
+    }
+  },
+  {
+    "id": 23,
+    "question": "<p>\"Essential Traffic Information\" is provided to pilots to:</p>",
+    "a": "Promote a specific airline.",
+    "b": "Inform them of other aircraft that may constitute a collision hazard.",
+    "c": "Tell them about the weather in Jakarta.",
+    "d": "Give them the gate number for arrival.",
+    "isTrue": 0,
+    "isFalse": 11,
+    "total": 11,
+    "percentageTrue": 0,
+    "answerSummary": {
+      "A": 4,
+      "B": 0,
+      "C": 6,
+      "D": 1
+    }
+  },
+  {
+    "id": 24,
+    "question": "<p>What is the standard maximum speed for aircraft below 10,000ft in Class C/D airspace?</p><p></p>",
+    "a": "210 KIAS",
+    "b": "250 KIAS",
+    "c": "280 KIAS",
+    "d": "300 KIAS",
+    "isTrue": 4,
+    "isFalse": 7,
+    "total": 11,
+    "percentageTrue": 36.36363636363637,
+    "answerSummary": {
+      "A": 1,
+      "B": 4,
+      "C": 2,
+      "D": 4
+    }
+  },
+  {
+    "id": 25,
+    "question": "<p>When vectoring, a controller's \"Minimum Vectoring Altitude\" (MVA) is:</p>",
+    "a": "Higher than the MSA.",
+    "b": "The lowest altitude a controller can assign while ensuring terrain clearance.",
+    "c": "Always 2,000 ft.",
+    "d": "Determined by the pilot.",
+    "isTrue": 3,
+    "isFalse": 8,
+    "total": 11,
+    "percentageTrue": 27.27272727272727,
+    "answerSummary": {
+      "A": 1,
+      "B": 3,
+      "C": 3,
+      "D": 4
+    }
+  },
+  {
+    "id": 26,
+    "question": "<p>Vertical separation for IFR aircraft below FL290 is usually:</p>",
+    "a": "500 ft",
+    "b": "1,000 ft",
+    "c": "2,000 ft",
+    "d": "3,000 ft",
+    "isTrue": 0,
+    "isFalse": 11,
+    "total": 11,
+    "percentageTrue": 0,
+    "answerSummary": {
+      "A": 8,
+      "B": 0,
+      "C": 1,
+      "D": 2
+    }
+  },
+  {
+    "id": 27,
+    "question": "<p>Coordination for an aircraft's descent from Cruise to TMA entry is done by:</p>",
+    "a": "Bali Tower.",
+    "b": "Makassar ACC and Bali Approach.",
+    "c": "The pilot and the airline dispatcher.",
+    "d": "The Ground controller.",
+    "isTrue": 3,
+    "isFalse": 8,
+    "total": 11,
+    "percentageTrue": 27.27272727272727,
+    "answerSummary": {
+      "A": 0,
+      "B": 3,
+      "C": 6,
+      "D": 2
+    }
+  },
+  {
+    "id": 28,
+    "question": "<p>A \"Continuous Descent Operation\" (CDO) is a technique that minimizes:</p>",
+    "a": "Aircraft speed.",
+    "b": "Level flight segments, reducing noise and fuel burn.",
+    "c": "Radar visibility.",
+    "d": "Pilot workload but increases fuel burn.",
+    "isTrue": 1,
+    "isFalse": 10,
+    "total": 11,
+    "percentageTrue": 9.090909090909092,
+    "answerSummary": {
+      "A": 0,
+      "B": 1,
+      "C": 8,
+      "D": 2
+    }
+  },
+  {
+    "id": 29,
+    "question": "<p>If the \"BALI\" holding pattern is at capacity, the Approach controller must:</p>",
+    "a": "Force planes to land on the grass.",
+    "b": "Coordinate with ACC for \"linear holding\" or speed control further out.",
+    "c": "Turn off the radio.",
+    "d": "Tell pilots to orbit over the volcano.",
+    "isTrue": 1,
+    "isFalse": 10,
+    "total": 11,
+    "percentageTrue": 9.090909090909092,
+    "answerSummary": {
+      "A": 2,
+      "B": 1,
+      "C": 5,
+      "D": 3
+    }
+  },
+  {
+    "id": 30,
+    "question": "<p>An \"Expected Approach Time\" (EAT) must be issued to an aircraft if the delay is expected to exceed:</p>",
+    "a": "5 minutes",
+    "b": "10 minutes",
+    "c": "30 minutes",
+    "d": "60 minutes",
+    "isTrue": 4,
+    "isFalse": 7,
+    "total": 11,
+    "percentageTrue": 36.36363636363637,
+    "answerSummary": {
+      "A": 3,
+      "B": 4,
+      "C": 1,
+      "D": 3
+    }
+  },
+  {
+    "id": 31,
+    "question": "<p>Granting a \"Direct To\" (Short-cut) request in the Bali TMA requires the controller to first check:</p>",
+    "a": "The aircraft's fuel price.",
+    "b": "The Minimum Vectoring Altitude (MVA) for that specific area.",
+    "c": "The passenger count.",
+    "d": "If the pilot is friendly.",
+    "isTrue": 0,
+    "isFalse": 11,
+    "total": 11,
+    "percentageTrue": 0,
+    "answerSummary": {
+      "A": 2,
+      "B": 0,
+      "C": 8,
+      "D": 1
+    }
+  },
+  {
+    "id": 32,
+    "question": "<p>The \"Point Merge\" system (if used) helps controllers by:</p>",
+    "a": "Eliminating the need for a runway.",
+    "b": "Providing a structured way to sequence arrivals using arcs.",
+    "c": "Forcing all planes to fly at the same altitude.",
+    "d": "Making the pilots navigate using only stars.",
+    "isTrue": 1,
+    "isFalse": 10,
+    "total": 11,
+    "percentageTrue": 9.090909090909092,
+    "answerSummary": {
+      "A": 2,
+      "B": 1,
+      "C": 5,
+      "D": 3
+    }
+  },
+  {
+    "id": 33,
+    "question": "<p>The primary objective of an Approach Controller is:</p>",
+    "a": "To sell duty-free items.",
+    "b": "To achieve a safe, orderly, and expeditious flow of air traffic.",
+    "c": "To guide aircraft to the parking gate.",
+    "d": "To manage the airport's lighting system.",
+    "isTrue": 3,
+    "isFalse": 8,
+    "total": 11,
+    "percentageTrue": 27.27272727272727,
+    "answerSummary": {
+      "A": 3,
+      "B": 3,
+      "C": 4,
+      "D": 1
+    }
+  },
+  {
+    "id": 34,
+    "question": "<p>Following a \"Missed Approach,\" the controller's first priority is:</p>",
+    "a": "To ask why the pilot missed.",
+    "b": "To ensure the aircraft is climbing and separated from other traffic.",
+    "c": "To fill out an incident report.",
+    "d": "To cancel the flight plan.",
+    "isTrue": 2,
+    "isFalse": 9,
+    "total": 11,
+    "percentageTrue": 18.181818181818183,
+    "answerSummary": {
+      "A": 4,
+      "B": 2,
+      "C": 5,
+      "D": 0
+    }
+  },
+  {
+    "id": 35,
+    "question": "<p>At what point does the Approach controller typically hand off an arriving aircraft to the Tower?</p>",
+    "a": "At the Top of Descent.",
+    "b": "When the aircraft is established on final and at a specified distance/fix.",
+    "c": "After the aircraft has landed.",
+    "d": "When the pilot sees the beach.",
+    "isTrue": 2,
+    "isFalse": 9,
+    "total": 11,
+    "percentageTrue": 18.181818181818183,
+    "answerSummary": {
+      "A": 1,
+      "B": 2,
+      "C": 8,
+      "D": 0
+    }
+  },
+  {
+    "id": 36,
+    "question": "<p>Standard hand-off sequence for a departing aircraft at WADD is:</p>",
+    "a": "GND -> TWR -> APP -> ACC",
+    "b": "TWR -> GND -> ACC -> APP",
+    "c": "APP -> TWR -> GND -> ACC",
+    "d": "ACC -> APP -> TWR -> GND",
+    "isTrue": 4,
+    "isFalse": 7,
+    "total": 11,
+    "percentageTrue": 36.36363636363637,
+    "answerSummary": {
+      "A": 1,
+      "B": 4,
+      "C": 6,
+      "D": 0
+    }
+  },
+  {
+    "id": 37,
+    "question": "<p>Which transponder code indicates a complete \"Loss of Communication\"?</p>",
+    "a": "7500",
+    "b": "7600",
+    "c": "7700",
+    "d": "2000",
+    "isTrue": 2,
+    "isFalse": 8,
+    "total": 10,
+    "percentageTrue": 20,
+    "answerSummary": {
+      "A": 0,
+      "B": 2,
+      "C": 4,
+      "D": 4
+    }
+  },
+  {
+    "id": 38,
+    "question": "<p>Which transponder code is used for an \"Unlawful Interference\" (Hijack)?</p>",
+    "a": "7500",
+    "b": "7600",
+    "c": "7700",
+    "d": "7000",
+    "isTrue": 3,
+    "isFalse": 8,
+    "total": 11,
+    "percentageTrue": 27.27272727272727,
+    "answerSummary": {
+      "A": 0,
+      "B": 3,
+      "C": 4,
+      "D": 4
+    }
+  },
+  {
+    "id": 39,
+    "question": "<p>If an aircraft declares a \"MAYDAY,\" the controller should:</p>",
+    "a": "Tell the pilot to wait.",
+    "b": "Give that aircraft priority over all other traffic.",
+    "c": "Ask them to switch to a different frequency immediately.",
+    "d": "Inform the airline that the flight is cancelled.",
+    "isTrue": 5,
+    "isFalse": 6,
+    "total": 11,
+    "percentageTrue": 45.45454545454545,
+    "answerSummary": {
+      "A": 0,
+      "B": 5,
+      "C": 3,
+      "D": 3
+    }
+  },
+  {
+    "id": 40,
+    "question": "<p>A \"Safety Alert\" is issued by ATC when:</p>",
+    "a": "The weather is sunny.",
+    "b": "An aircraft is in unsafe proximity to terrain, obstacles, or other aircraft.",
+    "c": "The pilot's license is about to expire.",
+    "d": "A flight is arriving early.",
+    "isTrue": 3,
+    "isFalse": 7,
+    "total": 10,
+    "percentageTrue": 30,
+    "answerSummary": {
+      "A": 1,
+      "B": 3,
+      "C": 5,
+      "D": 1
+    }
+  },
+  {
+    "id": 41,
+    "question": "<p>If volcanic ash from Mt. Agung is reported in the TMA, the controller should:</p>",
+    "a": "Direct all aircraft into the ash cloud to test it.",
+    "b": "Provide the latest reports and assist pilots in avoiding the affected areas.",
+    "c": "Ignore it unless a pilot complains.",
+    "d": "Close the tower and go home.",
+    "isTrue": 2,
+    "isFalse": 9,
+    "total": 11,
+    "percentageTrue": 18.181818181818183,
+    "answerSummary": {
+      "A": 1,
+      "B": 2,
+      "C": 1,
+      "D": 7
+    }
+  },
+  {
+    "id": 42,
+    "question": "<p>A \"MAYDAY FUEL\" declaration requires the controller to:</p>",
+    "a": "Tell the aircraft to hold for 20 minutes.",
+    "b": "Provide immediate priority to the nearest suitable airport.",
+    "c": "Check if the pilot has a credit card for fuel.",
+    "d": "Ask the aircraft to fly at a higher altitude.",
+    "isTrue": 0,
+    "isFalse": 11,
+    "total": 11,
+    "percentageTrue": 0,
+    "answerSummary": {
+      "A": 3,
+      "B": 0,
+      "C": 6,
+      "D": 2
+    }
+  },
+  {
+    "id": 43,
+    "question": "<p>In the event of a \"Bird Strike\" on departure, the controller should:</p>",
+    "a": "Ask the pilot to bring the bird to the office.",
+    "b": "Coordinate an immediate return or standby for emergency instructions.",
+    "c": "Clear a second aircraft to take off immediately.",
+    "d": "Do nothing unless the engine stops.",
+    "isTrue": 3,
+    "isFalse": 8,
+    "total": 11,
+    "percentageTrue": 27.27272727272727,
+    "answerSummary": {
+      "A": 1,
+      "B": 3,
+      "C": 3,
+      "D": 4
+    }
+  },
+  {
+    "id": 44,
+    "question": "<p>An \"Emergency Descent\" by a jet aircraft usually involves:</p>",
+    "a": "A slow, gradual climb.",
+    "b": "A rapid descent to 10,000 ft or the lowest safe altitude.",
+    "c": "Turning off the transponder.",
+    "d": "Flying to a different country.",
+    "isTrue": 2,
+    "isFalse": 6,
+    "total": 8,
+    "percentageTrue": 25,
+    "answerSummary": {
+      "A": 3,
+      "B": 2,
+      "C": 1,
+      "D": 2
+    }
+  },
+  {
+    "id": 45,
+    "question": "<p>If an aircraft \"strays\" into a Prohibited Area, the controller must:</p>",
+    "a": "Warn the aircraft and give instructions to clear the area immediately.",
+    "b": "Delete the aircraft from the radar.",
+    "c": "Call the pilot's family.",
+    "d": "Wait for the military to take over.",
+    "isTrue": 5,
+    "isFalse": 6,
+    "total": 11,
+    "percentageTrue": 45.45454545454545,
+    "answerSummary": {
+      "A": 1,
+      "B": 5,
+      "C": 3,
+      "D": 2
+    }
+  },
+  {
+    "id": 46,
+    "question": "<p>If the main radar system fails, the controller must transition to:</p>",
+    "a": "Procedural (non-radar) separation.",
+    "b": "Visual separation by looking out the window.",
+    "c": "Asking pilots to use their cell phones.",
+    "d": "Closing the entire FIR.",
+    "isTrue": 1,
+    "isFalse": 10,
+    "total": 11,
+    "percentageTrue": 9.090909090909092,
+    "answerSummary": {
+      "A": 5,
+      "B": 1,
+      "C": 0,
+      "D": 5
+    }
+  },
+  {
+    "id": 47,
+    "question": "<p>During the Northwest Monsoon, the prevailing wind at WADD usually favors:</p>",
+    "a": "Runway 09",
+    "b": "Runway 27",
+    "c": "Runway 13",
+    "d": "Runway 31",
+    "isTrue": 5,
+    "isFalse": 6,
+    "total": 11,
+    "percentageTrue": 45.45454545454545,
+    "answerSummary": {
+      "A": 5,
+      "B": 5,
+      "C": 1,
+      "D": 0
+    }
+  },
+  {
+    "id": 48,
+    "question": "<p>Why must the \"ILS Critical Area\" be clear when an aircraft is on auto-land?</p>",
+    "a": "To keep the runway clean.",
+    "b": "To prevent interference with the localizer and glide slope signals.",
+    "c": "To allow ground vehicles to race.",
+    "d": "To save electricity.",
+    "isTrue": 4,
+    "isFalse": 7,
+    "total": 11,
+    "percentageTrue": 36.36363636363637,
+    "answerSummary": {
+      "A": 5,
+      "B": 4,
+      "C": 0,
+      "D": 2
+    }
+  },
+  {
+    "id": 49,
+    "question": "<p>Primary Surveillance Radar (PSR) differs from Secondary (SSR) because:</p>",
+    "a": "PSR requires a transponder.",
+    "b": "PSR detects the \"skin\" reflection of the aircraft without needing a transponder.",
+    "c": "SSR is only for weather.",
+    "d": "PSR is much newer than SSR.",
+    "isTrue": 0,
+    "isFalse": 10,
+    "total": 10,
+    "percentageTrue": 0,
+    "answerSummary": {
+      "A": 3,
+      "B": 0,
+      "C": 3,
+      "D": 4
+    }
+  },
+  {
+    "id": 50,
+    "question": "<p>To \"Identify\" an aircraft using the \"Squawk Ident\" method, the controller looks for:</p>",
+    "a": "The aircraft to turn 90 degrees.",
+    "b": "The data block or target to flash or change appearance on the radar.",
+    "c": "The pilot to wave their wings.",
+    "d": "The altitude to change.",
+    "isTrue": 3,
+    "isFalse": 7,
+    "total": 10,
+    "percentageTrue": 30,
+    "answerSummary": {
+      "A": 1,
+      "B": 3,
+      "C": 0,
+      "D": 6
+    }
+  },
+  {
+    "id": 51,
+    "question": "<p>What information is <em>not</em> typically found on the ATIS (Automatic Terminal Information Service)?</p>",
+    "a": "Current weather (METAR).",
+    "b": "Runway in use.",
+    "c": "Captain's name and age.",
+    "d": "Transition level.",
+    "isTrue": 2,
+    "isFalse": 5,
+    "total": 7,
+    "percentageTrue": 28.57142857142857,
+    "answerSummary": {
+      "A": 3,
+      "B": 2,
+      "C": 1,
+      "D": 1
+    }
+  },
+  {
+    "id": 52,
+    "question": "<p>APA ARtimya Multiple CHoice Question</p>",
+    "a": "A",
+    "b": "B",
+    "c": "C",
+    "d": "D",
+    "isTrue": 8,
+    "isFalse": 3,
+    "total": 11,
+    "percentageTrue": 72.72727272727273,
+    "answerSummary": {
+      "A": 8,
+      "B": 1,
+      "C": 1,
+      "D": 1
+    }
+  }
+]

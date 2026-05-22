@@ -1,38 +1,159 @@
-[
-  {
-    "id": "1",
-    "kindOfQuestion": { "id": "1", "question": "Essay" },
-    "branchUnit": { "id": "1", "unit": "ACC" },
-    "group": "PENDEK"
+{
+  "event": {
+    "event": "WEST SMT 2 2026",
+    "session": {
+      "session": "Semester 2 tahun 2026"
+    },
+    "remarkDoc": {
+      "remark": "PERPANJANGAN"
+    }
   },
-  {
-    "id": "2",
-    "kindOfQuestion": { "id": "1", "question": "Essay" },
-    "branchUnit": { "id": "1", "unit": "ACC" },
-    "group": "PANJANG"
-  },
-  {
-    "id": "3",
-    "kindOfQuestion": { "id": "2", "question": "Multiple Choice" },
-    "branchUnit": { "id": "1", "unit": "ACC" },
-    "group": "STRUKTUR RUANG UDARA"
-  },
-  {
-    "id": "4",
-    "kindOfQuestion": { "id": "2", "question": "Multiple Choice" },
-    "branchUnit": { "id": "1", "unit": "ACC" },
-    "group": "SOP, LOCA DAN INFO"
-  },
-  {
-    "id": "5",
-    "kindOfQuestion": { "id": "2", "question": "Multiple Choice" },
-    "branchUnit": { "id": "1", "unit": "ACC" },
-    "group": "FAS NAV PNB"
-  },
-  {
-    "id": "6",
-    "kindOfQuestion": { "id": "2", "question": "Multiple Choice" },
-    "branchUnit": { "id": "1", "unit": "ACC" },
-    "group": "FAS NAV PNB"
-  }
-]
+  "sortEventUser": [
+    {
+      "id": 9,
+      "user": {
+        "name": "ANATA CELOSIA ASSYIFA",
+        "licenseUserId": "3459"
+      },
+      "applicationDocs": []
+    },
+    {
+      "id": 10,
+      "user": {
+        "name": "ANATA GYANO FATHLANI",
+        "licenseUserId": "3480"
+      },
+      "applicationDocs": []
+    },
+    {
+      "id": 8,
+      "user": {
+        "name": "ANATA SHAIMA GALYNA",
+        "licenseUserId": "3460"
+      },
+      "applicationDocs": []
+    },
+    {
+      "id": 12,
+      "user": {
+        "name": "INDRA SUDARSONO",
+        "licenseUserId": "3458"
+      },
+      "applicationDocs": [
+        {
+          "id": 30,
+          "number": "ATC/PERPANJANGAN/3458-1",
+          "license": {
+            "id": 5,
+            "file": "/uploads/license/license-1773194927526-388795055.pdf",
+            "expiredDate": "2026-06-30T23:59:59.000Z"
+          },
+          "medex": {
+            "id": 1,
+            "file": "/uploads/medex/medex-1773218860918-197781161.pdf",
+            "expired": "2026-05-28T23:59:59.000Z"
+          },
+          "ielp": {
+            "id": 1,
+            "file": "/uploads/ielp/ielp-1773198770987-120277416.pdf",
+            "expired": "2029-03-15T23:59:59.000Z"
+          },
+          "logbook": {
+            "id": 1,
+            "file": "/uploads/logbookUser/logbookUser-1773965801351-221550746.pdf"
+          },
+          "appRatings": [
+            {
+              "id": 36,
+              "rating": {
+                "id": 6,
+                "rating": "ACP"
+              },
+              "finalScores": [],
+              "practicalTests": [
+                {
+                  "id": 34,
+                  "score": null,
+                  "file": null,
+                  "kindOfPractical": {
+                    "id": 1,
+                    "kind": "PRACTICAL"
+                  },
+                  "checkerGroup": {
+                    "id": 20,
+                    "userChecker": {
+                      "name": "FENNY APRILIANI PUTRI"
+                    }
+                  }
+                },
+                {
+                  "id": 35,
+                  "score": null,
+                  "file": null,
+                  "kindOfPractical": {
+                    "id": 2,
+                    "kind": "SIMULATOR"
+                  },
+                  "checkerGroup": {
+                    "id": 20,
+                    "userChecker": {
+                      "name": "FENNY APRILIANI PUTRI"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 37,
+              "rating": {
+                "id": 7,
+                "rating": "ACS"
+              },
+              "finalScores": [],
+              "practicalTests": [
+                {
+                  "id": 36,
+                  "score": null,
+                  "file": null,
+                  "kindOfPractical": {
+                    "id": 1,
+                    "kind": "PRACTICAL"
+                  },
+                  "checkerGroup": {
+                    "id": 20,
+                    "userChecker": {
+                      "name": "FENNY APRILIANI PUTRI"
+                    }
+                  }
+                },
+                {
+                  "id": 37,
+                  "score": null,
+                  "file": null,
+                  "kindOfPractical": {
+                    "id": 2,
+                    "kind": "SIMULATOR"
+                  },
+                  "checkerGroup": {
+                    "id": 20,
+                    "userChecker": {
+                      "name": "FENNY APRILIANI PUTRI"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "user": {
+        "name": "MARCO REUS",
+        "licenseUserId": "3463"
+      },
+      "applicationDocs": []
+    }
+  ]
+}

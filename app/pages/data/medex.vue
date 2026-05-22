@@ -1,68 +1,59 @@
 <script setup lang="ts">
-import type { TableColumn } from "@nuxt/ui";
-import { getPaginationRowModel } from "@tanstack/table-core";
+import ip from "../../utils/config.json";
 
-const UButton = resolveComponent("UButton");
+interface MedexItem {
+  id?: number;
+  expired?: string | null;
+  file?: string | null;
+}
 
-// Define MEDEX interface
-interface MEDEX {
-  id: number;
+interface MedexApiItem {
+  nik?: string | null;
+  name?: string | null;
+  medex?: MedexItem[] | null;
+}
+
+interface MedexRow {
+  no: number;
+  nik: string;
   name: string;
-  released: string;
   expired: string;
-  examiner: string;
-  institution: string;
-  isConfirm: boolean;
+  expiredRaw: string | null;
+  file: string | null;
 }
 
+const { token } = useAuth();
 const toast = useToast();
-const table = useTemplateRef("table");
 
-// Search filter
 const searchQuery = ref("");
+const isFileModalOpen = ref(false);
+const selectedFilePath = ref<string | null>(null);
 
-// Table state
-const columnFilters = computed(() => [
+const { data, status, error, refresh } = await useFetch<MedexApiItem[]>(
+  `http://${ip.ipBackEnd}/api/dataCheckerMedex`,
   {
-    id: "name",
-    value: searchQuery.value,
+    headers: {
+      Authorization: token.value ? `Bearer ${token.value}` : "",
+    },
+    default: () => [],
   },
-]);
-const columnVisibility = ref();
-const rowSelection = ref({});
+);
 
-// Pagination state
-const pagination = ref({
-  pageIndex: 0,
-  pageSize: 10,
-});
-
-// Fetch MEDEX data
-const { data, status, refresh } = await useFetch<MEDEX[]>("/api/medex", {
-  lazy: true,
-  default: () => [],
-});
-
-// Helper function to check if date is within months from now
-function getExpirationStatus(expiredDate: string): "red" | "yellow" | "normal" {
-  const now = new Date();
-  const expired = new Date(expiredDate);
-  const diffTime = expired.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  const diffMonths = diffDays / 30;
-
-  if (diffMonths < 2) {
-    return "red";
-  } else if (diffMonths < 4) {
-    return "yellow";
-  }
-  return "normal";
+function getLatestMedex(medexList?: MedexItem[] | null): MedexItem | null {
+  if (!medexList || medexList.length === 0) return null;
+  return (
+    [...medexList].sort((a, b) => {
+      const aTime = a.expired ? new Date(a.expired).getTime() : -Infinity;
+      const bTime = b.expired ? new Date(b.expired).getTime() : -Infinity;
+      return bTime - aTime;
+    })[0] || null
+  );
 }
 
-// Helper function to format date
-function formatDate(dateString: string): string {
+function formatDate(dateString?: string | null): string {
   if (!dateString) return "-";
   const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "2-digit",
@@ -70,85 +61,182 @@ function formatDate(dateString: string): string {
   });
 }
 
-// Table columns definition
-const columns: TableColumn<MEDEX>[] = [
-  {
-    id: "no",
-    header: "NO",
-    cell: ({ row }) => {
-      const pageIndex =
-        table.value?.tableApi?.getState().pagination.pageIndex || 0;
-      const pageSize =
-        table.value?.tableApi?.getState().pagination.pageSize || 10;
-      return pageIndex * pageSize + row.index + 1;
-    },
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
+function daysUntil(expiredDate?: string | null): number | null {
+  if (!expiredDate) return null;
+  const expired = new Date(expiredDate);
+  if (Number.isNaN(expired.getTime())) return null;
 
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Name",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    cell: ({ row }) => {
-      return h(
-        "div",
-        { class: "font-medium text-highlighted" },
-        row.original.name,
-      );
-    },
-  },
-  {
-    accessorKey: "expired",
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
+  const now = new Date();
+  const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const expiredStart = new Date(
+    expired.getFullYear(),
+    expired.getMonth(),
+    expired.getDate(),
+  );
+  const diffTime = expiredStart.getTime() - nowStart.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
 
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Expiration Date",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    cell: ({ row }) => {
-      const status = getExpirationStatus(row.original.expired);
-      const baseClasses =
-        "px-3 py-1 rounded-full text-sm font-medium inline-block";
-      const statusClasses = {
-        red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-        yellow:
-          "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-        normal:
-          "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-      };
+function getExpiredCellClass(expiredDate?: string | null): string {
+  const days = daysUntil(expiredDate);
+  if (days === null) return "";
+  if (days < 30) return "bg-red-100 text-red-800";
+  if (days <= 60) return "bg-orange-100 text-orange-800";
+  return "";
+}
 
-      return h(
-        "span",
-        {
-          class: `${baseClasses} ${statusClasses[status]}`,
-        },
-        formatDate(row.original.expired),
-      );
-    },
-  },
-];
+function getPrintExpiredCellStyle(expiredDate?: string | null): string {
+  const days = daysUntil(expiredDate);
+  if (days === null) return "";
+  if (days < 30) return "background:#fee2e2;color:#991b1b;";
+  if (days <= 60) return "background:#ffedd5;color:#9a3412;";
+  return "";
+}
+
+function resolveFileUrl(filePath?: string | null): string | null {
+  if (!filePath) return null;
+  if (/^https?:\/\//i.test(filePath)) return filePath;
+  return `http://${ip.ipBackEnd}${filePath}`;
+}
+
+function getFileExtension(filePath?: string | null): string {
+  if (!filePath) return "";
+  const cleanPath = filePath.split("?")[0] ?? "";
+  return (cleanPath.split(".").pop() || "").toLowerCase();
+}
+
+function isImageFile(filePath?: string | null): boolean {
+  const ext = getFileExtension(filePath);
+  return ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"].includes(ext);
+}
+
+function isPdfFile(filePath?: string | null): boolean {
+  return getFileExtension(filePath) === "pdf";
+}
+
+function openFileModal(filePath: string | null) {
+  if (!filePath) return;
+  selectedFilePath.value = filePath;
+  isFileModalOpen.value = true;
+}
+
+function closeFileModal() {
+  isFileModalOpen.value = false;
+  selectedFilePath.value = null;
+}
+
+const rows = computed<MedexRow[]>(() => {
+  const payload = data.value || [];
+
+  return payload.map((item, index) => {
+    const latestMedex = getLatestMedex(item.medex);
+
+    return {
+      no: index + 1,
+      nik: item.nik || "-",
+      name: item.name || "-",
+      expired: formatDate(latestMedex?.expired || null),
+      expiredRaw: latestMedex?.expired || null,
+      file: latestMedex?.file || null,
+    };
+  });
+});
+
+const filteredRows = computed(() => {
+  const keyword = searchQuery.value.trim().toLowerCase();
+  if (!keyword) return rows.value;
+
+  return rows.value.filter((row) => {
+    return (
+      row.nik.toLowerCase().includes(keyword) ||
+      row.name.toLowerCase().includes(keyword)
+    );
+  });
+});
+
+const errorMessage = computed(() => {
+  if (!error.value) return "";
+  const err = error.value as { data?: { message?: string }; message?: string };
+  return err.data?.message || err.message || "Failed to load MEDEX data.";
+});
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function handlePrintPdf() {
+  const printableRows = filteredRows.value;
+
+  const tableRowsHtml = printableRows
+    .map((row) => {
+      const style = getPrintExpiredCellStyle(row.expiredRaw);
+      return `
+        <tr>
+          <td>${row.no}</td>
+          <td>${escapeHtml(row.nik)}</td>
+          <td>${escapeHtml(row.name)}</td>
+          <td style="${style}">${escapeHtml(row.expired)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const printWindow = window.open("", "_blank", "width=1000,height=700");
+  if (!printWindow) {
+    toast.add({
+      title: "Error",
+      description: "Unable to open print window.",
+      color: "error",
+    });
+    return;
+  }
+
+  const html = `
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>MEDEX Data</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 16px; color: #111827; }
+          h2 { margin: 0 0 12px 0; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #d1d5db; padding: 8px; font-size: 12px; }
+          th { background: #f3f4f6; text-align: center; }
+          td:nth-child(1), td:nth-child(2), td:nth-child(4) { text-align: center; }
+          @page { size: A4 portrait; margin: 12mm; }
+        </style>
+      </head>
+      <body>
+        <h2>MEDEX Data</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>NIK</th>
+              <th>Name</th>
+              <th>Expired Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRowsHtml || '<tr><td colspan="4" style="text-align:center;">No data</td></tr>'}
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `;
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
 </script>
 
 <template>
@@ -162,106 +250,186 @@ const columns: TableColumn<MEDEX>[] = [
     </template>
 
     <template #body>
-      <!-- Filters -->
-      <div class="flex flex-col gap-4 mb-4">
-        <div class="flex items-center gap-2">
+      <div class="space-y-4">
+        <div
+          class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        >
           <UInput
             v-model="searchQuery"
-            placeholder="Filter names..."
-            class="max-w-sm"
+            placeholder="Filter by NIK or Name"
             icon="i-lucide-search"
+            class="w-full md:max-w-sm"
           />
+
+          <div class="flex items-center gap-2">
+            <UButton
+              label="Refresh"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-refresh-cw"
+              @click="() => refresh()"
+            />
+            <UButton
+              label="Print PDF"
+              color="primary"
+              variant="solid"
+              icon="i-lucide-printer"
+              @click="handlePrintPdf"
+            />
+          </div>
+        </div>
+
+        <div
+          v-if="status === 'pending'"
+          class="flex items-center gap-2 text-muted py-4"
+        >
+          <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
+          Loading MEDEX data...
+        </div>
+
+        <div
+          v-else-if="error"
+          class="rounded-lg border border-error/30 bg-error/5 p-4 space-y-2"
+        >
+          <p class="font-medium text-error">{{ errorMessage }}</p>
           <UButton
-            label="Refresh"
-            color="neutral"
+            label="Retry"
+            color="error"
             variant="outline"
             icon="i-lucide-refresh-cw"
-            @click="refresh"
+            @click="() => refresh()"
           />
         </div>
 
-        <!-- Legend -->
-        <div class="flex items-center gap-4 text-sm">
-          <div class="flex items-center gap-2">
-            <span
-              class="w-3 h-3 rounded-full bg-red-100 border border-red-300"
-            ></span>
-            <span class="text-muted">Expires in < 2 months</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span
-              class="w-3 h-3 rounded-full bg-yellow-100 border border-yellow-300"
-            ></span>
-            <span class="text-muted">Expires in < 4 months</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span
-              class="w-3 h-3 rounded-full bg-green-100 border border-green-300"
-            ></span>
-            <span class="text-muted">Valid</span>
-          </div>
+        <div v-else class="overflow-x-auto rounded-lg border">
+          <table
+            class="min-w-full text-sm border-collapse border border-default"
+          >
+            <thead class="bg-muted/40">
+              <tr>
+                <th
+                  class="px-3 py-2 text-center font-medium border border-default"
+                >
+                  No
+                </th>
+                <th
+                  class="px-3 py-2 text-center font-medium border border-default"
+                >
+                  NIK
+                </th>
+                <th
+                  class="px-3 py-2 text-center font-medium border border-default"
+                >
+                  Name
+                </th>
+                <th
+                  class="px-3 py-2 text-center font-medium border border-default"
+                >
+                  Expired Date
+                </th>
+                <th
+                  class="px-3 py-2 text-center font-medium border border-default"
+                >
+                  File
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in filteredRows" :key="`${row.nik}-${row.no}`">
+                <td class="px-3 py-2 border border-default text-center">
+                  {{ row.no }}
+                </td>
+                <td class="px-3 py-2 border border-default text-center">
+                  {{ row.nik }}
+                </td>
+                <td class="px-3 py-2 border border-default">{{ row.name }}</td>
+                <td
+                  class="px-3 py-2 border border-default text-center"
+                  :class="getExpiredCellClass(row.expiredRaw)"
+                >
+                  {{ row.expired }}
+                </td>
+                <td class="px-3 py-2 border border-default text-center">
+                  <UButton
+                    v-if="row.file"
+                    icon="i-lucide-eye"
+                    color="primary"
+                    variant="soft"
+                    size="xs"
+                    @click="openFileModal(row.file)"
+                  />
+                </td>
+              </tr>
+
+              <tr v-if="filteredRows.length === 0">
+                <td
+                  class="px-3 py-3 text-muted border border-default text-center"
+                  colspan="5"
+                >
+                  No MEDEX data available.
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
 
-      <UTable
-        v-if="data && data.length > 0"
-        ref="table"
-        v-model:column-filters="columnFilters"
-        v-model:column-visibility="columnVisibility"
-        v-model:row-selection="rowSelection"
-        v-model:pagination="pagination"
-        :pagination-options="{
-          getPaginationRowModel: getPaginationRowModel(),
-        }"
-        class="shrink-0"
-        :data="data || []"
-        :columns="columns"
-        :loading="status === 'pending'"
-        :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
-          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-          tbody: '[&>tr]:last:[&>td]:border-b-0',
-          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default',
-          separator: 'h-0',
-        }"
-      />
+        <UModal
+          :open="isFileModalOpen"
+          title="MEDEX File"
+          :ui="{ content: 'max-w-4xl w-full h-full' }"
+          @update:open="(value) => (!value ? closeFileModal() : null)"
+        >
+          <template #body>
+            <div style="height: 70vh">
+              <div
+                v-if="isImageFile(selectedFilePath)"
+                class="flex h-full items-center justify-center rounded-lg border border-default bg-muted/20 p-2"
+              >
+                <img
+                  :src="resolveFileUrl(selectedFilePath) || ''"
+                  alt="MEDEX file"
+                  class="h-full w-full rounded object-contain"
+                />
+              </div>
 
-      <!-- Empty State -->
-      <div
-        v-else-if="!status || status === 'success'"
-        class="flex flex-col items-center justify-center py-12 text-center"
-      >
-        <UIcon name="i-lucide-inbox" class="text-4xl text-muted mb-4" />
-        <p class="text-muted">No MEDEX data available</p>
-      </div>
+              <div
+                v-else-if="isPdfFile(selectedFilePath)"
+                class="h-full rounded-lg border border-default overflow-hidden"
+              >
+                <iframe
+                  :src="resolveFileUrl(selectedFilePath) || ''"
+                  style="height: 100%; width: 100%"
+                  title="MEDEX file"
+                />
+              </div>
 
-      <div
-        v-if="data && data.length > 0"
-        class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
-      >
-        <div class="text-sm text-muted">
-          Showing {{ pagination.pageIndex * pagination.pageSize + 1 }} to
-          {{
-            Math.min(
-              (pagination.pageIndex + 1) * pagination.pageSize,
-              table?.tableApi?.getFilteredRowModel().rows.length || 0,
-            )
-          }}
-          of
-          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} records
-        </div>
-
-        <div class="flex items-center gap-1.5">
-          <UPagination
-            :default-page="
-              (table?.tableApi?.getState().pagination.pageIndex || 0) + 1
-            "
-            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-            :total="table?.tableApi?.getFilteredRowModel().rows.length"
-            @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
-          />
-        </div>
+              <div
+                v-else
+                class="rounded-lg border border-default bg-muted/20 p-4 text-sm text-muted"
+              >
+                Preview is not available for this file type.
+              </div>
+            </div>
+          </template>
+          <template #footer>
+            <div class="flex items-center justify-end gap-2 w-full">
+              <a
+                :href="resolveFileUrl(selectedFilePath) || '#'"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-sm text-primary hover:underline"
+              >
+                Open file in new tab
+              </a>
+              <UButton
+                label="Close"
+                color="neutral"
+                variant="soft"
+                @click="closeFileModal"
+              />
+            </div>
+          </template>
+        </UModal>
       </div>
     </template>
   </UDashboardPanel>

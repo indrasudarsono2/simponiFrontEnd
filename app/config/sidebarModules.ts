@@ -23,6 +23,7 @@ export type ModuleKey =
   | "room"
   | "multipleChoiceQuestion"
   | "essayChoiceQuestion"
+  | "checkerStatistic"
   | "score"
   | "data"
   | "verification"
@@ -199,6 +200,19 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
       { label: "Question Group", to: "/multipleChoice/group" },
     ],
   },
+
+  checkerStatistic: {
+    label: "Statistic",
+    icon: "i-lucide-calendar-sync",
+    to: "/checkerStatistic",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Member", to: "/checkerStatistic/member" },
+      { label: "Question", to: "/checkerStatistic/question" },
+    ],
+  },
+
   essayChoiceQuestion: {
     label: "Essay Preparation",
     icon: "i-lucide-pen-line",
@@ -211,14 +225,7 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
       { label: "Essay Group", to: "/essay/group" },
     ],
   },
-  score: {
-    label: "Score",
-    icon: "i-lucide-star",
-    to: "/settings",
-    type: "trigger",
-    defaultOpen: true,
-    children: [{ label: "Score", to: "/settings/members" }],
-  },
+
   data: {
     label: "Data",
     icon: "i-lucide-database-backup",
@@ -228,7 +235,7 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     children: [
       { label: "IELP", to: "/data/ielp" },
       { label: "MEDEX", to: "/data/medex" },
-      { label: "Competence", to: "/settings/members" },
+      { label: "Competence", to: "/data/competence" },
     ],
   },
   // verification: {
@@ -258,13 +265,18 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     icon: "i-lucide-school",
     to: "/practicalExam/practical",
   },
+  // history: {
+  //   label: "History",
+  //   icon: "i-lucide-history",
+  //   to: "/history",
+  //   type: "trigger",
+  //   defaultOpen: true,
+  //   children: [{ label: "History", to: "/settings" }],
+  // },
   history: {
-    label: "History",
+    label: "history",
     icon: "i-lucide-history",
-    to: "/history",
-    type: "trigger",
-    defaultOpen: true,
-    children: [{ label: "History", to: "/settings" }],
+    to: "/checkerHistory/history",
   },
   dailyBriefing: {
     label: "Daily Briefing",
@@ -322,16 +334,29 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     to: "/examination/examination",
   },
   userHistory: {
-    label: "History",
+    label: "Score History",
     icon: "i-lucide-file-clock",
     to: "/userHistory",
     type: "trigger",
     defaultOpen: true,
     children: [
-      { label: "Score Recap", to: "/settings" },
-      { label: "Practical Exam", to: "/settings/members" },
+      { label: "Score Recap", to: "/userHistory/scorRecap" },
+      { label: "Practical Exam", to: "/userHistory/practicalExam" },
     ],
   },
+
+  score: {
+    label: "Score",
+    icon: "i-lucide-star",
+    to: "/settings",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Score", to: "/checkerScore/scoreRecap" },
+      { label: "Practical Exam", to: "/checkerScore/practicalExam" },
+    ],
+  },
+
   medicalTest: {
     label: "Medical Test",
     icon: "i-lucide-heart-pulse",
