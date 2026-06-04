@@ -1,43 +1,55 @@
 [
   {
-    "id": 1,
-    "remark": "PENERBITAN",
-    "events": []
+    "nik": "10077772",
+    "licenseUserId": "8882",
+    "name": "ARMITA",
+    "userRatings": [
+      {
+        "id": 2,
+        "expireddate": "2026-06-26T00:00:00.000Z",
+        "rating": {
+          "rating": "TWR"
+        }
+      }
+    ]
   },
   {
-    "id": 2,
-    "remark": "PERPANJANGAN",
-    "events": [
+    "nik": "10077771",
+    "licenseUserId": "8881",
+    "name": "CITTA",
+    "userRatings": []
+  },
+  {
+    "nik": "10077770",
+    "licenseUserId": "8880",
+    "name": "DAPOT",
+    "userRatings": [
       {
         "id": 1,
-        "event": "WEST SMT 2 2026",
-        "session": {
-          "id": 3,
-          "session": "Semester 2 tahun 2026"
+        "expireddate": "2026-12-31T00:00:00.000Z",
+        "rating": {
+          "rating": "TWR"
         }
       },
       {
-        "id": 5,
-        "event": "EAST SMT 2026",
-        "session": {
-          "id": 3,
-          "session": "Semester 2 tahun 2026"
+        "id": 4,
+        "expireddate": "2026-12-31T00:00:00.000Z",
+        "rating": {
+          "rating": "APS"
         }
-      },
+      }
+    ]
+  },
+  {
+    "nik": "10077773",
+    "licenseUserId": "8883",
+    "name": "I WAYAN INDRA",
+    "userRatings": [
       {
-        "id": 6,
-        "event": "NORTH SMT 2026",
-        "session": {
-          "id": 3,
-          "session": "Semester 2 tahun 2026"
-        }
-      },
-      {
-        "id": 7,
-        "event": "TEST",
-        "session": {
-          "id": 3,
-          "session": "Semester 2 tahun 2026"
+        "id": 3,
+        "expireddate": "2026-12-31T00:00:00.000Z",
+        "rating": {
+          "rating": "TWR"
         }
       }
     ]

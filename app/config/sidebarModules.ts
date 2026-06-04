@@ -20,6 +20,7 @@ export type ModuleKey =
   | "branchUnitManagement"
   ////////////////////BRANCH ADMIN
   | "eventPreparation"
+  | "ratingSummary"
   | "room"
   | "multipleChoiceQuestion"
   | "essayChoiceQuestion"
@@ -199,6 +200,12 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
       { label: "Question", to: "/multipleChoice/question" },
       { label: "Question Group", to: "/multipleChoice/group" },
     ],
+  },
+
+  ratingSummary: {
+    label: "Rating Summary",
+    icon: "i-lucide-radar",
+    to: "/ratingSummary/rating",
   },
 
   checkerStatistic: {
