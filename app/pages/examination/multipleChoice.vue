@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ip from "../../utils/config.json";
+import { useScreenMonitoring } from "../../composables/useScreenMonitoring";
 
 interface MultipleChoiceItem {
   id: number;
@@ -106,6 +107,18 @@ const isCameraInitializing = ref(false);
 const isCameraReady = ref(false);
 const cameraError = ref<string | null>(null);
 const isCameraObstructed = ref(false);
+const isExamStarted = ref(false);
+const {
+  screenMonitoringEnabled,
+  screenSupportError,
+  isScreenInitializing,
+  isScreenReady,
+  screenError,
+  checkScreenMonitoringSupport,
+  startScreenCapture,
+  stopScreenCapture,
+  captureScreenSnapshotBlob,
+} = useScreenMonitoring();
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 let postTimeInterval: ReturnType<typeof setInterval> | null = null;
 let randomSnapshotTimeouts: Array<ReturnType<typeof setTimeout>> = [];
@@ -315,7 +328,13 @@ const isAllQuestionsAnswered = computed(
 
 const isTimeUp = computed(() => remainingSeconds.value <= 0);
 const canContinueExam = computed(
-  () => isCameraReady.value && !isCameraObstructed.value,
+  () =>
+    isCameraReady.value &&
+    !isCameraObstructed.value &&
+    (!screenMonitoringEnabled || isScreenReady.value),
+);
+const isMonitoringInitializing = computed(
+  () => isCameraInitializing.value || isScreenInitializing.value,
 );
 const isLessThanTenMinutes = computed(
   () => remainingSeconds.value > 300 && remainingSeconds.value < 600,
@@ -373,6 +392,17 @@ function stopCameraStream() {
   }
   isCameraReady.value = false;
   isCameraObstructed.value = false;
+}
+
+function activateExamination(payload: ExaminationMultipleChoiceResponse) {
+  if (isExamStarted.value) return;
+  isExamStarted.value = true;
+  startCountdown(getCountdownMinutes(payload));
+  startPostTimeInterval(payload);
+  scheduleRandomSnapshots(payload);
+  if (isTimeUp.value) {
+    void submitAnswers(true);
+  }
 }
 
 function getCameraErrorMessage(error: unknown): string {
@@ -438,6 +468,20 @@ async function startCamera() {
   } finally {
     isCameraInitializing.value = false;
   }
+}
+
+async function startExamMonitoring() {
+  if (screenMonitoringEnabled && !isScreenReady.value) {
+    const screenStarted = await startScreenCapture();
+    if (!screenStarted) return;
+  }
+
+  if (!isCameraReady.value) {
+    await startCamera();
+  }
+
+  if (!canContinueExam.value || !multipleChoiceData.value) return;
+  activateExamination(multipleChoiceData.value);
 }
 
 function detectCameraObstruction(): boolean {
@@ -528,7 +572,7 @@ function captureCameraSnapshotBlob(): Promise<Blob | null> {
   });
 }
 
-async function postCameraSnapshot(
+async function postMonitoringSnapshot(
   payload: ExaminationMultipleChoiceResponse,
   targetMinute: number,
 ) {
@@ -549,8 +593,13 @@ async function postCameraSnapshot(
     return;
   }
 
-  const snapshotBlob = await captureCameraSnapshotBlob();
-  if (!snapshotBlob) {
+  const [cameraBlob, screenBlob] = await Promise.all([
+    captureCameraSnapshotBlob(),
+    screenMonitoringEnabled
+      ? captureScreenSnapshotBlob()
+      : Promise.resolve(null),
+  ]);
+  if (!cameraBlob) {
     toast.add({
       title: "Camera Snapshot Failed",
       description: `Unable to capture photo at minute ${targetMinute}.`,
@@ -558,16 +607,32 @@ async function postCameraSnapshot(
     });
     return;
   }
+  if (screenMonitoringEnabled && !screenBlob) {
+    toast.add({
+      title: "Screen Snapshot Failed",
+      description: `Unable to capture the screen at minute ${targetMinute}.`,
+      color: "warning",
+    });
+  }
 
   const formData = new FormData();
   formData.append("eventId", String(currentEventId));
   formData.append("appRatingId", String(currentAppRatingId));
   formData.append("groupMemberId", String(currentGroupMemberId));
   formData.append(
-    "file",
-    snapshotBlob,
-    `mc-${currentEventId}-${currentGroupMemberId}-m${targetMinute}.jpg`,
+    screenMonitoringEnabled ? "cameraFile" : "file",
+    cameraBlob,
+    screenMonitoringEnabled
+      ? `mc-camera-${currentEventId}-${currentGroupMemberId}-m${targetMinute}.jpg`
+      : `mc-${currentEventId}-${currentGroupMemberId}-m${targetMinute}.jpg`,
   );
+  if (screenBlob) {
+    formData.append(
+      "screenFile",
+      screenBlob,
+      `mc-screen-${currentEventId}-${currentGroupMemberId}-m${targetMinute}.jpg`,
+    );
+  }
 
   try {
     await $fetch(`http://${ip.ipBackEnd}/api/preview`, {
@@ -580,7 +645,7 @@ async function postCameraSnapshot(
   } catch (_error) {
     toast.add({
       title: "Upload Failed",
-      description: `Failed to upload camera snapshot at minute ${targetMinute}.`,
+      description: `Failed to upload monitoring snapshots at minute ${targetMinute}.`,
       color: "error",
     });
   }
@@ -620,7 +685,7 @@ function scheduleRandomSnapshots(payload: ExaminationMultipleChoiceResponse) {
       Math.round((minuteMark - elapsedMinutes) * 60 * 1000),
     );
     const timer = setTimeout(() => {
-      void postCameraSnapshot(payload, minuteMark);
+      void postMonitoringSnapshot(payload, minuteMark);
     }, delayMs);
     randomSnapshotTimeouts.push(timer);
   });
@@ -974,11 +1039,8 @@ async function loadMultipleChoiceData() {
       }
     }
 
-    startCountdown(getCountdownMinutes(payload));
-    startPostTimeInterval(payload);
-    scheduleRandomSnapshots(payload);
-    if (isTimeUp.value) {
-      void submitAnswers(true);
+    if (!screenMonitoringEnabled) {
+      activateExamination(payload);
     }
   } catch (error: any) {
     fetchError.value =
@@ -997,8 +1059,19 @@ watch(cameraVideoRef, async (videoEl) => {
 });
 
 onMounted(async () => {
+  if (screenMonitoringEnabled && !checkScreenMonitoringSupport()) {
+    toast.add({
+      title: "Browser Upgrade Required",
+      description:
+        screenSupportError.value ||
+        "Please update your browser to continue the examination.",
+      color: "warning",
+    });
+  }
   await loadMultipleChoiceData();
-  await startCamera();
+  if (!screenMonitoringEnabled) {
+    await startCamera();
+  }
 });
 watch(
   multipleChoiceGroups,
@@ -1027,6 +1100,7 @@ onBeforeUnmount(() => {
   clearPostTimeInterval();
   clearRandomSnapshotTimeouts();
   stopCameraStream();
+  stopScreenCapture();
 });
 </script>
 
@@ -1086,7 +1160,44 @@ onBeforeUnmount(() => {
         </div>
 
         <template v-else>
-          <UCard>
+          <UCard
+            v-if="screenMonitoringEnabled && !isExamStarted"
+            class="border border-warning/40 bg-warning/5"
+          >
+            <div class="space-y-3">
+              <div>
+                <p class="font-semibold text-highlighted">
+                  Monitoring permission required
+                </p>
+                <p class="text-sm text-muted">
+                  Select Entire Screen and allow camera access. The examination
+                  timer starts after both monitoring sources are active.
+                </p>
+              </div>
+              <p
+                v-if="screenError && !screenSupportError"
+                class="text-sm text-error"
+              >
+                {{ screenError }}
+              </p>
+              <p v-if="screenSupportError" class="text-sm text-error">
+                {{ screenSupportError }}
+              </p>
+              <p v-if="cameraError" class="text-sm text-error">
+                {{ cameraError }}
+              </p>
+              <UButton
+                label="Start Examination"
+                icon="i-lucide-monitor-up"
+                :loading="isMonitoringInitializing"
+                :disabled="!!screenSupportError"
+                @click="startExamMonitoring"
+              />
+            </div>
+          </UCard>
+
+          <template v-if="isExamStarted || !screenMonitoringEnabled">
+            <UCard>
             <div class="space-y-4">
               <div class="text-sm text-muted">
                 <p>
@@ -1115,19 +1226,30 @@ onBeforeUnmount(() => {
                           : 'border-primary/30 bg-primary/10 text-primary'
                     "
                   >
-                    Time Left: {{ countdownText }}
+                    Time Left: {{ isExamStarted ? countdownText : "--:--" }}
                   </div>
                 </div>
 
                 <div class="rounded-xl border border-default p-3 bg-muted/20">
-                  <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center justify-between gap-2 mb-2">
                     <p class="text-sm font-medium text-highlighted">
-                      Camera Monitoring
+                      {{
+                        screenMonitoringEnabled
+                          ? "Camera & Screen Monitoring"
+                          : "Camera Monitoring"
+                      }}
                     </p>
-                    <UBadge
-                      :color="isCameraReady ? 'success' : 'error'"
-                      :label="isCameraReady ? 'Active' : 'Inactive'"
-                    />
+                    <div class="flex gap-1">
+                      <UBadge
+                        :color="isCameraReady ? 'success' : 'error'"
+                        :label="isCameraReady ? 'Camera Active' : 'Camera Inactive'"
+                      />
+                      <UBadge
+                        v-if="screenMonitoringEnabled"
+                        :color="isScreenReady ? 'success' : 'error'"
+                        :label="isScreenReady ? 'Screen Active' : 'Screen Inactive'"
+                      />
+                    </div>
                   </div>
 
                   <video
@@ -1150,8 +1272,21 @@ onBeforeUnmount(() => {
                   >
                     Initializing camera...
                   </p>
+                  <p v-if="screenError" class="text-xs text-error mt-2">
+                    {{ screenError }}
+                  </p>
 
-                  <div class="mt-2 flex justify-end">
+                  <div class="mt-2 flex justify-end gap-2">
+                    <UButton
+                      v-if="screenMonitoringEnabled && !isScreenReady"
+                      label="Share Entire Screen"
+                      size="xs"
+                      color="warning"
+                      variant="outline"
+                      icon="i-lucide-monitor-up"
+                      :loading="isScreenInitializing"
+                      @click="startExamMonitoring"
+                    />
                     <UButton
                       label="Retry Camera"
                       size="xs"
@@ -1171,8 +1306,11 @@ onBeforeUnmount(() => {
             v-if="!canContinueExam"
             class="rounded-lg border border-error/30 bg-error/10 p-3 text-sm text-error"
           >
-            Camera is required to continue examination. Please enable camera
-            access.
+            {{
+              screenMonitoringEnabled
+                ? "Camera and Entire Screen sharing are required to continue the examination."
+                : "Camera is required to continue the examination. Please enable camera access."
+            }}
           </div>
 
           <div
@@ -1302,7 +1440,8 @@ onBeforeUnmount(() => {
                 </div>
               </div>
             </div>
-          </UCard>
+            </UCard>
+          </template>
         </template>
       </div>
     </template>

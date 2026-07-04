@@ -4,6 +4,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     ipBackEnd: "localhost:3001",
+    public: {
+      screenMonitoringEnabled: true,
+    },
   },
 
   devtools: {

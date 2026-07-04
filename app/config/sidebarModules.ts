@@ -3,10 +3,16 @@ import type { NavigationMenuItem } from "@nuxt/ui";
 
 export type ModuleKey =
   | "dashboard"
+  | "dashboardGeneralAdmin"
+  | "dashboardBranchAdmin"
+  | "dashboardBranchUnitAdmin"
   | "dashboardOperational"
+  | "dashboardChecker"
+  | "dashboardCheckerAdmin"
   | "userManagement"
   | "userManagementBranch"
   | "userManagementBranchUnit"
+  | "userManagementChecker"
   | "branchManagement"
   | "systemSettings"
   | "branchReports"
@@ -19,6 +25,7 @@ export type ModuleKey =
   /////////////////////ADMIN
   | "branchUnitManagement"
   ////////////////////BRANCH ADMIN
+  | "escalation"
   | "eventPreparation"
   | "ratingSummary"
   | "room"
@@ -42,14 +49,50 @@ export type ModuleKey =
   | "ratingCheckerAdmin"
   | "applicationDoc"
   | "medicalTest"
-  | "mandatoryQuestion";
+  | "mandatoryQuestion"
+  ///////////////////////////////////////////////
+  | "briefing"
+  | "dashboardSupervisor"
+  //////////////////////////
+  | "dashboardDoctor"
+  | "monitorMedicalTest"
+  | "logbookUser"
+  | "logbookBranchUnit"
+  | "logbookGeneralAdmin"
+  | "shiftManagement";
 
 export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
   dashboard: { label: "Dashboard", icon: "i-lucide-home", to: "/" },
+  dashboardGeneralAdmin: {
+    label: "Dashboard General Admin",
+    icon: "i-lucide-home",
+    to: "/dashboard/dashboardGeneralAdmin",
+  },
+  dashboardBranchAdmin: {
+    label: "Dashboard Branch Admin",
+    icon: "i-lucide-home",
+    to: "/dashboard/dashboardBranchAdmin",
+  },
+
+  dashboardBranchUnitAdmin: {
+    label: "Dashboard Branch Unit Admin",
+    icon: "i-lucide-home",
+    to: "/dashboard/dashboardBranchUnitAdmin",
+  },
   dashboardOperational: {
-    label: "Dashboard",
+    label: "Dashboard Operational",
     icon: "i-lucide-home",
     to: "/dashboard/dashboardOperational",
+  },
+  dashboardChecker: {
+    label: "Dashboard Checker",
+    icon: "i-lucide-home",
+    to: "/dashboard/dashboardChecker",
+  },
+  dashboardCheckerAdmin: {
+    label: "Dashboard Checker Admin",
+    icon: "i-lucide-home",
+    to: "/dashboard/dashboardCheckerAdmin",
   },
   room: {
     label: "Room",
@@ -115,17 +158,32 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     ],
   },
 
-  userManagementBranch: {
-    label: "User Management",
+  userManagementChecker: {
+    label: "User Management Checker",
     icon: "i-lucide-users",
     to: "/userManagement",
     type: "trigger",
     defaultOpen: true,
-    children: [{ label: "User List", to: "/userManagement/userBranch" }],
+    children: [
+      { label: "User List", to: "/userManagement/userChecker" },
+      { label: "User Role", to: "/userManagement/userCheckerRole" }, ////buat mindahin user
+    ],
+  },
+
+  userManagementBranch: {
+    label: "User Management Branch",
+    icon: "i-lucide-users",
+    to: "/userManagement",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "User List", to: "/userManagement/userBranch" },
+      { label: "User Role", to: "/userManagement/userRoleBranch" },
+    ],
   },
 
   userManagementBranchUnit: {
-    label: "User Management",
+    label: "User Management Branch Unit",
     icon: "i-lucide-users",
     to: "/userManagement",
     type: "trigger",
@@ -165,7 +223,27 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
   cwpManagement: {
     label: "CWP Management",
     icon: "i-lucide-laptop",
-    to: "/cwpManagement/cwp",
+    to: "/cwpManagement",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "CWP", to: "/cwpManagement/cwp" },
+      { label: "CWP Sector", to: "/cwpManagement/sector" },
+      { label: "CWP Frequency", to: "/cwpManagement/frequency" },
+      { label: "CWP Supervisor", to: "/cwpManagement/supervisor" },
+    ],
+  },
+
+  escalation: {
+    label: "Escalation",
+    icon: "i-lucide-radio",
+    to: "/escalation",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Escalation Level", to: "/escalation/level" },
+      { label: "Escalation Actor", to: "/escalation/actor" }, //includes event question
+    ],
   },
 
   //////////////////////////////////////////////////////////////////////BRANCH UNIT ADMIN
@@ -173,6 +251,17 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     label: "Rating",
     icon: "i-lucide-star",
     to: "/ratingCheckerAdmin/ratingCheckerAdmin",
+  },
+
+  shiftManagement: {
+    label: "Shift Management",
+    icon: "i-lucide-calendar-clock",
+    to: "/shiftManagement",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Operation Shift", to: "/shiftManagement/operation" }, //includes event question
+    ],
   },
 
   eventPreparation: {
@@ -189,6 +278,7 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
       { label: "Token", to: "/eventPreparation/token" },
     ],
   },
+
   multipleChoiceQuestion: {
     label: "Multiple Choice Preparation",
     icon: "i-lucide-list-checks",
@@ -311,10 +401,19 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     icon: "i-lucide-screen-share",
     to: "/settings",
   },
+
   dutyReport: {
     label: "Duty Report",
     icon: "i-lucide-notebook-pen",
-    to: "/settings",
+    to: "/dutyReport",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Supervisor Assignment", to: "/dutyReport/dutyReport" },
+      { label: "Position Log", to: "/dutyReport/positionLog" },
+      { label: "Frequency Status", to: "/dutyReport/frequencyStatus" },
+      { label: "Recap", to: "/dutyReport/recap" },
+    ],
   },
   document: {
     label: "Document",
@@ -367,6 +466,63 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
   medicalTest: {
     label: "Medical Test",
     icon: "i-lucide-heart-pulse",
-    to: "/settingss",
+    to: "/medicalTest/userMedicalTest",
+  },
+
+  logbookUser: {
+    label: "User Logbook",
+    icon: "i-lucide-book",
+    to: "/logbookUser/logbookUser",
+  },
+
+  logbookBranchUnit: {
+    label: "Logbook Branch Unit",
+    icon: "i-lucide-book",
+    to: "/logbookBranchUnit",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Daily Logbook", to: "/logbookBranchUnit/dailyLogbook" },
+      { label: "Personal Logbook", to: "/logbookBranchUnit/personalLogbook" },
+    ],
+  },
+
+  logbookGeneralAdmin: {
+    label: "Logbook General Admin",
+    icon: "i-lucide-book",
+    to: "/logbookGeneralAdmin",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Daily Logbook", to: "/logbookGeneralAdmin/dailyLogbook" },
+      { label: "Personal Logbook", to: "/logbookGeneralAdmin/personalLogbook" },
+    ],
+  },
+
+  ////////////////////////////////////////////////SUPERVISOR
+
+  briefing: {
+    label: "Briefing",
+    icon: "i-lucide-users",
+    to: "/briefing/briefing",
+  },
+
+  dashboardSupervisor: {
+    label: "Dashboard Supervisor",
+    icon: "i-lucide-home",
+    to: "/dashboard/dashboardSupervisor",
+  },
+
+  ////////////////////////DOCTOR
+  dashboardDoctor: {
+    label: "Dashboard Doctor",
+    icon: "i-lucide-users",
+    to: "/dashboard/dashboardDoctor",
+  },
+
+  monitorMedicalTest: {
+    label: "Monitor Medical Test",
+    icon: "i-lucide-home",
+    to: "/doctor/monitorMedicalTest",
   },
 };

@@ -1,173 +1,70 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import type { Row } from "@tanstack/table-core";
+import ip from "../../utils/config.json";
 
+const { token } = useAuth();
+const toast = useToast();
+const table = useTemplateRef("table");
 const UButton = resolveComponent("UButton");
 
-// Define CWP interface
+interface Rating {
+  id: number;
+  rating: string | null;
+}
+
 interface Cwp {
   id: number;
-  name: string;
-  ratingId: number;
-  ratingName: string;
-  sectorId: number;
-  sectorName: string;
-  branchId: number;
-  branchName: string;
-  branchUnitId: number;
-  branchUnitName: string;
+  ratingId: number | null;
+  cwp: string | null;
+  rating: Rating | null;
   createdAt?: string;
 }
 
-const toast = useToast();
-const table = useTemplateRef("table");
-
-// State for modals
-const selectedCwp = ref<Cwp | null>(null);
 const cwpToUpdate = ref<Cwp | null>(null);
 const cwpToDelete = ref<Cwp | null>(null);
 
-// Table state
 const columnFilters = ref([
   {
-    id: "name",
+    id: "cwp",
     value: "",
   },
 ]);
 const columnVisibility = ref();
 const rowSelection = ref({});
-
-// Fetch CWP data - filtered for ACC branch unit only (Branch Unit Admin context)
-// TODO: Replace with actual API endpoint that filters by current user's branch unit
-const { data, status, refresh } = await useFetch<Cwp[]>("/api/cwps", {
-  lazy: true,
-  // Temporary mock data - ACC branch unit CWP configurations based on adminMindMap.json
-  default: () => [
-    // WEST sector CWP
-    {
-      id: 1,
-      name: "UMDN",
-      ratingId: 5,
-      ratingName: "ACS",
-      sectorId: 1,
-      sectorName: "WEST",
-      branchId: 1,
-      branchName: "JAKARTA",
-      branchUnitId: 1,
-      branchUnitName: "ACC",
-      createdAt: "2024-01-15",
-    },
-    {
-      id: 2,
-      name: "UPLB",
-      ratingId: 5,
-      ratingName: "ACS",
-      sectorId: 1,
-      sectorName: "WEST",
-      branchId: 1,
-      branchName: "JAKARTA",
-      branchUnitId: 1,
-      branchUnitName: "ACC",
-      createdAt: "2024-01-16",
-    },
-    {
-      id: 3,
-      name: "UMDNA",
-      ratingId: 4,
-      ratingName: "ACP",
-      sectorId: 1,
-      sectorName: "WEST",
-      branchId: 1,
-      branchName: "JAKARTA",
-      branchUnitId: 1,
-      branchUnitName: "ACC",
-      createdAt: "2024-01-17",
-    },
-    // EAST sector CWP
-    {
-      id: 4,
-      name: "UTPN",
-      ratingId: 5,
-      ratingName: "ACS",
-      sectorId: 2,
-      sectorName: "EAST",
-      branchId: 1,
-      branchName: "JAKARTA",
-      branchUnitId: 1,
-      branchUnitName: "ACC",
-      createdAt: "2024-01-18",
-    },
-    {
-      id: 5,
-      name: "USMG",
-      ratingId: 5,
-      ratingName: "ACS",
-      sectorId: 2,
-      sectorName: "EAST",
-      branchId: 1,
-      branchName: "JAKARTA",
-      branchUnitId: 1,
-      branchUnitName: "ACC",
-      createdAt: "2024-01-19",
-    },
-    {
-      id: 6,
-      name: "UJOGA",
-      ratingId: 4,
-      ratingName: "ACP",
-      sectorId: 2,
-      sectorName: "EAST",
-      branchId: 1,
-      branchName: "JAKARTA",
-      branchUnitId: 1,
-      branchUnitName: "ACC",
-      createdAt: "2024-01-20",
-    },
-    // NORTH sector CWP
-    {
-      id: 7,
-      name: "UNTA",
-      ratingId: 5,
-      ratingName: "ACS",
-      sectorId: 3,
-      sectorName: "NORTH",
-      branchId: 1,
-      branchName: "JAKARTA",
-      branchUnitId: 1,
-      branchUnitName: "ACC",
-      createdAt: "2024-01-21",
-    },
-    {
-      id: 8,
-      name: "TPG",
-      ratingId: 5,
-      ratingName: "ACS",
-      sectorId: 3,
-      sectorName: "NORTH",
-      branchId: 1,
-      branchName: "JAKARTA",
-      branchUnitId: 1,
-      branchUnitName: "ACC",
-      createdAt: "2024-01-22",
-    },
-    {
-      id: 9,
-      name: "UNTAA",
-      ratingId: 4,
-      ratingName: "ACP",
-      sectorId: 3,
-      sectorName: "NORTH",
-      branchId: 1,
-      branchName: "JAKARTA",
-      branchUnitId: 1,
-      branchUnitName: "ACC",
-      createdAt: "2024-01-23",
-    },
-  ],
+const pagination = ref({
+  pageIndex: 0,
+  pageSize: 10,
 });
 
-// Action handlers
+const { data, status, refresh } = await useFetch<Cwp[]>(
+  `http://${ip.ipBackEnd}/api/cwps`,
+  {
+    headers: {
+      Authorization: token.value ? `Bearer ${token.value}` : "",
+    },
+  },
+);
+
+const currentPage = computed({
+  get: () => pagination.value.pageIndex + 1,
+  set: (page: number) => {
+    table.value?.tableApi?.setPageIndex(page - 1);
+  },
+});
+
+const searchQuery = computed({
+  get: (): string => {
+    return (
+      (table.value?.tableApi?.getColumn("cwp")?.getFilterValue() as string) ||
+      ""
+    );
+  },
+  set: (value: string) => {
+    table.value?.tableApi?.getColumn("cwp")?.setFilterValue(value || undefined);
+  },
+});
+
 function handleEdit(cwp: Cwp) {
   cwpToUpdate.value = cwp;
 }
@@ -176,21 +73,36 @@ function handleDelete(cwp: Cwp) {
   cwpToDelete.value = cwp;
 }
 
-// Table columns definition
+function handleCwpChanged() {
+  cwpToUpdate.value = null;
+  cwpToDelete.value = null;
+  refresh();
+  toast.add({
+    title: "Success",
+    description: "CWP list has been refreshed",
+    color: "success",
+  });
+}
+
+function handleModalClose() {
+  cwpToUpdate.value = null;
+  cwpToDelete.value = null;
+}
+
+function formatCwpText(cwp: string | null) {
+  if (!cwp) return "-";
+  return cwp.length > 30 ? `${cwp.slice(0, 30)}...` : cwp;
+}
+
 const columns: TableColumn<Cwp>[] = [
   {
     id: "no",
-    header: "NO",
-    cell: ({ row }) => {
-      const pageIndex =
-        table.value?.tableApi?.getState().pagination.pageIndex || 0;
-      const pageSize =
-        table.value?.tableApi?.getState().pagination.pageSize || 10;
-      return pageIndex * pageSize + row.index + 1;
-    },
+    header: "No",
+    cell: ({ row }) =>
+      pagination.value.pageIndex * pagination.value.pageSize + row.index + 1,
   },
   {
-    accessorKey: "name",
+    accessorKey: "cwp",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
 
@@ -207,16 +119,11 @@ const columns: TableColumn<Cwp>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
-    cell: ({ row }) => {
-      return h(
-        "div",
-        { class: "font-medium text-highlighted" },
-        row.original.name,
-      );
-    },
+    cell: ({ row }) =>
+      h("div", { class: "font-medium text-highlighted" }, formatCwpText(row.original.cwp)),
   },
   {
-    accessorKey: "ratingName",
+    accessorKey: "rating.rating",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
 
@@ -233,81 +140,14 @@ const columns: TableColumn<Cwp>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
-    cell: ({ row }) => {
-      return h("div", { class: "text-muted" }, row.original.ratingName);
-    },
-  },
-  {
-    accessorKey: "sectorName",
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Sector",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    cell: ({ row }) => {
-      return h("div", { class: "text-muted" }, row.original.sectorName);
-    },
-  },
-  {
-    accessorKey: "branchName",
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Branch",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    cell: ({ row }) => {
-      return h("div", { class: "text-muted" }, row.original.branchName);
-    },
-  },
-  {
-    accessorKey: "branchUnitName",
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Branch Unit",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    cell: ({ row }) => {
-      return h("div", { class: "text-muted" }, row.original.branchUnitName);
-    },
+    cell: ({ row }) =>
+      h("div", { class: "text-muted" }, row.original.rating?.rating || "-"),
   },
   {
     id: "actions",
     header: "Action",
-    cell: ({ row }) => {
-      return h("div", { class: "flex items-center justify-start gap-2" }, [
+    cell: ({ row }) =>
+      h("div", { class: "flex items-center justify-start gap-2" }, [
         h(UButton, {
           icon: "i-lucide-pencil",
           color: "primary",
@@ -322,100 +162,41 @@ const columns: TableColumn<Cwp>[] = [
           size: "sm",
           onClick: () => handleDelete(row.original),
         }),
-      ]);
-    },
+      ]),
   },
 ];
-
-// Search filter
-const searchQuery = computed({
-  get: (): string => {
-    return (
-      (table.value?.tableApi?.getColumn("name")?.getFilterValue() as string) ||
-      ""
-    );
-  },
-  set: (value: string) => {
-    table.value?.tableApi
-      ?.getColumn("name")
-      ?.setFilterValue(value || undefined);
-  },
-});
-
-// Pagination state
-const pagination = ref({
-  pageIndex: 0,
-  pageSize: 10,
-});
-
-// Handle modal events
-function handleCwpAdded() {
-  refresh();
-  toast.add({
-    title: "Success",
-    description: "CWP list has been refreshed",
-    color: "success",
-  });
-}
-
-function handleCwpUpdated() {
-  cwpToUpdate.value = null;
-  refresh();
-  toast.add({
-    title: "Success",
-    description: "CWP list has been refreshed",
-    color: "success",
-  });
-}
-
-function handleCwpDeleted() {
-  cwpToDelete.value = null;
-  refresh();
-  toast.add({
-    title: "Success",
-    description: "CWP list has been refreshed",
-    color: "success",
-  });
-}
-
-function handleModalClose() {
-  cwpToUpdate.value = null;
-  cwpToDelete.value = null;
-}
 </script>
 
 <template>
   <UDashboardPanel id="cwp-management">
     <template #header>
-      <UDashboardNavbar title="CWP Management - ACC (JAKARTA)">
+      <UDashboardNavbar title="CWP Management">
         <template #leading>
           <UDashboardSidebarCollapse />
-        </template>
-
-        <template #right>
-          <CwpAddModal @cwp-added="handleCwpAdded" />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <div class="flex flex-wrap items-center justify-between gap-1.5 mb-4">
-        <UInput
-          v-model="searchQuery"
-          class="max-w-sm"
-          icon="i-lucide-search"
-          placeholder="Search CWP..."
-        />
-
         <div class="flex flex-wrap items-center gap-1.5">
-          <UButton
-            label="Refresh"
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-refresh-cw"
-            @click="refresh"
+          <UInput
+            v-model="searchQuery"
+            class="max-w-sm"
+            icon="i-lucide-search"
+            placeholder="Search CWP..."
           />
+
+          <CwpAddModal @cwp-added="handleCwpChanged" />
         </div>
+
+        <UButton
+          label="Refresh"
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-refresh-cw"
+          @click="() => refresh()"
+        />
       </div>
 
       <UTable
@@ -454,32 +235,24 @@ function handleModalClose() {
           }}
           of
           {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} CWP
-          configurations
         </div>
 
-        <div class="flex items-center gap-1.5">
-          <UPagination
-            :default-page="
-              (table?.tableApi?.getState().pagination.pageIndex || 0) + 1
-            "
-            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-            :total="table?.tableApi?.getFilteredRowModel().rows.length"
-            @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
-          />
-        </div>
+        <UPagination
+          v-model:page="currentPage"
+          :items-per-page="pagination.pageSize"
+          :total="table?.tableApi?.getFilteredRowModel().rows.length || 0"
+        />
       </div>
 
-      <!-- Update Modal -->
       <CwpUpdateModal
         :cwp="cwpToUpdate"
-        @cwp-updated="handleCwpUpdated"
+        @cwp-updated="handleCwpChanged"
         @close="handleModalClose"
       />
 
-      <!-- Delete Modal -->
       <CwpDeleteModal
         :cwp="cwpToDelete"
-        @cwp-deleted="handleCwpDeleted"
+        @cwp-deleted="handleCwpChanged"
         @close="handleModalClose"
       />
     </template>

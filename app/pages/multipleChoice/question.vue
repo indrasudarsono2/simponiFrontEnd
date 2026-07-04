@@ -112,6 +112,40 @@ function openImagePreview(imagePath?: string | null) {
   isImagePreviewOpen.value = true;
 }
 
+function escapeCsvCell(value: string | number | null | undefined) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function downloadMultipleChoiceCsv() {
+  const questions = data.value?.multipleChoice || [];
+  const rows = [
+    ["multipleChoiceId", "question", "a", "b", "c", "d", "key"],
+    ...questions.map((question) => [
+      question.id,
+      question.question || "",
+      question.a || "",
+      question.b || "",
+      question.c || "",
+      question.d || "",
+      question.key || "",
+    ]),
+  ];
+  const csv = rows
+    .map((row) => row.map((cell) => escapeCsvCell(cell)).join(","))
+    .join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const date = new Date().toISOString().slice(0, 10);
+
+  link.href = url;
+  link.download = `multiple-choice-questions-${date}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 // Table columns definition
 const columns: TableColumn<MultipleChoice>[] = [
   {
@@ -366,7 +400,12 @@ function handleModalClose() {
         </template>
 
         <template #right>
-          <MultipleChoiceAddModal @question-added="handleQuestionAdded" />
+          <div class="flex items-center gap-2">
+            <MultipleChoiceImportCsvModal
+              @question-imported="handleQuestionAdded"
+            />
+            <MultipleChoiceAddModal @question-added="handleQuestionAdded" />
+          </div>
         </template>
       </UDashboardNavbar>
     </template>
@@ -411,6 +450,14 @@ function handleModalClose() {
             icon="i-lucide-refresh-cw"
             @click="refresh"
           />
+          <UButton
+            label="Download CSV"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-download"
+            :disabled="!(data?.multipleChoice?.length)"
+            @click="downloadMultipleChoiceCsv"
+          />
         </div>
       </div>
 
@@ -428,11 +475,11 @@ function handleModalClose() {
         :columns="columns"
         :loading="status === 'pending'"
         :ui="{
-          base: 'table-auto border-separate border-spacing-0',
+          base: 'table-auto border-collapse border border-default',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-          tbody: '[&>tr]:last:[&>td]:border-b-0',
-          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default align-top',
+          tbody: '[&>tr]:last:[&>td]:border-b',
+          th: 'border border-default px-3 py-2',
+          td: 'border border-default align-top px-3 py-2',
           separator: 'h-0',
         }"
       />

@@ -1,104 +1,90 @@
 <script setup lang="ts">
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
+import ip from "../../utils/config.json";
+
+interface Rating {
+  id: number;
+  rating: string | null;
+}
 
 interface Cwp {
   id: number;
-  name: string;
-  ratingId: number;
-  ratingName: string;
-  sectorId: number;
-  sectorName: string;
-  branchId: number;
-  branchName: string;
-  branchUnitId: number;
-  branchUnitName: string;
+  cwp: string | null;
+  ratingId: number | null;
+  rating: Rating | null;
 }
 
 const props = defineProps<{
   cwp: Cwp | null;
 }>();
 
-const schema = z.object({
-  name: z.string().min(2, "CWP name must be at least 2 characters"),
-  ratingId: z.coerce.number().min(1, "Rating is required"),
-  sectorId: z.coerce.number().min(1, "Sector is required"),
-});
+const emit = defineEmits<{
+  cwpUpdated: [];
+  close: [];
+}>();
 
-const open = ref(false);
-const loading = ref(false);
+const { token } = useAuth();
+const toast = useToast();
+
+const schema = z.object({
+  cwp: z.string().min(1, "CWP is required"),
+  ratingId: z.coerce.number().int().positive("Rating is required"),
+});
 
 type Schema = z.output<typeof schema>;
 
+const open = ref(false);
+const loading = ref(false);
 const state = reactive<Partial<Schema>>({
-  name: undefined,
+  cwp: undefined,
   ratingId: undefined,
-  sectorId: undefined,
 });
 
-// Fixed context for ACC Branch Unit Admin
-const ACC_BRANCH_UNIT_ID = 1;
-const ACC_BRANCH_UNIT_NAME = "ACC";
-const JAKARTA_BRANCH_ID = 1;
-const JAKARTA_BRANCH_NAME = "JAKARTA";
-
-// Fetch ratings for dropdown
-const { data: ratings } = await useFetch<{ id: number; name: string }[]>(
-  "/api/ratings",
-  {
-    lazy: true,
-    default: () => [
-      { id: 1, name: "TWR" },
-      { id: 2, name: "APP" },
-      { id: 3, name: "APS" },
-      { id: 4, name: "ACP" },
-      { id: 5, name: "ACS" },
-      { id: 6, name: "ACO" },
-      { id: 7, name: "KARTOGRAFI" },
-    ],
+const {
+  data: ratings,
+  status: ratingsStatus,
+  refresh: refreshRatings,
+} = await useFetch<Rating[]>(`http://${ip.ipBackEnd}/api/cwps/ratings`, {
+  headers: {
+    Authorization: token.value ? `Bearer ${token.value}` : "",
   },
+});
+
+const ratingOptions = computed(() =>
+  (ratings.value || []).map((rating) => ({
+    label: rating.rating || `Rating ${rating.id}`,
+    value: rating.id,
+  })),
 );
 
-// Fetch sectors for dropdown (ACC branch unit only)
-const { data: sectors } = await useFetch<{ id: number; name: string }[]>(
-  "/api/sectors",
-  {
-    lazy: true,
-    default: () => [
-      { id: 1, name: "WEST" },
-      { id: 2, name: "EAST" },
-      { id: 3, name: "NORTH" },
-      { id: 4, name: "NORTH WEST" },
-      { id: 5, name: "NORTH EAST" },
-    ],
-  },
-);
-
-// Watch for cwp prop changes to populate form
 watch(
   () => props.cwp,
-  (newCwp) => {
-    if (newCwp) {
-      state.name = newCwp.name;
-      state.ratingId = newCwp.ratingId;
-      state.sectorId = newCwp.sectorId;
-      open.value = true;
+  async (nextCwp) => {
+    if (!nextCwp) return;
+
+    await refreshRatings();
+    state.cwp = nextCwp.cwp || undefined;
+    state.ratingId = nextCwp.ratingId || undefined;
+    open.value = true;
+
+    if (ratingOptions.value.length === 0) {
+      toast.add({
+        title: "No Related Rating",
+        description: "No related rating found for your branch unit.",
+        color: "warning",
+      });
     }
   },
-  { immediate: true },
 );
 
-// Reset form when modal closes
 watch(open, (isOpen) => {
-  if (!isOpen) {
-    state.name = undefined;
-    state.ratingId = undefined;
-    state.sectorId = undefined;
-    emit("close");
-  }
-});
+  if (isOpen) return;
 
-const toast = useToast();
+  state.cwp = undefined;
+  state.ratingId = undefined;
+  emit("close");
+});
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!props.cwp) return;
@@ -106,54 +92,46 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    // Call API to update CWP - always for ACC branch unit
-    await $fetch(`/api/cwps/${props.cwp.id}`, {
+    await $fetch(`http://${ip.ipBackEnd}/api/cwps/${props.cwp.id}`, {
       method: "PUT",
       body: {
-        name: event.data.name,
+        cwp: event.data.cwp,
         ratingId: event.data.ratingId,
-        sectorId: event.data.sectorId,
-        branchId: JAKARTA_BRANCH_ID,
-        branchUnitId: ACC_BRANCH_UNIT_ID,
+      },
+      headers: {
+        Authorization: token.value ? `Bearer ${token.value}` : "",
       },
     });
 
     toast.add({
       title: "Success",
-      description: `CWP "${event.data.name}" has been updated successfully`,
+      description: `CWP "${event.data.cwp.toUpperCase()}" has been updated`,
       color: "success",
     });
 
     open.value = false;
-
-    // Emit event to refresh parent table
     emit("cwpUpdated");
   } catch (error: any) {
-    const errorMessage =
-      error?.data?.statusMessage ||
-      error?.message ||
-      "Failed to update CWP. Please try again.";
     toast.add({
       title: "Error",
-      description: errorMessage,
+      description:
+        error?.data?.message ||
+        error?.data?.statusMessage ||
+        error?.message ||
+        "Failed to update CWP",
       color: "error",
     });
   } finally {
     loading.value = false;
   }
 }
-
-const emit = defineEmits<{
-  cwpUpdated: [];
-  close: [];
-}>();
 </script>
 
 <template>
   <UModal
     v-model:open="open"
     title="Update CWP"
-    description="Edit the CWP configuration"
+    description="Edit this CWP configuration"
   >
     <template #body>
       <UForm
@@ -162,60 +140,33 @@ const emit = defineEmits<{
         class="space-y-4"
         @submit="onSubmit"
       >
-        <UFormField
-          label="CWP Name"
-          placeholder="Enter CWP name"
-          name="name"
-          required
-        >
+        <UAlert
+          v-if="ratingOptions.length === 0 && ratingsStatus !== 'pending'"
+          color="warning"
+          variant="soft"
+          icon="i-lucide-triangle-alert"
+          title="No related rating"
+          description="Please add a related rating to this branch unit before updating CWP."
+        />
+
+        <UFormField label="CWP" name="cwp" required>
           <UInput
-            v-model="state.name"
+            v-model="state.cwp"
             class="w-full"
             placeholder="e.g., UMDN"
           />
         </UFormField>
 
         <UFormField label="Rating" name="ratingId" required>
-          <USelect
+          <USelectMenu
             v-model="state.ratingId"
-            :items="ratings || []"
-            label-key="name"
-            value-key="id"
-            placeholder="Select a rating"
             class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="Sector" name="sectorId" required>
-          <USelect
-            v-model="state.sectorId"
-            :items="sectors || []"
-            label-key="name"
-            value-key="id"
-            placeholder="Select a sector"
-            class="w-full"
-          />
-        </UFormField>
-
-        <!-- Branch is fixed to JAKARTA for ACC Branch Unit Admin -->
-        <UFormField label="Branch" name="branch">
-          <UInput
-            :model-value="JAKARTA_BRANCH_NAME"
-            class="w-full"
-            disabled
-            color="neutral"
-            variant="subtle"
-          />
-        </UFormField>
-
-        <!-- Branch Unit is fixed to ACC for Branch Unit Admin -->
-        <UFormField label="Branch Unit" name="branchUnit">
-          <UInput
-            :model-value="ACC_BRANCH_UNIT_NAME"
-            class="w-full"
-            disabled
-            color="neutral"
-            variant="subtle"
+            :items="ratingOptions"
+            value-key="value"
+            label-key="label"
+            searchable
+            placeholder="Select rating"
+            :loading="ratingsStatus === 'pending'"
           />
         </UFormField>
 
@@ -230,9 +181,9 @@ const emit = defineEmits<{
           <UButton
             label="Update CWP"
             color="primary"
-            variant="solid"
             type="submit"
             :loading="loading"
+            :disabled="ratingOptions.length === 0"
           />
         </div>
       </UForm>

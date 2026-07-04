@@ -566,9 +566,9 @@ function onDrugsPopupConfirm() {
   resetForm();
   open.value = false;
   toast.add({
-    title: "Proses Dihentikan",
+    title: "Process Stopped",
     description:
-      "Permohonan tidak dapat dilanjutkan karena penggunaan obat terlarang.",
+      "The application cannot proceed due to prohibited drug use.",
     color: "error",
   });
 }
@@ -583,8 +583,8 @@ async function onSubmit() {
 
   if (!canSubmit.value) {
     toast.add({
-      title: "Validasi Gagal",
-      description: "Harap lengkapi semua field yang diperlukan.",
+      title: "Validation Failed",
+      description: "Please complete all required fields.",
       color: "error",
     });
     return;
@@ -647,7 +647,7 @@ async function onSubmit() {
   } catch (error: any) {
     toast.add({
       title: "Error",
-      description: error?.data?.statusMessage || "Gagal membuat dokumen.",
+      description: error?.data?.statusMessage || "Failed to create the document.",
       color: "error",
     });
   } finally {
@@ -707,7 +707,7 @@ async function onSubmit() {
             <h3
               class="font-semibold text-sm text-muted uppercase tracking-wide"
             >
-              Dokumen Pendukung
+              Supporting Documents
             </h3>
             <div class="grid grid-cols-1 gap-4">
               <div>
@@ -725,7 +725,7 @@ async function onSubmit() {
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1"
-                  >Lisensi <span class="text-error">*</span></label
+                  >License <span class="text-error">*</span></label
                 >
                 <USelect
                   v-model="selectedLicenseId"
@@ -768,12 +768,12 @@ async function onSubmit() {
               class="text-base font-bold border-b border-default pb-2 flex items-center gap-2"
             >
               <UIcon name="i-lucide-file-badge" class="text-primary" />
-              I. JENIS PERMOHONAN RATING
+              I. RATING APPLICATION TYPE
             </h2>
 
             <div>
               <label class="block text-sm font-medium mb-1"
-                >A. Jenis Permohonan Rating
+                >A. Rating Application Type
                 <span class="text-error">*</span></label
               >
               <USelect
@@ -781,7 +781,7 @@ async function onSubmit() {
                 :items="eventOptions"
                 value-key="id"
                 label-key="label"
-                placeholder="Pilih Jenis Permohonan"
+                placeholder="Select Application Type"
                 class="w-full"
               />
               <p v-if="selectedEventId" class="text-xs text-muted mt-1">
@@ -794,7 +794,7 @@ async function onSubmit() {
 
             <div>
               <label class="block text-sm font-medium mb-1"
-                >B. Nama ATS Unit <span class="text-error">*</span></label
+                >B. ATS Unit Name <span class="text-error">*</span></label
               >
               <UInput
                 v-model="atsName"
@@ -805,7 +805,7 @@ async function onSubmit() {
 
             <div>
               <label class="block text-sm font-medium mb-1"
-                >C. Alamat Kantor <span class="text-error">*</span></label
+                >C. Office Address <span class="text-error">*</span></label
               >
               <UInput
                 v-model="address"
@@ -834,12 +834,12 @@ async function onSubmit() {
                     class="mt-3 ml-6 space-y-1"
                   >
                     <label class="block text-xs text-muted"
-                      >Jam Pemanduan (min. 40 jam)</label
+                      >Control Hours (min. 40 hours)</label
                     >
                     <UInput
                       v-model.number="controlHours[String(rating.id)]"
                       type="number"
-                      placeholder="Masukkan jam pemanduan"
+                      placeholder="Enter control hours"
                       class="max-w-xs"
                     />
                     <p
@@ -849,7 +849,7 @@ async function onSubmit() {
                       "
                       class="text-xs text-error"
                     >
-                      ⚠ Jam pemanduan minimal 40 jam untuk dapat diproses
+                      ⚠ A minimum of 40 control hours is required to proceed
                     </p>
                     <p
                       v-else-if="
@@ -872,13 +872,13 @@ async function onSubmit() {
                         :items="getCheckerOptionsForRating(rating.id, rating.rating)"
                         value-key="id"
                         label-key="label"
-                        placeholder="Pilih checker group(s)"
+                        placeholder="Select checker group(s)"
                         class="max-w-xs"
                         multiple
                       />
                     </div>
                     <p v-else class="text-xs text-warning pt-2">
-                      Checker untuk rating {{ rating.rating }} tidak tersedia.
+                      No checker is available for rating {{ rating.rating }}.
                     </p>
                   </div>
                 </div>
@@ -886,7 +886,7 @@ async function onSubmit() {
                   v-if="ratingOptions.length === 0"
                   class="text-sm text-muted italic"
                 >
-                  Tidak ada rating yang tersedia
+                  No ratings available
                 </p>
               </div>
             </div>
@@ -898,17 +898,17 @@ async function onSubmit() {
               class="text-base font-bold border-b border-default pb-2 flex items-center gap-2"
             >
               <UIcon name="i-lucide-user" class="text-primary" />
-              II. INFORMASI PEMOHON
+              II. APPLICANT INFORMATION
             </h2>
 
             <div class="grid grid-cols-2 gap-4">
               <div class="col-span-2">
-                <label class="block text-sm font-medium mb-1">1. Nama</label>
+                <label class="block text-sm font-medium mb-1">1. Name</label>
                 <UInput :model-value="userData.name" disabled class="w-full" />
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1"
-                  >2. Nomor Lisensi</label
+                  >2. License Number</label
                 >
                 <UInput
                   :model-value="userData.licenseUserId"
@@ -918,7 +918,7 @@ async function onSubmit() {
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1"
-                  >3. Tanggal Lahir</label
+                  >3. Date of Birth</label
                 >
                 <div class="flex items-center gap-2">
                   <UInput
@@ -945,7 +945,7 @@ async function onSubmit() {
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1"
-                  >5. Alamat Tinggal</label
+                  >5. Residential Address</label
                 >
                 <UInput
                   :model-value="userData.personalAddress"
@@ -988,7 +988,7 @@ async function onSubmit() {
             <!-- 9a. Rating Sebelumnya -->
             <div class="border border-default rounded-lg p-4 space-y-3">
               <label class="block text-sm font-semibold"
-                >9a. Apakah anda memiliki rating sebelumnya?</label
+                >9a. Have you held a rating before?</label
               >
               <div class="flex gap-6">
                 <label class="flex items-center gap-2 cursor-pointer">
@@ -998,7 +998,7 @@ async function onSubmit() {
                     v-model="confirmRating"
                     class="accent-primary"
                   />
-                  <span class="text-sm">Ya</span>
+                  <span class="text-sm">Yes</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
@@ -1007,7 +1007,7 @@ async function onSubmit() {
                     v-model="confirmRating"
                     class="accent-primary"
                   />
-                  <span class="text-sm">Tidak</span>
+                  <span class="text-sm">No</span>
                 </label>
               </div>
 
@@ -1017,7 +1017,7 @@ async function onSubmit() {
               >
                 <div>
                   <label class="block text-sm font-medium mb-2"
-                    >9b. Alasan Pengajuan Rating</label
+                    >9b. Reason for Rating Application</label
                   >
                   <div class="space-y-2">
                     <label
@@ -1037,7 +1037,7 @@ async function onSubmit() {
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-2"
-                    >9c. Jenis Rating (Pilih satu atau lebih)</label
+                    >9c. Rating Type (Select one or more)</label
                   >
                   <div class="space-y-2">
                     <label
@@ -1058,12 +1058,12 @@ async function onSubmit() {
                     v-if="previousRatings.length > 0"
                     class="text-xs text-muted mt-2"
                   >
-                    Terpilih: {{ previousRatings.join(", ") }}
+                    Selected: {{ previousRatings.join(", ") }}
                   </p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1"
-                    >9d. Lokasi Rating</label
+                    >9d. Rating Location</label
                   >
                   <UInput
                     v-model="location"
@@ -1095,22 +1095,22 @@ async function onSubmit() {
                 >
                 <UBadge
                   :color="isMedexValid ? 'success' : 'error'"
-                  :label="isMedexValid ? 'Valid' : 'Expired / Tidak Ada'"
+                  :label="isMedexValid ? 'Valid' : 'Expired / Unavailable'"
                 />
               </div>
               <p v-if="!isMedexValid" class="text-sm text-error font-medium">
-                ⚠ Medex anda sudah expired atau tidak ada. Permohonan tidak
-                dapat dilanjutkan.
+                ⚠ Your medical examination has expired or is unavailable. The application cannot
+                proceed.
               </p>
               <div v-if="latestMedex" class="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p class="text-muted text-xs">10b. Tanggal Dikeluarkan</p>
+                  <p class="text-muted text-xs">10b. Date Issued</p>
                   <p class="font-medium">
                     {{ formatDate(latestMedex.released) }}
                   </p>
                 </div>
                 <div>
-                  <p class="text-muted text-xs">Tanggal Expired</p>
+                  <p class="text-muted text-xs">Expiry Date</p>
                   <p
                     class="font-medium"
                     :class="isMedexValid ? 'text-success' : 'text-error'"
@@ -1132,13 +1132,13 @@ async function onSubmit() {
                   >
                     {{
                       medexRemainingDays > 0
-                        ? `${medexRemainingDays} hari lagi`
+                        ? `${medexRemainingDays} days remaining`
                         : "Sudah expired"
                     }}
                   </p>
                 </div>
                 <div>
-                  <p class="text-muted text-xs">10c. Nama Dokter Penguji</p>
+                  <p class="text-muted text-xs">10c. Medical Examiner Name</p>
                   <p class="font-medium">{{ latestMedex.examiner }}</p>
                 </div>
                 <div>
@@ -1153,12 +1153,12 @@ async function onSubmit() {
                     class="mt-1"
                   />
                   <p v-else class="text-xs text-muted italic mt-1">
-                    Tidak ada file
+                    No file available
                   </p>
                 </div>
               </div>
               <p v-else class="text-sm text-muted italic">
-                Tidak ada data medex
+                No medical examination data available
               </p>
             </div>
 
@@ -1177,16 +1177,16 @@ async function onSubmit() {
                 >
                 <UBadge
                   :color="isIelpValid ? 'success' : 'error'"
-                  :label="isIelpValid ? 'Valid' : 'Expired / Tidak Ada'"
+                  :label="isIelpValid ? 'Valid' : 'Expired / Unavailable'"
                 />
               </div>
               <p v-if="!isIelpValid" class="text-sm text-error font-medium">
-                ⚠ IELP anda sudah expired atau tidak ada. Permohonan tidak dapat
-                dilanjutkan.
+                ⚠ Your IELP has expired or is unavailable. The application cannot
+                proceed.
               </p>
               <div v-if="latestIelp" class="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p class="text-muted text-xs">11b. Nama Rater</p>
+                  <p class="text-muted text-xs">11b. Rater Name</p>
                   <p class="font-medium">{{ latestIelp.rater }}</p>
                 </div>
                 <div>
@@ -1194,7 +1194,7 @@ async function onSubmit() {
                   <p class="font-medium">{{ latestIelp.institution }}</p>
                 </div>
                 <div>
-                  <p class="text-muted text-xs">11d. Tanggal Dikeluarkan</p>
+                  <p class="text-muted text-xs">11d. Date Issued</p>
                   <p class="font-medium">
                     {{ formatDate(latestIelp.released) }}
                   </p>
@@ -1204,7 +1204,7 @@ async function onSubmit() {
                   <p class="font-medium">Level {{ latestIelp.level }}</p>
                 </div>
                 <div>
-                  <p class="text-muted text-xs">Tanggal Expired</p>
+                  <p class="text-muted text-xs">Expiry Date</p>
                   <p
                     class="font-medium"
                     :class="isIelpValid ? 'text-success' : 'text-error'"
@@ -1226,7 +1226,7 @@ async function onSubmit() {
                   >
                     {{
                       ielpRemainingDays > 0
-                        ? `${ielpRemainingDays} hari lagi`
+                        ? `${ielpRemainingDays} days remaining`
                         : "Sudah expired"
                     }}
                   </p>
@@ -1243,21 +1243,21 @@ async function onSubmit() {
                     class="mt-1"
                   />
                   <p v-else class="text-xs text-muted italic mt-1">
-                    Tidak ada file
+                    No file available
                   </p>
                 </div>
               </div>
               <p v-else class="text-sm text-muted italic">
-                Tidak ada data IELP
+                No IELP data available
               </p>
             </div>
 
             <!-- 12a. OJT -->
             <div class="border border-default rounded-lg p-4 space-y-3">
               <label class="block text-sm font-semibold">
-                12a. Apakah ada surat Rekomendasi OJTI?
+                12a. Do you have an OJTI recommendation letter?
                 <span class="text-xs text-muted font-normal ml-1"
-                  >(Pilih YES jika untuk pengambilan rating)</span
+                  >(Select YES when applying for a rating)</span
                 >
               </label>
               <div class="flex gap-6">
@@ -1268,7 +1268,7 @@ async function onSubmit() {
                     v-model="confirmOjt"
                     class="accent-primary"
                   />
-                  <span class="text-sm">Ya</span>
+                  <span class="text-sm">Yes</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
@@ -1277,7 +1277,7 @@ async function onSubmit() {
                     v-model="confirmOjt"
                     class="accent-primary"
                   />
-                  <span class="text-sm">Tidak</span>
+                  <span class="text-sm">No</span>
                 </label>
               </div>
               <div
@@ -1286,17 +1286,17 @@ async function onSubmit() {
               >
                 <div>
                   <label class="block text-sm font-medium mb-1"
-                    >12b. Nomor Surat</label
+                    >12b. Letter Number</label
                   >
                   <UInput
                     v-model="letterNumber"
-                    placeholder="Nomor surat rekomendasi"
+                    placeholder="Recommendation letter number"
                     class="w-full"
                   />
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1"
-                    >12c. Tanggal Surat</label
+                    >12c. Letter Date</label
                   >
                   <UInput v-model="letterDate" type="date" class="max-w-xs" />
                 </div>
@@ -1306,27 +1306,27 @@ async function onSubmit() {
                   >
                   <UInput
                     v-model="ojtControlHour"
-                    placeholder="Total jam pemanduan"
+                    placeholder="Total control hours"
                     class="max-w-xs"
                   />
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1"
-                    >12e. Nomor Lisensi OJTI</label
+                    >12e. OJTI License Number</label
                   >
                   <UInput
                     v-model="ojtId"
-                    placeholder="Nomor lisensi OJTI"
+                    placeholder="OJTI license number"
                     class="max-w-xs"
                   />
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1"
-                    >12f. Nama OJTI</label
+                    >12f. OJTI Name</label
                   >
                   <UInput
                     v-model="ojtName"
-                    placeholder="Nama OJTI"
+                    placeholder="OJTI name"
                     class="max-w-xs"
                   />
                 </div>
@@ -1338,10 +1338,9 @@ async function onSubmit() {
               <label
                 class="block text-sm font-semibold text-sm leading-relaxed"
               >
-                13. Apakah anda terlibat pelanggaran yang disebabkan oleh
-                penggunaan obat-obatan terlarang, marijuana dan obat anti
-                depresi atau obat stimulant atau pengoperasian kendaraan
-                bermotor dengan pengaruh alkohol?
+                13. Have you been involved in a violation caused by
+                prohibited drugs, marijuana, antidepressants, stimulants, or
+                operating a motor vehicle under the influence of alcohol?
               </label>
               <div class="flex gap-6">
                 <label class="flex items-center gap-2 cursor-pointer">
@@ -1352,7 +1351,7 @@ async function onSubmit() {
                     class="accent-primary"
                     @change="onDrugsChange(true)"
                   />
-                  <span class="text-sm text-error font-medium">Ya</span>
+                  <span class="text-sm text-error font-medium">Yes</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
@@ -1361,7 +1360,7 @@ async function onSubmit() {
                     v-model="isDrugs"
                     class="accent-primary"
                   />
-                  <span class="text-sm">Tidak</span>
+                  <span class="text-sm">No</span>
                 </label>
               </div>
             </div>
@@ -1373,7 +1372,7 @@ async function onSubmit() {
               class="text-base font-bold border-b border-default pb-2 flex items-center gap-2"
             >
               <UIcon name="i-lucide-award" class="text-primary" />
-              III. JENIS SERTIFIKASI KOMPETENSI YANG DIMILIKI
+              III. COMPETENCY CERTIFICATIONS HELD
             </h2>
             <div class="space-y-2">
               <div
@@ -1399,7 +1398,7 @@ async function onSubmit() {
                 v-if="!userData.competence.length"
                 class="text-sm text-muted italic"
               >
-                Tidak ada data kompetensi
+                No competency data available
               </p>
             </div>
           </div>
@@ -1410,12 +1409,12 @@ async function onSubmit() {
               class="text-base font-bold border-b border-default pb-2 flex items-center gap-2"
             >
               <UIcon name="i-lucide-clipboard-x" class="text-primary" />
-              IV. RIWAYAT UJIAN
+              IV. EXAMINATION HISTORY
             </h2>
             <div class="border border-default rounded-lg p-4 space-y-3">
               <label class="block text-sm font-semibold">
-                Apakah anda pernah gagal ujian sebelumnya, dalam kurun waktu 30
-                hari?
+                Have you failed an examination within the previous 30
+                days?
               </label>
               <div class="flex gap-6">
                 <label class="flex items-center gap-2 cursor-pointer">
@@ -1425,7 +1424,7 @@ async function onSubmit() {
                     v-model="isFailed"
                     class="accent-primary"
                   />
-                  <span class="text-sm">Ya</span>
+                  <span class="text-sm">Yes</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
@@ -1434,7 +1433,7 @@ async function onSubmit() {
                     v-model="isFailed"
                     class="accent-primary"
                   />
-                  <span class="text-sm">Tidak</span>
+                  <span class="text-sm">No</span>
                 </label>
               </div>
             </div>
@@ -1445,14 +1444,14 @@ async function onSubmit() {
       <template #footer>
         <div class="flex justify-end gap-3 w-full">
           <UButton
-            label="Batal"
+            label="Cancel"
             color="neutral"
             variant="subtle"
             :disabled="loading"
             @click="open = false"
           />
           <UButton
-            label="Kirim Permohonan"
+            label="Submit Application"
             color="primary"
             variant="solid"
             icon="i-lucide-send"

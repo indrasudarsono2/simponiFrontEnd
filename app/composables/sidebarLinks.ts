@@ -19,9 +19,12 @@ export function getSidebarLinksFromBackend(
 ): [NavigationMenuItem[], NavigationMenuItem[]] {
   const found = config.find((r) => r.role === role);
 
-  const mainLinks: NavigationMenuItem[] = (found?.modules ?? ["dashboard"])
-    .filter((m): m is ModuleKey => m in MODULE_TO_ITEM) // drop unknown module keys safely
-    .map((m) => MODULE_TO_ITEM[m]);
+  const validModules = (found?.modules ?? ["dashboard"]).filter(
+    (module): module is ModuleKey => module in MODULE_TO_ITEM,
+  );
+  const orderedModules = validModules.filter((module) => module.startsWith("dashboard"))
+    .concat(validModules.filter((module) => !module.startsWith("dashboard")));
+  const mainLinks = orderedModules.map((module) => MODULE_TO_ITEM[module]);
 
   return [mainLinks, bottomLinks];
 }

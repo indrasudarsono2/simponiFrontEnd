@@ -97,6 +97,37 @@ function openImagePreview(imagePath?: string | null) {
   isImagePreviewOpen.value = true;
 }
 
+function escapeCsvCell(value: string | number | null | undefined) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function downloadEssayCsv() {
+  const essays = data.value?.essay || [];
+  const rows = [
+    ["essayId", "question", "answer", "value"],
+    ...essays.map((essay) => [
+      essay.id,
+      essay.question || "",
+      essay.answer || "",
+      essay.value || "",
+    ]),
+  ];
+  const csv = rows
+    .map((row) => row.map((cell) => escapeCsvCell(cell)).join(","))
+    .join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const date = new Date().toISOString().slice(0, 10);
+
+  link.href = url;
+  link.download = `essay-questions-${date}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 // Table columns definition
 const columns: TableColumn<Essay>[] = [
   {
@@ -130,7 +161,7 @@ const columns: TableColumn<Essay>[] = [
     cell: ({ row }) => {
       return h("div", {
         class:
-          "font-medium text-highlighted max-w-md whitespace-normal break-words py-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1",
+          "w-full font-medium text-highlighted whitespace-normal break-words py-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1",
         innerHTML: truncateHtml(row.original.question, 500),
       });
     },
@@ -141,7 +172,7 @@ const columns: TableColumn<Essay>[] = [
     cell: ({ row }) => {
       return h("div", {
         class:
-          "text-muted text-sm max-w-md whitespace-normal break-words py-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1",
+          "w-full text-muted text-sm whitespace-normal break-words py-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1",
         innerHTML: truncateHtml(row.original.answer, 500),
       });
     },
@@ -304,7 +335,10 @@ function handleModalClose() {
         </template>
 
         <template #right>
-          <EssayAddModal @essay-added="handleEssayAdded" />
+          <div class="flex items-center gap-2">
+            <EssayImportCsvModal @essay-imported="handleEssayAdded" />
+            <EssayAddModal @essay-added="handleEssayAdded" />
+          </div>
         </template>
       </UDashboardNavbar>
     </template>
@@ -349,6 +383,14 @@ function handleModalClose() {
             icon="i-lucide-refresh-cw"
             @click="refresh"
           />
+          <UButton
+            label="Download CSV"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-download"
+            :disabled="!(data?.essay?.length)"
+            @click="downloadEssayCsv"
+          />
         </div>
       </div>
 
@@ -366,11 +408,11 @@ function handleModalClose() {
         :columns="columns"
         :loading="status === 'pending'"
         :ui="{
-          base: 'table-auto border-separate border-spacing-0',
+          base: 'table-auto border-collapse border border-default',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-          tbody: '[&>tr]:last:[&>td]:border-b-0',
-          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default align-top',
+          tbody: '[&>tr]:last:[&>td]:border-b',
+          th: 'border border-default px-3 py-2',
+          td: 'border border-default align-top px-3 py-2',
           separator: 'h-0',
         }"
       >

@@ -60,6 +60,29 @@ function formatValue(value: string | number | null | undefined) {
   return value ?? "-";
 }
 
+function formatDateForInput(value: string | null | undefined): string {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toISOString().slice(0, 10);
+}
+
+function formatDateOfBirth(value: string | null | undefined): string {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 // ─── Update Modal State ─────────────────────────────────────────────────
 const showUpdateModal = ref(false);
 const updateMode = ref<"manual" | "sync">("manual");
@@ -104,7 +127,7 @@ function openUpdateModal() {
     formState.name = profile.value.name;
     formState.licenseUserId = profile.value.licenseUserId;
     formState.genderId = String(profile.value.gender?.id || "");
-    formState.dateOfBirth = profile.value.dateOfBirth ?? "";
+    formState.dateOfBirth = formatDateForInput(profile.value.dateOfBirth);
     formState.placeOfBirth = profile.value.placeOfBirth ?? "";
     formState.personalAddress = profile.value.personalAddress ?? "";
     formState.nationality = profile.value.nationality ?? "";
@@ -277,7 +300,7 @@ async function syncFromExternalSystem() {
             </div>
             <div>
               <span class="text-muted">Date of Birth:</span>
-              {{ formatValue(profile.dateOfBirth) }}
+              {{ formatDateOfBirth(profile.dateOfBirth) }}
             </div>
             <div>
               <span class="text-muted">Place of Birth:</span>

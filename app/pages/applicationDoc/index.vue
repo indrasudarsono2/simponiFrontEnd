@@ -605,7 +605,7 @@ const columns = computed((): any[] => [
       <div class="flex flex-wrap items-center gap-2 mb-4">
         <UInput
           v-model="searchQuery"
-          placeholder="Cari nomor permohonan..."
+          placeholder="Search application number..."
           class="max-w-sm"
           icon="i-lucide-search"
         />
@@ -645,9 +645,9 @@ const columns = computed((): any[] => [
         class="flex flex-col items-center justify-center py-12 text-center"
       >
         <UIcon name="i-lucide-file-x" class="text-4xl text-muted mb-4" />
-        <p class="text-muted font-medium">Belum ada dokumen permohonan</p>
+        <p class="text-muted font-medium">No application documents yet</p>
         <p class="text-sm text-muted mt-1">
-          Klik "Buat Permohonan" untuk membuat dokumen baru
+          Click "Create Application" to create a new document
         </p>
       </div>
 

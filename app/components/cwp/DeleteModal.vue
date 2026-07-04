@@ -1,96 +1,89 @@
 <script setup lang="ts">
+import ip from "../../utils/config.json";
+
+interface Rating {
+  id: number;
+  rating: string | null;
+}
+
 interface Cwp {
   id: number;
-  name: string;
-  ratingId: number;
-  ratingName: string;
-  sectorId: number;
-  sectorName: string;
-  branchId: number;
-  branchName: string;
-  branchUnitId: number;
-  branchUnitName: string;
+  cwp: string | null;
+  rating: Rating | null;
 }
 
 const props = defineProps<{
   cwp: Cwp | null;
 }>();
 
+const emit = defineEmits<{
+  cwpDeleted: [];
+  close: [];
+}>();
+
+const { token } = useAuth();
+const toast = useToast();
 const open = ref(false);
 const loading = ref(false);
 
-// Watch for cwp prop changes to open modal
 watch(
   () => props.cwp,
-  (newCwp) => {
-    if (newCwp) {
-      open.value = true;
-    }
+  (nextCwp) => {
+    if (nextCwp) open.value = true;
   },
-  { immediate: true },
 );
 
-// Reset when modal closes
 watch(open, (isOpen) => {
-  if (!isOpen) {
-    emit("close");
-  }
+  if (!isOpen) emit("close");
 });
 
-const toast = useToast();
-
-async function onSubmit() {
+async function onDelete() {
   if (!props.cwp) return;
 
   loading.value = true;
 
   try {
-    // Call API to delete CWP
-    await $fetch(`/api/cwps/${props.cwp.id}`, {
+    await $fetch(`http://${ip.ipBackEnd}/api/cwps/${props.cwp.id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: token.value ? `Bearer ${token.value}` : "",
+      },
     });
 
     toast.add({
       title: "Success",
-      description: `CWP "${props.cwp.name}" has been deleted successfully`,
+      description: `CWP "${props.cwp.cwp}" has been deleted`,
       color: "success",
     });
 
     open.value = false;
-
-    // Emit event to refresh parent table
     emit("cwpDeleted");
   } catch (error: any) {
-    const errorMessage =
-      error?.data?.statusMessage ||
-      error?.message ||
-      "Failed to delete CWP. Please try again.";
     toast.add({
       title: "Error",
-      description: errorMessage,
+      description:
+        error?.data?.message ||
+        error?.data?.statusMessage ||
+        error?.message ||
+        "Failed to delete CWP",
       color: "error",
     });
   } finally {
     loading.value = false;
   }
 }
-
-const emit = defineEmits<{
-  cwpDeleted: [];
-  close: [];
-}>();
 </script>
 
 <template>
   <UModal v-model:open="open" title="Delete CWP">
     <template #description>
       <p>
-        Are you sure you want to delete <strong>"{{ cwp?.name }}"</strong> ({{
-          cwp?.ratingName
-        }}) in sector <strong>"{{ cwp?.sectorName }}"</strong>? This action
-        cannot be undone.
+        Are you sure you want to delete
+        <strong>"{{ cwp?.cwp }}"</strong>
+        from rating <strong>{{ cwp?.rating?.rating || "-" }}</strong>?
       </p>
     </template>
+
     <template #body>
       <div class="flex justify-end gap-2">
         <UButton
@@ -103,9 +96,8 @@ const emit = defineEmits<{
         <UButton
           label="Delete"
           color="error"
-          variant="solid"
           :loading="loading"
-          @click="onSubmit"
+          @click="onDelete"
         />
       </div>
     </template>

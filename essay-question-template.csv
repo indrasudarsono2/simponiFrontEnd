@@ -1,0 +1,4 @@
+﻿question;answer;value
+<p>Explain the standard phraseology for requesting taxi clearance.</p>;<p>The answer should include aircraft callsign, position, destination, and requested taxi instruction.</p>;5
+<p>Mention three actions required when radio communication failure occurs.</p>;<ol><li>Maintain last assigned clearance.</li><li>Squawk appropriate code.</li><li>Follow published procedure.</li></ol>;10
+<p>Coba import CSV.</p>;<p>Jawaban Import CSV</p>;5

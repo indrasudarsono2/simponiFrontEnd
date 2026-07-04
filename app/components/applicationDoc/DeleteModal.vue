@@ -53,8 +53,8 @@ async function onSubmit() {
       },
     );
     toast.add({
-      title: "Berhasil",
-      description: "Dokumen permohonan berhasil dihapus.",
+      title: "Success",
+      description: "The application document was deleted successfully.",
       color: "success",
     });
     open.value = false;
@@ -62,7 +62,7 @@ async function onSubmit() {
   } catch (error: any) {
     toast.add({
       title: "Error",
-      description: error?.data?.statusMessage || "Gagal menghapus dokumen.",
+      description: error?.data?.statusMessage || "Failed to delete the document.",
       color: "error",
     });
   } finally {
@@ -72,25 +72,25 @@ async function onSubmit() {
 </script>
 
 <template>
-  <UModal v-model:open="open" title="Hapus Dokumen Permohonan">
+  <UModal v-model:open="open" title="Delete Application Document">
     <template #description>
       <p>
-        Apakah anda yakin ingin menghapus dokumen permohonan
-        <strong>"{{ applicationDoc?.number }}"</strong>? Tindakan ini tidak
-        dapat dibatalkan.
+        Are you sure you want to delete application document
+        <strong>"{{ applicationDoc?.number }}"</strong>? This action cannot be
+        undone.
       </p>
     </template>
     <template #body>
       <div class="flex justify-end gap-2">
         <UButton
-          label="Batal"
+          label="Cancel"
           color="neutral"
           variant="subtle"
           :disabled="loading"
           @click="open = false"
         />
         <UButton
-          label="Hapus"
+          label="Delete"
           color="error"
           variant="solid"
           :loading="loading"
