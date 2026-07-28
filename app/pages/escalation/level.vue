@@ -139,7 +139,7 @@ const columns: TableColumn<EscalationLevel>[] = [
       h(
         "div",
         { class: "text-muted" },
-        row.original.time ? `${row.original.time} minutes` : "-",
+        row.original.time === null ? "-" : `${row.original.time} minutes`,
       ),
   },
   {
@@ -183,7 +183,7 @@ const columns: TableColumn<EscalationLevel>[] = [
         variant="soft"
         icon="i-lucide-clock-3"
         title="How escalation timing works"
-        description="Each time value is cumulative from the ongoing issue start. The email worker runs every 15 minutes, so delivery may occur up to 15 minutes after an escalation becomes due."
+        description="Each time value is cumulative from the ongoing issue start. Use 0 to send email as soon as possible after an ongoing issue is created; other values run on 15-minute intervals."
       />
 
       <div class="flex flex-wrap items-center justify-between gap-1.5 mb-4">

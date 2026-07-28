@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="467" viewBox="0 0 500 467">
+  <defs>
+    <clipPath id="rounded-corners">
+      <rect width="500" height="467" rx="10" ry="10" />
+    </clipPath>
+  </defs>
+  <image
+    href="/performa-favicon-source.jpg"
+    width="500"
+    height="467"
+    preserveAspectRatio="xMidYMid meet"
+    clip-path="url(#rounded-corners)"
+  />
+</svg>

@@ -17,9 +17,10 @@ interface MultipleChoiceQuestionPayload {
 }
 
 interface MultipleChoiceGroupPayload {
-  id: number;
+  id: number | string;
   quantity: number;
   group?: string | null;
+  isMats?: boolean;
   multipleChoice?: MultipleChoiceQuestionPayload[];
 }
 
@@ -96,7 +97,8 @@ const examinationMultipleChoiceMeta = useState<{
 
 const answers = reactive<Record<number, "A" | "B" | "C" | "D" | "">>({});
 const optionOrderByQuestion = reactive<Record<number, OptionKey[]>>({});
-const activeGroupId = ref<number | undefined>(undefined);
+const activeGroupId = ref<number | string | undefined>(undefined);
+const tabScrollerRef = ref<HTMLElement | null>(null);
 const remainingSeconds = ref(0);
 const isTimeUpToastShown = ref(false);
 const isSubmittingAnswers = ref(false);
@@ -218,17 +220,19 @@ const getGroupProgressClass = (state: GroupProgressState): string => {
   return "data-[state=inactive]:text-blue-600 data-[state=active]:text-blue-700";
 };
 const getGroupById = (
-  groupId: number,
+  groupId: unknown,
 ): MultipleChoiceGroupPayload | undefined =>
-  multipleChoiceGroups.value.find((group) => group.id === groupId);
-const getGroupProgressLabelById = (groupId: number): string => {
+  multipleChoiceGroups.value.find(
+    (group) => String(group.id) === String(groupId),
+  );
+const getGroupProgressLabelById = (groupId: unknown): string => {
   const group = getGroupById(groupId);
   if (!group) return "0/0";
   const answered = getGroupAnsweredCount(group);
   const target = getGroupTargetCount(group);
   return `${answered}/${target}`;
 };
-const getGroupProgressPillClassById = (groupId: number): string => {
+const getGroupProgressPillClassById = (groupId: unknown): string => {
   const group = getGroupById(groupId);
   if (!group) return "bg-muted text-muted";
   const state = getGroupProgressState(group);
@@ -241,7 +245,7 @@ const groupTabs = computed(() =>
     const state = getGroupProgressState(group);
 
     return {
-      label: `Group ${index + 1}`,
+      label: getGroupDisplayName(group, index),
       value: group.id,
       ui: {
         trigger: getGroupProgressClass(state),
@@ -257,13 +261,37 @@ const activeGroup = computed(() => {
     ) || multipleChoiceGroups.value[0]
   );
 });
-const getGroupLabel = (groupId?: number): string => {
+function getGroupDisplayName(
+  group: MultipleChoiceGroupPayload,
+  index: number,
+): string {
+  const groupName = String(group.group || "").replace(/<[^>]*>/g, "").trim();
+  if (
+    group.isMats ||
+    String(group.id).toUpperCase() === "MATS" ||
+    groupName.toUpperCase() === "MATS"
+  ) {
+    return "MATS";
+  }
+  return groupName || `Group ${index + 1}`;
+}
+
+const getGroupLabel = (groupId?: number | string): string => {
   if (!groupId) return "Group";
   const index = multipleChoiceGroups.value.findIndex(
-    (group) => group.id === groupId,
+    (group) => String(group.id) === String(groupId),
   );
-  return index >= 0 ? `Group ${index + 1}` : "Group";
+  return index >= 0
+    ? getGroupDisplayName(multipleChoiceGroups.value[index], index)
+    : "Group";
 };
+
+function slideTabs(direction: "left" | "right") {
+  tabScrollerRef.value?.scrollBy({
+    left: direction === "left" ? -320 : 320,
+    behavior: "smooth",
+  });
+}
 
 const totalQuestions = computed(() =>
   multipleChoiceGroups.value.reduce(
@@ -1343,28 +1371,57 @@ onBeforeUnmount(() => {
             />
           </div>
 
-          <UTabs
-            v-model="activeGroupId"
-            :items="groupTabs"
-            :content="false"
-            size="lg"
-          >
-            <template #trailing="{ item }">
-              <span
-                class="ml-2 rounded-md px-2 py-1 text-sm font-semibold"
-                :class="getGroupProgressPillClassById(Number(item.value))"
+          <div class="flex min-w-0 items-center gap-2">
+            <UButton
+              icon="i-lucide-chevron-left"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              aria-label="Slide tabs left"
+              class="shrink-0"
+              @click="slideTabs('left')"
+            />
+            <div
+              ref="tabScrollerRef"
+              class="min-w-0 flex-1 overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]"
+            >
+              <UTabs
+                v-model="activeGroupId"
+                :items="groupTabs"
+                :content="false"
+                size="lg"
+                class="w-max min-w-full"
+                :ui="{
+                  list: 'flex w-max min-w-full flex-nowrap',
+                  trigger: 'shrink-0 whitespace-nowrap',
+                }"
               >
-                {{ getGroupProgressLabelById(Number(item.value)) }}
-              </span>
-            </template>
-          </UTabs>
+                <template #trailing="{ item }">
+                  <span
+                    class="ml-2 shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-sm font-semibold"
+                    :class="getGroupProgressPillClassById(item.value)"
+                  >
+                    {{ getGroupProgressLabelById(item.value) }}
+                  </span>
+                </template>
+              </UTabs>
+            </div>
+            <UButton
+              icon="i-lucide-chevron-right"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              aria-label="Slide tabs right"
+              class="shrink-0"
+              @click="slideTabs('right')"
+            />
+          </div>
 
           <UCard v-if="activeGroup" :key="activeGroup.id" class="space-y-4">
             <template #header>
               <div class="flex items-center justify-between gap-2">
                 <h2 class="text-base font-semibold text-highlighted">
-                  {{ getGroupLabel(activeGroup.id) }}:
-                  {{ activeGroup.group || "-" }}
+                  {{ getGroupLabel(activeGroup.id) }}
                 </h2>
                 <span class="text-xs text-muted">
                   Quantity: {{ activeGroup.quantity }}

@@ -1,113 +1,131 @@
 <script setup lang="ts">
-definePageMeta({
-  layout: false,
-});
+import { getDashboardRoute } from '~/utils/dashboardRoute'
 
-const { loginWithApi, isAuthenticated } = useAuth();
-const toast = useToast();
-const router = useRouter();
+definePageMeta({
+  layout: false
+})
+
+const { loginWithApi, isAuthenticated, getRoleNames } = useAuth()
+const toast = useToast()
+const router = useRouter()
 
 const form = reactive({
-  nik: "",
-  password: "",
-  captchaInput: "",
-});
+  nik: '',
+  password: '',
+  captchaInput: ''
+})
 
-const isSubmitting = ref(false);
-const captchaText = ref("");
+const isSubmitting = ref(false)
+const captchaText = ref('')
 
 const generateCaptcha = () => {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   captchaText.value = Array.from(
     { length: 6 },
-    () => chars[Math.floor(Math.random() * chars.length)],
-  ).join("");
-};
+    () => chars[Math.floor(Math.random() * chars.length)]
+  ).join('')
+}
 
-const validateNik = (nik: string) => /^\d{8}$/.test(nik);
+const validateNik = (nik: string) => /^\d{8}$/.test(nik)
+
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const requestError = error as {
+      message?: string
+      data?: { message?: string }
+    }
+    return requestError.data?.message
+      || requestError.message
+      || 'Please check your credentials and try again.'
+  }
+  return 'Please check your credentials and try again.'
+}
 
 const handleLogin = async () => {
   if (!validateNik(form.nik)) {
     toast.add({
-      title: "e-NIK tidak valid",
-      description: "e-NIK harus terdiri dari 8 digit angka.",
-      color: "error",
-    });
-    return;
+      title: 'Invalid e-NIK',
+      description: 'e-NIK must contain exactly 8 digits.',
+      color: 'error'
+    })
+    return
   }
 
   if (!form.password || form.password.length < 6) {
     toast.add({
-      title: "Password tidak valid",
-      description: "Password minimal 6 karakter.",
-      color: "error",
-    });
-    return;
+      title: 'Invalid password',
+      description: 'Password must contain at least 6 characters.',
+      color: 'error'
+    })
+    return
   }
 
   if (form.captchaInput.trim().toUpperCase() !== captchaText.value) {
     toast.add({
-      title: "Captcha salah",
-      description: "Silakan masukkan captcha dengan benar.",
-      color: "error",
-    });
-    generateCaptcha();
-    form.captchaInput = "";
-    return;
+      title: 'Incorrect captcha',
+      description: 'Please enter the captcha correctly.',
+      color: 'error'
+    })
+    generateCaptcha()
+    form.captchaInput = ''
+    return
   }
 
-  isSubmitting.value = true;
+  isSubmitting.value = true
 
   try {
-    const response = await loginWithApi(form.nik, form.password);
+    const response = await loginWithApi(form.nik, form.password)
 
     toast.add({
-      title: "Login berhasil",
-      description: response.message || "Selamat datang di aplikasi.",
-      color: "success",
-    });
+      title: 'Login successful',
+      description: response.message || 'Welcome to the application.',
+      color: 'success'
+    })
 
-    await router.push("/");
-  } catch (error: any) {
+    const roleNames = response.user.roles.map(role => role.roles.role)
+    await router.push(getDashboardRoute(roleNames))
+  } catch (error: unknown) {
     toast.add({
-      title: "Login gagal",
-      description:
-        error?.data?.message ||
-        error?.message ||
-        "Periksa kembali kredensial Anda.",
-      color: "error",
-    });
-    generateCaptcha();
-    form.captchaInput = "";
+      title: 'Login failed',
+      description: getErrorMessage(error),
+      color: 'error'
+    })
+    generateCaptcha()
+    form.captchaInput = ''
   } finally {
-    isSubmitting.value = false;
+    isSubmitting.value = false
   }
-};
+}
 
 onMounted(() => {
-  generateCaptcha();
+  generateCaptcha()
 
   if (isAuthenticated.value) {
-    router.push("/");
+    router.push(getDashboardRoute(getRoleNames()))
   }
-});
+})
 </script>
 
 <template>
   <div
     class="min-h-screen bg-gradient-to-br from-slate-100 via-white to-green-50 dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-900 flex items-center justify-center px-4"
   >
-    <div class="w-full max-w-md">
+    <div class="w-full max-w-lg">
       <UCard class="shadow-xl ring-1 ring-gray-200/70 dark:ring-gray-800">
         <template #header>
-          <div class="text-center space-y-1">
+          <div class="space-y-3 text-center">
+            <img
+              src="/performa-logo.png"
+              alt="PERFORMA - Performance and Operational Record Management Application"
+              class="mx-auto h-auto w-full max-w-md object-contain"
+            >
             <h1
               class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
             >
-              Login Aplikasi
+              Application Login
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-              Masuk menggunakan e-NIK, password, dan captcha
+              Sign in using your e-NIK, password, and captcha
             </p>
           </div>
         </template>
@@ -116,7 +134,7 @@ onMounted(() => {
           <UFormField label="e-NIK" name="nik" required>
             <UInput
               v-model="form.nik"
-              placeholder="Masukkan 8 digit e-NIK"
+              placeholder="Enter your 8-digit e-NIK"
               icon="i-lucide-id-card"
               size="xl"
               :maxlength="8"
@@ -128,7 +146,7 @@ onMounted(() => {
             <UInput
               v-model="form.password"
               type="password"
-              placeholder="Masukkan password"
+              placeholder="Enter your password"
               icon="i-lucide-lock"
               size="xl"
               class="w-full"
@@ -152,13 +170,14 @@ onMounted(() => {
                   color="neutral"
                   variant="soft"
                   icon="i-lucide-refresh-cw"
+                  aria-label="Generate a new captcha"
                   @click="generateCaptcha"
                 />
               </div>
 
               <UInput
                 v-model="form.captchaInput"
-                placeholder="Ketik captcha di atas"
+                placeholder="Enter the captcha shown above"
                 icon="i-lucide-shield-check"
                 size="xl"
                 class="w-full"
@@ -174,7 +193,7 @@ onMounted(() => {
             :disabled="isSubmitting"
             icon="i-lucide-log-in"
           >
-            Masuk
+            Sign In
           </UButton>
         </form>
       </UCard>

@@ -7,18 +7,23 @@ import {
   parseDate,
 } from "@internationalized/date";
 
-interface CheckerStatisticEventUserItem {
+interface BranchOption {
   id: number;
-  event?: {
-    id?: number;
-    event?: string | null;
+  branch?: string | null;
+}
+
+interface IndividualUserItem {
+  nik?: string | null;
+  name?: string | null;
+  licenseUserId?: string | null;
+  professionInBranch?: {
+    profession?: { profession?: string | null } | null;
   } | null;
 }
 
-interface CheckerStatisticMemberItem {
-  nik?: string | null;
-  name?: string | null;
-  eventUsers?: CheckerStatisticEventUserItem[] | null;
+interface IndividualOptionsResponse {
+  branches: BranchOption[];
+  users: IndividualUserItem[];
 }
 
 interface StatisticGroupItem {
@@ -52,31 +57,15 @@ const { token } = useAuth();
 const toast = useToast();
 const df = new DateFormatter("en-US", { dateStyle: "medium" });
 
+const selectedBranchId = ref<number | undefined>(undefined);
 const selectedMemberNik = ref<string | undefined>(undefined);
 const periodMode = ref<"all" | "period">("all");
 const startDate = ref("");
 const endDate = ref("");
+const users = ref<IndividualUserItem[]>([]);
+const usersLoading = ref(false);
 const submitLoading = ref(false);
 const answeredData = ref<CheckerStatisticAnsweredResponse | null>(null);
-
-const { data, status, error, refresh } = await useFetch<
-  CheckerStatisticMemberItem[]
->(`http://${ip.ipBackEnd}/api/checkerStatistic`, {
-  headers: {
-    Authorization: token.value ? `Bearer ${token.value}` : "",
-  },
-});
-
-const memberOptions = computed(() => {
-  return (data.value || []).map((item) => ({
-    label: item.name || item.nik || "-",
-    value: item.nik || "",
-  }));
-});
-
-watch(selectedMemberNik, () => {
-  answeredData.value = null;
-});
 
 function parseDateString(value: string): CalendarDate | null {
   if (!value) return null;
@@ -108,11 +97,67 @@ const periodOptions = [
   { label: "Particular Period", value: "period" },
 ];
 
+const { data, status, error, refresh } = await useFetch<IndividualOptionsResponse>(
+  `http://${ip.ipBackEnd}/api/pfcScore/individual`, {
+  headers: {
+    Authorization: token.value ? `Bearer ${token.value}` : "",
+  },
+});
+
+const branchOptions = computed(() =>
+  (data.value?.branches || []).map((item) => ({
+    label: item.branch || `Branch ${item.id}`,
+    value: item.id,
+  })),
+);
+
+const memberOptions = computed(() => {
+  return users.value.map((item) => ({
+    label: `${item.name || "-"} (${item.nik || "-"})`,
+    value: item.nik || "",
+  }));
+});
+
+const selectedMember = computed(() => {
+  if (!selectedMemberNik.value) return null;
+  return users.value.find((item) => item.nik === selectedMemberNik.value) || null;
+});
+
+watch(selectedMemberNik, () => {
+  answeredData.value = null;
+});
+
 watch([periodMode, startDate, endDate], () => {
   answeredData.value = null;
   if (periodMode.value === "all") {
     startDate.value = "";
     endDate.value = "";
+  }
+});
+
+watch(selectedBranchId, async (branchId) => {
+  selectedMemberNik.value = undefined;
+  answeredData.value = null;
+  users.value = [];
+  if (!branchId) return;
+  usersLoading.value = true;
+  try {
+    const response = await $fetch<IndividualOptionsResponse>(
+      `http://${ip.ipBackEnd}/api/pfcScore/individual`,
+      {
+        headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+        query: { branchId },
+      },
+    );
+    users.value = response.users || [];
+  } catch (fetchError: any) {
+    toast.add({
+      title: "Error",
+      description: fetchError?.data?.message || fetchError?.message || "Failed to load users.",
+      color: "error",
+    });
+  } finally {
+    usersLoading.value = false;
   }
 });
 
@@ -315,10 +360,10 @@ function linePointY(
 const yTicks = [100, 75, 50, 25, 0];
 
 async function handleSubmit() {
-  if (!selectedMemberNik.value) {
+  if (!selectedBranchId.value || !selectedMemberNik.value) {
     toast.add({
       title: "Validation",
-      description: "Please select a member.",
+      description: "Please select a branch and user.",
       color: "warning",
     });
     return;
@@ -344,14 +389,15 @@ async function handleSubmit() {
     submitLoading.value = true;
 
     const response = await $fetch<CheckerStatisticAnsweredResponse>(
-      `http://${ip.ipBackEnd}/api/checkerStatistic`,
+      `http://${ip.ipBackEnd}/api/pfcScore/individual`,
       {
         method: "POST",
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
         },
         body: {
-          memberNik: selectedMemberNik.value,
+          branchId: selectedBranchId.value,
+          userNik: selectedMemberNik.value,
           ...(periodMode.value === "period"
             ? { startDate: startDate.value, endDate: endDate.value }
             : {}),
@@ -363,14 +409,14 @@ async function handleSubmit() {
 
     toast.add({
       title: "Success",
-      description: "Checker statistic loaded successfully.",
+      description: "Individual statistic loaded successfully.",
       color: "success",
     });
   } catch (fetchError: any) {
     const message =
       fetchError?.data?.message ||
       fetchError?.message ||
-      "Failed to submit checker statistic request.";
+      "Failed to load individual statistic.";
     toast.add({
       title: "Error",
       description: message,
@@ -390,7 +436,7 @@ const initialErrorMessage = computed(() => {
   return (
     err.data?.message ||
     err.message ||
-    "Failed to load member and event options."
+    "Failed to load branch options."
   );
 });
 </script>
@@ -398,7 +444,7 @@ const initialErrorMessage = computed(() => {
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar title="Checker Statistic - Member">
+      <UDashboardNavbar title="Individual Performance Score">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -409,7 +455,7 @@ const initialErrorMessage = computed(() => {
       <div class="space-y-4">
         <UCard>
           <template #header>
-            <h2 class="text-lg font-semibold">Filter Member Statistic</h2>
+            <h2 class="text-lg font-semibold">Select Employee</h2>
           </template>
 
           <div
@@ -434,12 +480,25 @@ const initialErrorMessage = computed(() => {
             />
           </div>
 
-          <div v-else class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <UFormField label="Name">
+          <div v-else class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <UFormField label="Branch">
+              <USelect
+                v-model="selectedBranchId"
+                :items="branchOptions"
+                value-key="value"
+                placeholder="Select branch"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField label="User">
               <USelect
                 v-model="selectedMemberNik"
                 :items="memberOptions"
-                placeholder="Select member"
+                value-key="value"
+                :loading="usersLoading"
+                :disabled="!selectedBranchId || usersLoading"
+                placeholder="Select user"
                 class="w-full"
               />
             </UFormField>
@@ -496,6 +555,7 @@ const initialErrorMessage = computed(() => {
                 icon="i-lucide-search"
                 :loading="submitLoading"
                 :disabled="
+                  !selectedBranchId ||
                   !selectedMemberNik ||
                   submitLoading ||
                   (periodMode === 'period' && (!startDate || !endDate))
@@ -503,6 +563,29 @@ const initialErrorMessage = computed(() => {
                 class="w-full md:w-auto"
                 @click="handleSubmit"
               />
+            </div>
+          </div>
+        </UCard>
+
+        <UCard v-if="answeredData && selectedMember">
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p class="text-xs text-muted">Name</p>
+              <p class="font-medium">{{ selectedMember.name || '-' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-muted">NIK</p>
+              <p class="font-medium">{{ selectedMember.nik || '-' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-muted">License ID</p>
+              <p class="font-medium">{{ selectedMember.licenseUserId || '-' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-muted">Profession</p>
+              <p class="font-medium">
+                {{ selectedMember.professionInBranch?.profession?.profession || '-' }}
+              </p>
             </div>
           </div>
         </UCard>

@@ -175,7 +175,10 @@ async function submitVerification() {
   } catch (error: any) {
     toast.add({
       title: "Error",
-      description: error?.message || "Failed to submit verification data",
+      description:
+        error?.data?.message ||
+        error?.message ||
+        "Failed to submit verification data",
       color: "error",
     });
   } finally {

@@ -284,7 +284,7 @@ const columns = computed((): TableColumn<MedexUser>[] => [
           class="max-w-sm"
           icon="i-lucide-search"
         />
-        <MedexUserAddModal @medexUser-added="handleMedexUserAdded" />
+        <MedexUserAddModal @medex-user-added="handleMedexUserAdded" />
 
         <UButton
           label="Refresh"
@@ -379,14 +379,14 @@ const columns = computed((): TableColumn<MedexUser>[] => [
       <!-- Update Modal -->
       <MedexUserUpdateModal
         :medexUser="medexUserToUpdate"
-        @medexUser-updated="handleMedexUserUpdated"
+        @medex-user-updated="handleMedexUserUpdated"
         @close="handleModalClose"
       />
 
       <!-- Delete Modal -->
       <MedexUserDeleteModal
         :medexUser="medexUserToDelete"
-        @medexUser-deleted="handleMedexUserDeleted"
+        @medex-user-deleted="handleMedexUserDeleted"
         @close="handleModalClose"
       />
     </template>

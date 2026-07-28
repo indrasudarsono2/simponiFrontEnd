@@ -13,6 +13,11 @@ const schema = z.object({
   expired: z.string().min(1, "Expired date is required"),
   rater: z.string().min(2, "Rater must be at least 2 characters"),
   file: z.instanceof(File).optional(),
+  echainFileName: z.string().nullable().optional(),
+  echainFileUrl: z.string().nullable().optional(),
+  echainFileUrlExpiresAt: z.string().nullable().optional(),
+  echainFileMimeType: z.string().nullable().optional(),
+  echainFileSizeBytes: z.number().nullable().optional(),
 });
 
 const open = ref(false);
@@ -28,24 +33,44 @@ const state = reactive<Partial<Schema>>({
   expired: undefined,
   rater: undefined,
   file: undefined,
+  echainFileName: null,
+  echainFileUrl: null,
+  echainFileUrlExpiresAt: null,
+  echainFileMimeType: null,
+  echainFileSizeBytes: null,
 });
 
 const toast = useToast();
 const loading = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
+const { apiFetch } = useApiFetch();
 
-// Mock sync data from external IELP system
-const mockSyncData = {
-  institution: "PPIC CURUG",
-  level: "5",
-  released: "2024-02-28",
-  expired: "2027-02-28",
-};
+interface IelpUserSyncResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    institution?: string;
+    level?: string;
+    released?: string;
+    expired?: string;
+    rater?: string | null;
+    fileName?: string | null;
+    fileUrl?: string | null;
+    fileUrlExpiresAt?: string | null;
+    fileMimeType?: string | null;
+    fileSizeBytes?: number | null;
+  };
+}
 
 function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files[0]) {
     state.file = target.files[0];
+    state.echainFileName = null;
+    state.echainFileUrl = null;
+    state.echainFileUrlExpiresAt = null;
+    state.echainFileMimeType = null;
+    state.echainFileSizeBytes = null;
   }
 }
 
@@ -62,47 +87,100 @@ function toggleSyncMode() {
     state.released = undefined;
     state.expired = undefined;
     state.rater = undefined;
+    state.file = undefined;
+    state.echainFileName = null;
+    state.echainFileUrl = null;
+    state.echainFileUrlExpiresAt = null;
+    state.echainFileMimeType = null;
+    state.echainFileSizeBytes = null;
   }
 }
 
-function syncFromSystem() {
+async function syncFromSystem() {
   syncLoading.value = true;
 
-  // Simulate API call to external IELP system
-  setTimeout(() => {
-    state.institution = mockSyncData.institution;
-    state.level = mockSyncData.level;
-    state.released = mockSyncData.released;
-    state.expired = mockSyncData.expired;
+  try {
+    const response = (await apiFetch("/api/ielpUser/sync-echain", {
+      method: "POST",
+    })) as IelpUserSyncResponse;
+
+    state.institution = response.data.institution;
+    state.level = response.data.level;
+    state.released = response.data.released;
+    state.expired = response.data.expired;
+    state.rater = response.data.rater ?? undefined;
+    state.file = undefined;
+    state.echainFileName = response.data.fileName ?? null;
+    state.echainFileUrl = response.data.fileUrl ?? null;
+    state.echainFileUrlExpiresAt = response.data.fileUrlExpiresAt ?? null;
+    state.echainFileMimeType = response.data.fileMimeType ?? null;
+    state.echainFileSizeBytes = response.data.fileSizeBytes ?? null;
 
     toast.add({
       title: "Sync Success",
-      description:
-        "IELP data synced from external system. Please fill in the Rater field.",
+      description: response.data.fileName
+        ? `IELP data synced from e-chain: ${response.data.fileName}`
+        : "IELP data synced from e-chain. Please review before saving.",
       color: "success",
     });
+  } catch (error: any) {
+    const errorMessage =
+      error?.data?.message ||
+      error?.data?.statusMessage ||
+      error?.message ||
+      "Failed to sync IELP data. Please try again.";
+    toast.add({
+      title: "Sync Failed",
+      description: errorMessage,
+      color: "error",
+    });
+  } finally {
     syncLoading.value = false;
-  }, 1500);
+  }
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    // Use JSON body
-    const body = {
-      institution: event.data.institution,
-      level: event.data.level,
-      released: event.data.released,
-      expired: event.data.expired,
-      rater: event.data.rater,
-      file: event.data.file ? { name: event.data.file.name } : null,
-    };
+    const formData = new FormData();
+
+    formData.append("institution", event.data.institution);
+    formData.append("level", event.data.level);
+    formData.append("released", event.data.released);
+    formData.append("expired", event.data.expired);
+    formData.append("rater", event.data.rater);
+
+    if (event.data.file instanceof File) {
+      formData.append("file", event.data.file);
+    }
+
+    if (!event.data.file && event.data.echainFileUrl) {
+      formData.append("echainFileUrl", event.data.echainFileUrl);
+      if (event.data.echainFileName) {
+        formData.append("echainFileName", event.data.echainFileName);
+      }
+      if (event.data.echainFileMimeType) {
+        formData.append("echainFileMimeType", event.data.echainFileMimeType);
+      }
+      if (event.data.echainFileUrlExpiresAt) {
+        formData.append(
+          "echainFileUrlExpiresAt",
+          event.data.echainFileUrlExpiresAt,
+        );
+      }
+      if (event.data.echainFileSizeBytes != null) {
+        formData.append(
+          "echainFileSizeBytes",
+          String(event.data.echainFileSizeBytes),
+        );
+      }
+    }
 
     // Call API to create IELPUser
-    await $fetch("/api/ielpUser", {
+    await apiFetch("/api/ielpUser", {
       method: "POST",
-      body: body,
+      body: formData,
     });
 
     toast.add({
@@ -118,6 +196,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.expired = undefined;
     state.rater = undefined;
     state.file = undefined;
+    state.echainFileName = null;
+    state.echainFileUrl = null;
+    state.echainFileUrlExpiresAt = null;
+    state.echainFileMimeType = null;
+    state.echainFileSizeBytes = null;
     syncMode.value = false;
     open.value = false;
 
@@ -212,6 +295,12 @@ const emit = defineEmits<{
               <p class="text-xs text-muted mt-1">
                 Institution: {{ state.institution }} | Level: {{ state.level }}
               </p>
+              <p
+                v-if="state.echainFileName"
+                class="text-xs text-muted mt-1"
+              >
+                File: {{ state.echainFileName }}
+              </p>
             </div>
           </div>
 
@@ -235,6 +324,12 @@ const emit = defineEmits<{
                 />
                 <span v-if="state.file" class="text-sm text-muted">
                   {{ state.file.name }}
+                </span>
+                <span
+                  v-else-if="state.echainFileName"
+                  class="text-sm text-muted"
+                >
+                  {{ state.echainFileName }}
                 </span>
                 <span v-else class="text-sm text-muted">No file selected</span>
               </div>

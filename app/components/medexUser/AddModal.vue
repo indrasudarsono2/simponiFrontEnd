@@ -12,6 +12,11 @@ const schema = z.object({
   expired: z.string().min(1, "Expired date is required"),
   examiner: z.string().min(2, "Examiner must be at least 2 characters"),
   file: z.instanceof(File).optional(),
+  echainFileName: z.string().nullable().optional(),
+  echainFileUrl: z.string().nullable().optional(),
+  echainFileUrlExpiresAt: z.string().nullable().optional(),
+  echainFileMimeType: z.string().nullable().optional(),
+  echainFileSizeBytes: z.number().nullable().optional(),
 });
 
 const open = ref(false);
@@ -26,23 +31,42 @@ const state = reactive<Partial<Schema>>({
   expired: undefined,
   examiner: undefined,
   file: undefined,
+  echainFileName: null,
+  echainFileUrl: null,
+  echainFileUrlExpiresAt: null,
+  echainFileMimeType: null,
+  echainFileSizeBytes: null,
 });
 
 const toast = useToast();
 const loading = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-// Mock sync data from external Medex system
-const mockSyncData = {
-  institution: "RS Aviation",
-  released: "2024-02-28",
-  expired: "2026-02-28",
-};
+interface MedexUserSyncResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    institution?: string;
+    released?: string;
+    expired?: string;
+    examiner?: string | null;
+    fileName?: string | null;
+    fileUrl?: string | null;
+    fileUrlExpiresAt?: string | null;
+    fileMimeType?: string | null;
+    fileSizeBytes?: number | null;
+  };
+}
 
 function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files[0]) {
     state.file = target.files[0];
+    state.echainFileName = null;
+    state.echainFileUrl = null;
+    state.echainFileUrlExpiresAt = null;
+    state.echainFileMimeType = null;
+    state.echainFileSizeBytes = null;
   }
 }
 
@@ -58,26 +82,55 @@ function toggleSyncMode() {
     state.released = undefined;
     state.expired = undefined;
     state.examiner = undefined;
+    state.file = undefined;
+    state.echainFileName = null;
+    state.echainFileUrl = null;
+    state.echainFileUrlExpiresAt = null;
+    state.echainFileMimeType = null;
+    state.echainFileSizeBytes = null;
   }
 }
 
-function syncFromSystem() {
+async function syncFromSystem() {
   syncLoading.value = true;
 
-  // Simulate API call to external Medex system
-  setTimeout(() => {
-    state.institution = mockSyncData.institution;
-    state.released = mockSyncData.released;
-    state.expired = mockSyncData.expired;
+  try {
+    const response = (await apiFetch("/api/medexUser/sync-echain", {
+      method: "POST",
+    })) as MedexUserSyncResponse;
+
+    state.institution = response.data.institution;
+    state.released = response.data.released;
+    state.expired = response.data.expired;
+    state.examiner = response.data.examiner ?? undefined;
+    state.file = undefined;
+    state.echainFileName = response.data.fileName ?? null;
+    state.echainFileUrl = response.data.fileUrl ?? null;
+    state.echainFileUrlExpiresAt = response.data.fileUrlExpiresAt ?? null;
+    state.echainFileMimeType = response.data.fileMimeType ?? null;
+    state.echainFileSizeBytes = response.data.fileSizeBytes ?? null;
 
     toast.add({
       title: "Sync Success",
-      description:
-        "Medex data synced from external system. Please fill in the Examiner field.",
+      description: response.data.fileName
+        ? `Medex data synced from e-chain: ${response.data.fileName}`
+        : "Medex data synced from e-chain. Please review before saving.",
       color: "success",
     });
+  } catch (error: any) {
+    const errorMessage =
+      error?.data?.message ||
+      error?.data?.statusMessage ||
+      error?.message ||
+      "Failed to sync Medex data. Please try again.";
+    toast.add({
+      title: "Sync Failed",
+      description: errorMessage,
+      color: "error",
+    });
+  } finally {
     syncLoading.value = false;
-  }, 1500);
+  }
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
@@ -94,6 +147,29 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     if (event.data.file instanceof File) {
       formData.append("file", event.data.file);
     }
+
+    if (!event.data.file && event.data.echainFileUrl) {
+      formData.append("echainFileUrl", event.data.echainFileUrl);
+      if (event.data.echainFileName) {
+        formData.append("echainFileName", event.data.echainFileName);
+      }
+      if (event.data.echainFileMimeType) {
+        formData.append("echainFileMimeType", event.data.echainFileMimeType);
+      }
+      if (event.data.echainFileUrlExpiresAt) {
+        formData.append(
+          "echainFileUrlExpiresAt",
+          event.data.echainFileUrlExpiresAt,
+        );
+      }
+      if (event.data.echainFileSizeBytes != null) {
+        formData.append(
+          "echainFileSizeBytes",
+          String(event.data.echainFileSizeBytes),
+        );
+      }
+    }
+
     // Call API to create MedexUser
     await apiFetch("/api/medexUser", {
       method: "POST",
@@ -112,6 +188,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.expired = undefined;
     state.examiner = undefined;
     state.file = undefined;
+    state.echainFileName = null;
+    state.echainFileUrl = null;
+    state.echainFileUrlExpiresAt = null;
+    state.echainFileMimeType = null;
+    state.echainFileSizeBytes = null;
     syncMode.value = false;
     open.value = false;
 
@@ -206,6 +287,12 @@ const emit = defineEmits<{
               <p class="text-xs text-muted mt-1">
                 Institution: {{ state.institution }}
               </p>
+              <p
+                v-if="state.echainFileName"
+                class="text-xs text-muted mt-1"
+              >
+                File: {{ state.echainFileName }}
+              </p>
             </div>
           </div>
 
@@ -229,6 +316,12 @@ const emit = defineEmits<{
                 />
                 <span v-if="state.file" class="text-sm text-muted">
                   {{ state.file.name }}
+                </span>
+                <span
+                  v-else-if="state.echainFileName"
+                  class="text-sm text-muted"
+                >
+                  {{ state.echainFileName }}
                 </span>
                 <span v-else class="text-sm text-muted">No file selected</span>
               </div>

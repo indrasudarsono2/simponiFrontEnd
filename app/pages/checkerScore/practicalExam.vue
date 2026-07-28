@@ -35,6 +35,12 @@ interface ScoreCheckerAppRatingItem {
     status?: string | null;
   } | null;
   practicalTests?: PracticalTestItem[] | null;
+  practicalRecheckAuthorization?: {
+    id: number;
+    status: string;
+    reason?: string | null;
+    createdAt: string;
+  } | null;
 }
 
 interface ScoreCheckerApplicationDocItem {
@@ -72,6 +78,10 @@ interface PracticalExamRow {
   checker: string;
   score: string;
   file: string | null;
+  appRatingId: number | null;
+  recheckStatus: string | null;
+  showAction: boolean;
+  actionRowSpan: number;
 }
 
 const { token } = useAuth();
@@ -81,6 +91,10 @@ const selectedRemarkId = ref<number | undefined>(undefined);
 const selectedEventId = ref<number | undefined>(undefined);
 const resultLoading = ref(false);
 const resultData = ref<ScoreCheckerResultItem[] | null>(null);
+const recheckTarget = ref<PracticalExamRow | null>(null);
+const recheckReason = ref("");
+const recheckConfirmation = ref("");
+const recheckLoading = ref(false);
 
 const isFileModalOpen = ref(false);
 const selectedFilePath = ref<string | null>(null);
@@ -256,6 +270,10 @@ const rows = computed<PracticalExamRow[]>(() => {
             checker: test.checkerGroup?.userChecker?.name || "-",
             score: formatScore(test.score),
             file: test.file || null,
+            appRatingId: appRating.id ?? null,
+            recheckStatus: appRating.practicalRecheckAuthorization?.status || null,
+            showAction: testIndex === 0,
+            actionRowSpan: ratingRowSpan,
           });
 
           isFirstUserRow = false;
@@ -311,6 +329,47 @@ async function handleSearch() {
   } finally {
     resultLoading.value = false;
   }
+}
+
+async function grantRecheck() {
+  if (!recheckTarget.value?.appRatingId) return;
+  try {
+    recheckLoading.value = true;
+    await $fetch(`http://${ip.ipBackEnd}/api/scoreCheckerPractical/recheck`, {
+      method: "POST",
+      headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+      body: {
+        appRatingId: recheckTarget.value.appRatingId,
+        reason: recheckReason.value.trim(),
+        confirmation: recheckConfirmation.value,
+      },
+    });
+    toast.add({
+      title: "Practical recheck granted",
+      description: "All practical tests are now available as one-time recheck tasks.",
+      color: "success",
+    });
+    recheckTarget.value = null;
+    recheckReason.value = "";
+    recheckConfirmation.value = "";
+    await handleSearch();
+  } catch (fetchError: any) {
+    toast.add({
+      title: "Unable to grant recheck",
+      description: fetchError?.data?.message || fetchError?.message,
+      color: "error",
+    });
+  } finally {
+    recheckLoading.value = false;
+  }
+}
+
+function openRecheckGrant(row: PracticalExamRow) {
+  recheckTarget.value = row;
+}
+
+function closeRecheckGrant() {
+  recheckTarget.value = null;
 }
 
 const initialErrorMessage = computed(() => {
@@ -468,6 +527,9 @@ const initialErrorMessage = computed(() => {
                   >
                     File
                   </th>
+                  <th class="px-3 py-2 text-center font-medium border border-default">
+                    Discretion
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -539,12 +601,31 @@ const initialErrorMessage = computed(() => {
                       @click="openFileModal(row.file)"
                     />
                   </td>
+                  <td
+                    v-if="row.showAction"
+                    class="px-3 py-2 border border-default align-middle text-center"
+                    :rowspan="row.actionRowSpan"
+                  >
+                    <UBadge v-if="row.recheckStatus" color="warning" variant="soft">
+                      {{ row.recheckStatus }}
+                    </UBadge>
+                    <UButton
+                      v-else-if="row.status.toUpperCase() === 'FAILED'"
+                      label="Grant Recheck"
+                      icon="i-lucide-rotate-ccw"
+                      color="warning"
+                      variant="soft"
+                      size="xs"
+                      @click="openRecheckGrant(row)"
+                    />
+                    <span v-else>-</span>
+                  </td>
                 </tr>
 
                 <tr v-if="rows.length === 0">
                   <td
                     class="px-3 py-3 text-muted border border-default text-center"
-                    colspan="9"
+                    colspan="10"
                   >
                     No practical exam data available.
                   </td>
@@ -607,6 +688,40 @@ const initialErrorMessage = computed(() => {
                 color="neutral"
                 variant="soft"
                 @click="closeFileModal"
+              />
+            </div>
+          </template>
+        </UModal>
+
+        <UModal
+          :open="Boolean(recheckTarget)"
+          title="Grant One-Time Practical Recheck"
+          description="All practical tests for this rating will be repeated. Original scores and evidence remain unchanged."
+          @update:open="(value) => { if (!value) recheckTarget = null }"
+        >
+          <template #body>
+            <div class="space-y-4">
+              <div class="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
+                This discretion can be granted only once. Every attempt-2 practical score must pass.
+              </div>
+              <UFormField label="Reason" required>
+                <UTextarea v-model="recheckReason" :rows="4" maxlength="2000" class="w-full" />
+              </UFormField>
+              <UFormField label="Type GRANT ONE PRACTICAL RECHECK to continue" required>
+                <UInput v-model="recheckConfirmation" class="w-full font-mono" />
+              </UFormField>
+            </div>
+          </template>
+          <template #footer>
+            <div class="flex w-full justify-end gap-2">
+              <UButton label="Cancel" color="neutral" variant="outline" @click="closeRecheckGrant" />
+              <UButton
+                label="Grant One-Time Recheck"
+                color="error"
+                icon="i-lucide-shield-alert"
+                :loading="recheckLoading"
+                :disabled="recheckReason.trim().length < 10 || recheckConfirmation !== 'GRANT ONE PRACTICAL RECHECK'"
+                @click="grantRecheck"
               />
             </div>
           </template>

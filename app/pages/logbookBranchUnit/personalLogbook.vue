@@ -298,8 +298,8 @@ function formatShiftLabel(
   const shifts = shiftName.shifts || [];
   const firstShift = shifts[0];
   const lastShift = shifts[shifts.length - 1];
-  const startTime = firstShift?.start || "-";
-  const endTime = lastShift?.end || "-";
+  const startTime = formatUtcTime(firstShift?.start);
+  const endTime = formatUtcTime(lastShift?.end);
   return `${shiftName.shift || "Shift"} (${startTime}-${endTime})`;
 }
 
@@ -322,13 +322,23 @@ function formatDisplayDate(value?: string | null) {
 function formatUtcTime(value?: string | null) {
   if (!value) return "-";
 
-  const date = new Date(value);
+  const trimmed = String(value).trim();
+  const timeMatch = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (timeMatch) {
+    const hours = Number(timeMatch[1]);
+    const minutes = Number(timeMatch[2]);
+    if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} UTC`;
+    }
+  }
+
+  const date = new Date(trimmed);
   if (Number.isNaN(date.getTime())) return "-";
 
   const hours = String(date.getUTCHours()).padStart(2, "0");
   const minutes = String(date.getUTCMinutes()).padStart(2, "0");
 
-  return `${hours}:${minutes}`;
+  return `${hours}:${minutes} UTC`;
 }
 
 // ── Load users on mount ──

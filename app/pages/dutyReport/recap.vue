@@ -111,6 +111,12 @@ interface LhdReport {
   } | null
 }
 
+interface OtherReport {
+  id: number
+  time: string | null
+  report: string | null
+}
+
 interface DutyReportRecap {
   id: number
   shiftDate: string | null
@@ -124,6 +130,7 @@ interface DutyReportRecap {
   logBooks?: LogBook[]
   statusFrequencies?: StatusFrequency[]
   lhdReports?: LhdReport[]
+  otherReports?: OtherReport[]
 }
 
 function formatLocalDateInput(value: Date) {
@@ -213,6 +220,15 @@ const lhdReportRows = computed(() =>
     (dutyReport.lhdReports || []).map(lhdReport => ({
       dutyReport,
       lhdReport
+    }))
+  )
+)
+
+const otherReportRows = computed(() =>
+  filteredRecapRows.value.flatMap(dutyReport =>
+    (dutyReport.otherReports || []).map(otherReport => ({
+      dutyReport,
+      otherReport
     }))
   )
 )
@@ -323,10 +339,12 @@ function formatDateTime(value?: string | null) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
 
-  return new Intl.DateTimeFormat('en-US', {
+  return `${new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium',
-    timeStyle: 'short'
-  }).format(date)
+    timeStyle: 'short',
+    hour12: false,
+    timeZone: 'UTC'
+  }).format(date)} UTC`
 }
 
 function formatUtcTime(value?: string | null) {
@@ -338,7 +356,7 @@ function formatUtcTime(value?: string | null) {
   const hours = String(date.getUTCHours()).padStart(2, '0')
   const minutes = String(date.getUTCMinutes()).padStart(2, '0')
 
-  return `${hours}:${minutes}`
+  return `${hours}:${minutes} UTC`
 }
 
 function formatDuration(value?: number | null) {
@@ -919,6 +937,74 @@ async function loadDutyReportRecap() {
                         class="border border-default px-4 py-3 align-top whitespace-pre-wrap text-muted"
                       >
                         {{ lhdReport.message || "-" }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </UCard>
+
+            <UCard>
+              <template #header>
+                <div class="flex flex-col gap-1">
+                  <h3 class="font-semibold text-highlighted">Other Report</h3>
+                  <p class="text-sm text-muted">
+                    Other operational reports for the selected shift recap.
+                  </p>
+                </div>
+              </template>
+
+              <div
+                v-if="!otherReportRows.length"
+                class="rounded-xl border border-dashed border-default bg-elevated/20 p-6 text-center text-sm text-muted"
+              >
+                No other report found for this shift.
+              </div>
+
+              <div
+                v-else
+                class="overflow-x-auto rounded-lg border border-default"
+              >
+                <table class="min-w-full border-collapse text-sm">
+                  <thead class="bg-elevated/50">
+                    <tr>
+                      <th class="border border-default px-4 py-3 text-left">
+                        No
+                      </th>
+                      <th class="border border-default px-4 py-3 text-left">
+                        Supervisor / CWP
+                      </th>
+                      <th class="border border-default px-4 py-3 text-left">
+                        Report Time
+                      </th>
+                      <th class="border border-default px-4 py-3 text-left">
+                        Report
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="({ dutyReport, otherReport }, index) in otherReportRows"
+                      :key="otherReport.id"
+                    >
+                      <td class="border border-default px-4 py-3 align-top">
+                        {{ index + 1 }}
+                      </td>
+                      <td class="border border-default px-4 py-3 align-top">
+                        <div class="font-medium text-highlighted">
+                          {{ dutyReport.spv?.name || dutyReport.supervisor || "-" }}
+                        </div>
+                        <div class="text-xs text-muted">
+                          {{ formatSupervisorCwps(dutyReport.supervisorCwp) }}
+                        </div>
+                      </td>
+                      <td class="border border-default px-4 py-3 align-top">
+                        {{ formatDateTime(otherReport.time) }}
+                      </td>
+                      <td
+                        class="border border-default px-4 py-3 align-top whitespace-pre-wrap text-muted"
+                      >
+                        {{ otherReport.report || "-" }}
                       </td>
                     </tr>
                   </tbody>

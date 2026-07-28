@@ -311,7 +311,7 @@ const columns = computed((): TableColumn<IELPUser>[] => [
           class="max-w-sm"
           icon="i-lucide-search"
         />
-        <IelpAddModal @ielpUser-added="handleIELPUserAdded" />
+        <IelpUserAddModal @ielp-user-added="handleIELPUserAdded" />
 
         <UButton
           label="Refresh"
@@ -403,15 +403,15 @@ const columns = computed((): TableColumn<IELPUser>[] => [
         </div>
       </div>
 
-      <IelpUpdateModal
+      <IelpUserUpdateModal
         :ielpUser="ielpUserToUpdate"
-        @ielpUpdated="handleIELPUserUpdated"
+        @ielp-user-updated="handleIELPUserUpdated"
         @close="handleModalClose"
       />
 
-      <IelpDeleteModal
+      <IelpUserDeleteModal
         :ielpUser="ielpUserToDelete"
-        @ielpDeleted="handleIELPUserDeleted"
+        @ielp-user-deleted="handleIELPUserDeleted"
         @close="handleModalClose"
       />
     </template>

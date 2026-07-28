@@ -149,6 +149,7 @@ interface DutyReportDeletionSummary {
     statusFrequencies: number;
     logBooks: number;
     lhdReports: number;
+    otherReports: number;
   };
 }
 
@@ -185,6 +186,13 @@ interface LhdReport {
   lhdBook: LhdBook | null;
 }
 
+interface OtherReport {
+  id: number;
+  dutyReportId: number | null;
+  report: string | null;
+  time: string | null;
+}
+
 const { token } = useAuth();
 const toast = useToast();
 const activeShiftNameId = ref<number | undefined>();
@@ -195,17 +203,27 @@ const onGoingIssues = ref<OnGoingIssue[]>([]);
 const equipmentOptions = ref<EquipmentOption[]>([]);
 const selectedIssueDutyReportId = ref<number | undefined>();
 const selectedLhdDutyReportId = ref<number | undefined>();
+const selectedOtherReportDutyReportId = ref<number | undefined>();
 const lhdBooks = ref<LhdBook[]>([]);
 const lhdReports = ref<LhdReport[]>([]);
+const otherReports = ref<OtherReport[]>([]);
 const lhdLoading = ref(false);
 const lhdSaving = ref(false);
 const lhdActionKey = ref("");
 const editingLhdReportId = ref<number | null>(null);
 const lhdDeleteTarget = ref<LhdReport | null>(null);
+const otherReportLoading = ref(false);
+const otherReportSaving = ref(false);
+const editingOtherReportId = ref<number | null>(null);
+const otherReportDeleteTarget = ref<OtherReport | null>(null);
 const lhdForm = reactive({
   lhdId: undefined as number | undefined,
   time: "",
   message: "",
+});
+const otherReportForm = reactive({
+  time: "",
+  report: "",
 });
 const selectedOpenIssueId = ref<number | undefined>();
 const issueMessageDrafts = reactive<Record<number, string>>({});
@@ -363,6 +381,7 @@ function refreshDutyReportData() {
   if (dutyReportUrl.value) loadDutyReportTableData();
   loadLhdBooks();
   if (selectedLhdDutyReportId.value) loadLhdReports();
+  if (selectedOtherReportDutyReportId.value) loadOtherReports();
 }
 
 function resetLhdForm() {
@@ -372,22 +391,33 @@ function resetLhdForm() {
   lhdForm.message = "";
 }
 
-function toDateTimeLocal(value: string | null) {
+function resetOtherReportForm() {
+  editingOtherReportId.value = null;
+  otherReportForm.time = "";
+  otherReportForm.report = "";
+}
+
+function toDateTimeUtcInput(value: string | null) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
+  return date.toISOString().slice(0, 16);
+}
+
+function parseUtcDateTimeInput(value: string) {
+  return new Date(`${value}:00Z`);
 }
 
 function formatLhdTime(value: string | null) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("en-GB", {
+  return `${new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(date);
+    hour12: false,
+    timeZone: "UTC",
+  }).format(date)} UTC`;
 }
 
 async function loadLhdBooks() {
@@ -432,6 +462,31 @@ async function loadLhdReports() {
   }
 }
 
+async function loadOtherReports() {
+  if (!selectedOtherReportDutyReportId.value) {
+    otherReports.value = [];
+    return;
+  }
+
+  otherReportLoading.value = true;
+  try {
+    otherReports.value = await $fetch<OtherReport[]>(
+      `http://${ip.ipBackEnd}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports`,
+      {
+        headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+      },
+    );
+  } catch (error: unknown) {
+    toast.add({
+      title: "Load Failed",
+      description: getRequestError(error, "Failed to load other reports."),
+      color: "error",
+    });
+  } finally {
+    otherReportLoading.value = false;
+  }
+}
+
 async function saveLhdReport() {
   if (
     !selectedLhdDutyReportId.value ||
@@ -458,7 +513,7 @@ async function saveLhdReport() {
         method: editingLhdReportId.value ? "PUT" : "POST",
         body: {
           lhdId: lhdForm.lhdId,
-          time: new Date(lhdForm.time).toISOString(),
+          time: parseUtcDateTimeInput(lhdForm.time).toISOString(),
           message: lhdForm.message.trim(),
         },
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
@@ -485,11 +540,68 @@ async function saveLhdReport() {
   }
 }
 
+async function saveOtherReport() {
+  if (
+    !selectedOtherReportDutyReportId.value ||
+    !otherReportForm.time ||
+    !otherReportForm.report.trim()
+  ) {
+    toast.add({
+      title: "Incomplete Other Report",
+      description: "Report time and report details are required.",
+      color: "warning",
+    });
+    return;
+  }
+
+  otherReportSaving.value = true;
+  try {
+    const baseUrl = `http://${ip.ipBackEnd}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports`;
+    await $fetch(
+      editingOtherReportId.value
+        ? `${baseUrl}/${editingOtherReportId.value}`
+        : baseUrl,
+      {
+        method: editingOtherReportId.value ? "PUT" : "POST",
+        body: {
+          time: parseUtcDateTimeInput(otherReportForm.time).toISOString(),
+          report: otherReportForm.report.trim(),
+        },
+        headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+      },
+    );
+
+    toast.add({
+      title: editingOtherReportId.value
+        ? "Other Report Updated"
+        : "Other Report Saved",
+      description: "The other report has been saved to this duty report.",
+      color: "success",
+    });
+    resetOtherReportForm();
+    await loadOtherReports();
+  } catch (error: unknown) {
+    toast.add({
+      title: "Save Failed",
+      description: getRequestError(error, "Failed to save the other report."),
+      color: "error",
+    });
+  } finally {
+    otherReportSaving.value = false;
+  }
+}
+
 function editLhdReport(report: LhdReport) {
   editingLhdReportId.value = report.id;
   lhdForm.lhdId = report.lhdId || undefined;
-  lhdForm.time = toDateTimeLocal(report.time);
+  lhdForm.time = toDateTimeUtcInput(report.time);
   lhdForm.message = report.message || "";
+}
+
+function editOtherReport(report: OtherReport) {
+  editingOtherReportId.value = report.id;
+  otherReportForm.time = toDateTimeUtcInput(report.time);
+  otherReportForm.report = report.report || "";
 }
 
 async function deleteLhdReport() {
@@ -517,6 +629,34 @@ async function deleteLhdReport() {
     });
   } finally {
     lhdActionKey.value = "";
+  }
+}
+
+async function deleteOtherReport() {
+  const report = otherReportDeleteTarget.value;
+  if (!report || !selectedOtherReportDutyReportId.value) return;
+
+  otherReportSaving.value = true;
+  try {
+    await $fetch(
+      `http://${ip.ipBackEnd}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports/${report.id}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+      },
+    );
+    if (editingOtherReportId.value === report.id) resetOtherReportForm();
+    otherReportDeleteTarget.value = null;
+    await loadOtherReports();
+    toast.add({ title: "Other Report Deleted", color: "success" });
+  } catch (error: unknown) {
+    toast.add({
+      title: "Delete Failed",
+      description: getRequestError(error, "Failed to delete the other report."),
+      color: "error",
+    });
+  } finally {
+    otherReportSaving.value = false;
   }
 }
 
@@ -567,14 +707,32 @@ function getIssueDescription(issue: OnGoingIssue) {
     : issue.other;
 }
 
+function getIssueMessagesNewestFirst(issue: OnGoingIssue) {
+  return [...(issue.messages || [])].reverse();
+}
+
 function formatIssueDate(value?: string | null) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
+    hour12: false,
+  }).format(date);
+}
+
+function formatIssueMessageDateUtc(value?: string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    hour12: false,
+    timeZone: "UTC",
   }).format(date);
 }
 
@@ -1100,6 +1258,7 @@ watch(
     if (!nextDutyReports?.length) {
       selectedIssueDutyReportId.value = undefined;
       selectedLhdDutyReportId.value = undefined;
+      selectedOtherReportDutyReportId.value = undefined;
       return;
     }
 
@@ -1116,6 +1275,13 @@ watch(
     if (!lhdReportStillAvailable) {
       selectedLhdDutyReportId.value = nextDutyReports[0]?.id;
     }
+
+    const otherReportStillAvailable = nextDutyReports.some(
+      (dutyReport) => dutyReport.id === selectedOtherReportDutyReportId.value,
+    );
+    if (!otherReportStillAvailable) {
+      selectedOtherReportDutyReportId.value = nextDutyReports[0]?.id;
+    }
   },
   { immediate: true },
 );
@@ -1125,6 +1291,15 @@ watch(
   async () => {
     resetLhdForm();
     await loadLhdReports();
+  },
+  { immediate: true },
+);
+
+watch(
+  selectedOtherReportDutyReportId,
+  async () => {
+    resetOtherReportForm();
+    await loadOtherReports();
   },
   { immediate: true },
 );
@@ -1672,6 +1847,48 @@ const renderedRows = computed(() =>
           </template>
         </UModal>
 
+        <UModal
+          :open="Boolean(otherReportDeleteTarget)"
+          title="Delete Other Report?"
+          description="This removes the report from the duty report."
+          :dismissible="!otherReportSaving"
+          @update:open="
+            (open) => {
+              if (!open && !otherReportSaving) otherReportDeleteTarget = null;
+            }
+          "
+        >
+          <template #body>
+            <div class="space-y-4">
+              <UAlert
+                color="error"
+                variant="soft"
+                icon="i-lucide-triangle-alert"
+                title="The other report will be removed"
+                :description="
+                  otherReportDeleteTarget?.report || 'Selected other report'
+                "
+              />
+              <div class="flex justify-end gap-2">
+                <UButton
+                  label="Cancel"
+                  color="neutral"
+                  variant="subtle"
+                  :disabled="otherReportSaving"
+                  @click="() => { otherReportDeleteTarget = null; }"
+                />
+                <UButton
+                  label="Delete Other Report"
+                  icon="i-lucide-trash-2"
+                  color="error"
+                  :loading="otherReportSaving"
+                  @click="deleteOtherReport"
+                />
+              </div>
+            </div>
+          </template>
+        </UModal>
+
         <UCard>
           <template #header>
             <div>
@@ -1798,7 +2015,7 @@ const renderedRows = computed(() =>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 <div
                   class="rounded-lg border border-warning/40 bg-warning/5 p-3 text-center"
                 >
@@ -1835,6 +2052,15 @@ const renderedRows = computed(() =>
                     {{ deleteSummary.dependencies.lhdReports }}
                   </div>
                   <div class="text-xs text-muted">LHD Records</div>
+                  <div class="mt-1 text-[11px] text-muted">Will be removed</div>
+                </div>
+                <div
+                  class="rounded-lg border border-error/40 bg-error/5 p-3 text-center"
+                >
+                  <div class="text-2xl font-semibold text-error">
+                    {{ deleteSummary.dependencies.otherReports }}
+                  </div>
+                  <div class="text-xs text-muted">Other Reports</div>
                   <div class="mt-1 text-[11px] text-muted">Will be removed</div>
                 </div>
               </div>
@@ -2003,14 +2229,18 @@ const renderedRows = computed(() =>
                       Latest Updates
                     </div>
                     <div
-                      v-for="message in issue.messages.slice(-3)"
-                      :key="message.id"
-                      class="text-sm"
+                      class="max-h-24 space-y-2 overflow-y-auto pr-2"
                     >
-                      <span class="text-muted">
-                        {{ formatIssueDate(message.createdAt) }} ·
-                      </span>
-                      {{ message.message }}
+                      <div
+                        v-for="message in getIssueMessagesNewestFirst(issue)"
+                        :key="message.id"
+                        class="text-sm"
+                      >
+                        <span class="text-muted">
+                          {{ formatIssueMessageDateUtc(message.createdAt) }} UTC ·
+                        </span>
+                        {{ message.message }}
+                      </div>
                     </div>
                   </div>
 
@@ -2390,6 +2620,9 @@ const renderedRows = computed(() =>
                     type="datetime-local"
                     class="w-full"
                   />
+                  <p class="mt-1 text-xs text-muted">
+                    Enter occurrence date and time in UTC 24-hour format.
+                  </p>
                 </UFormField>
                 <UFormField label="Occurrence Details" required>
                   <UTextarea
@@ -2420,6 +2653,173 @@ const renderedRows = computed(() =>
                     variant="ghost"
                     :disabled="lhdSaving"
                     @click="resetLhdForm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </UCard>
+
+        <UCard>
+          <template #header>
+            <div class="flex flex-col gap-1">
+              <h2 class="font-semibold text-highlighted">Other Report</h2>
+              <p class="text-sm text-muted">
+                Add operational notes or reports that are not categorized as LHD.
+              </p>
+            </div>
+          </template>
+
+          <div
+            v-if="!dutyReportIssueOptions.length"
+            class="rounded-xl border border-dashed border-default bg-elevated/20 p-6 text-center text-sm text-muted"
+          >
+            Load or create a duty report before adding other reports.
+          </div>
+
+          <div v-else class="space-y-5">
+            <UFormField label="Duty Report" required>
+              <USelectMenu
+                v-model="selectedOtherReportDutyReportId"
+                :items="dutyReportIssueOptions"
+                value-key="value"
+                label-key="label"
+                class="w-full"
+                placeholder="Select a duty report"
+              />
+            </UFormField>
+
+            <div
+              class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
+            >
+              <div class="space-y-3">
+                <div>
+                  <h3 class="font-semibold text-highlighted">
+                    Reported Items
+                  </h3>
+                  <p class="text-sm text-muted">
+                    Other operational reports linked to this duty report.
+                  </p>
+                </div>
+
+                <div
+                  v-if="otherReportLoading"
+                  class="rounded-xl border border-default p-6 text-center text-sm text-muted"
+                >
+                  Loading other reports...
+                </div>
+                <div
+                  v-else-if="!otherReports.length"
+                  class="rounded-xl border border-dashed border-default p-6 text-center text-sm text-muted"
+                >
+                  No other report has been added for this duty report.
+                </div>
+                <div
+                  v-else
+                  class="overflow-x-auto rounded-lg border border-default"
+                >
+                  <table class="w-full min-w-[640px] border-collapse text-sm">
+                    <thead class="bg-elevated/50">
+                      <tr>
+                        <th class="border border-default px-3 py-2 text-left">
+                          Report Time
+                        </th>
+                        <th class="border border-default px-3 py-2 text-left">
+                          Report
+                        </th>
+                        <th class="border border-default px-3 py-2 text-center">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="report in otherReports" :key="report.id">
+                        <td class="border border-default px-3 py-2">
+                          {{ formatLhdTime(report.time) }}
+                        </td>
+                        <td
+                          class="max-w-md whitespace-pre-wrap border border-default px-3 py-2"
+                        >
+                          {{ report.report || "-" }}
+                        </td>
+                        <td class="border border-default px-3 py-2">
+                          <div class="flex justify-center gap-1">
+                            <UButton
+                              icon="i-lucide-pencil"
+                              label="Edit"
+                              size="xs"
+                              color="neutral"
+                              variant="ghost"
+                              @click="editOtherReport(report)"
+                            />
+                            <UButton
+                              icon="i-lucide-trash-2"
+                              label="Delete"
+                              size="xs"
+                              color="error"
+                              variant="ghost"
+                              @click="() => { otherReportDeleteTarget = report; }"
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="space-y-4 rounded-xl border border-default p-4">
+                <div>
+                  <h3 class="font-semibold text-highlighted">
+                    {{
+                      editingOtherReportId
+                        ? "Edit Other Report"
+                        : "Add Other Report"
+                    }}
+                  </h3>
+                  <p class="text-sm text-muted">
+                    Record report time and operational details.
+                  </p>
+                </div>
+                <UFormField label="Report Date & Time" required>
+                  <UInput
+                    v-model="otherReportForm.time"
+                    type="datetime-local"
+                    class="w-full"
+                  />
+                  <p class="mt-1 text-xs text-muted">
+                    Enter report date and time in UTC 24-hour format.
+                  </p>
+                </UFormField>
+                <UFormField label="Report Details" required>
+                  <UTextarea
+                    v-model="otherReportForm.report"
+                    class="w-full"
+                    :rows="5"
+                    placeholder="Describe the report, observation, or operational note..."
+                  />
+                </UFormField>
+                <div class="flex flex-wrap gap-2">
+                  <UButton
+                    :label="
+                      editingOtherReportId
+                        ? 'Update Other Report'
+                        : 'Save Other Report'
+                    "
+                    icon="i-lucide-save"
+                    :loading="otherReportSaving"
+                    :disabled="
+                      !otherReportForm.time || !otherReportForm.report.trim()
+                    "
+                    @click="saveOtherReport"
+                  />
+                  <UButton
+                    v-if="editingOtherReportId"
+                    label="Cancel Edit"
+                    color="neutral"
+                    variant="ghost"
+                    :disabled="otherReportSaving"
+                    @click="resetOtherReportForm"
                   />
                 </div>
               </div>

@@ -201,6 +201,18 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function formatIssueDateUtc(value: string) {
+  return `${new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "UTC",
+  }).format(new Date(value))} UTC`;
+}
+
 function formatExpiryDate(value: string | null) {
   if (!value) return "Not available";
   return new Intl.DateTimeFormat("en-GB", {
@@ -477,11 +489,11 @@ function escalationColor(
                   </span>
                   <span v-if="issue.start" class="flex items-center gap-1.5">
                     <UIcon name="i-lucide-clock" class="size-3.5" />
-                    Started {{ formatDate(issue.start) }}
+                    Started {{ formatIssueDateUtc(issue.start) }}
                   </span>
                   <span v-if="issue.finish" class="flex items-center gap-1.5">
                     <UIcon name="i-lucide-circle-check" class="size-3.5" />
-                    Finished {{ formatDate(issue.finish) }}
+                    Finished {{ formatIssueDateUtc(issue.finish) }}
                   </span>
                   <span
                     v-if="issue.escalation?.level"
@@ -510,7 +522,7 @@ function escalationColor(
                           {{ message.message || "No message content" }}
                         </span>
                         <span class="shrink-0 text-muted">
-                          {{ formatDate(message.createdAt) }}
+                          {{ formatIssueDateUtc(message.createdAt) }}
                         </span>
                       </div>
                     </div>

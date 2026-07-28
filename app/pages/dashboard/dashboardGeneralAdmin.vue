@@ -221,7 +221,14 @@ const selectedExpirationRecords = computed<ExpirationRecord[]>(() => {
   return attention.ratings;
 });
 
-function formatDate(value: string) {
+function isValidDate(value: string | null | undefined): value is string {
+  if (!value) return false;
+  const d = new Date(value);
+  return !Number.isNaN(d.getTime());
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!isValidDate(value)) return "Not available";
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
@@ -231,8 +238,8 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function formatExpiryDate(value: string | null) {
-  if (!value) return "Not available";
+function formatExpiryDate(value: string | null | undefined) {
+  if (!isValidDate(value)) return "Not available";
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
@@ -240,14 +247,18 @@ function formatExpiryDate(value: string | null) {
   }).format(new Date(value));
 }
 
-function expiryColor(value: string | null): "success" | "error" | "neutral" {
-  if (!value) return "neutral";
+function expiryColor(
+  value: string | null | undefined,
+): "success" | "error" | "neutral" {
+  if (!isValidDate(value)) return "neutral";
   return new Date(value).getTime() < Date.now() ? "error" : "success";
 }
 
-function expirationState(value: string) {
+function expirationState(value: string | null | undefined) {
+  if (!isValidDate(value)) return "Not available";
   const days = Math.ceil((new Date(value).getTime() - Date.now()) / 86400000);
-  if (days < 0) return `Expired ${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} ago`;
+  if (days < 0)
+    return `Expired ${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} ago`;
   if (days === 0) return "Expires today";
   return `Expires in ${days} day${days === 1 ? "" : "s"}`;
 }
@@ -392,7 +403,10 @@ function escalationColor(
                     {{ record.branchUnit || "No branch unit" }}
                   </p>
                   <p class="mt-1 flex items-center gap-1.5 text-xs text-muted">
-                    <UIcon name="i-lucide-briefcase-business" class="size-3.5" />
+                    <UIcon
+                      name="i-lucide-briefcase-business"
+                      class="size-3.5"
+                    />
                     <span>
                       Profession: {{ record.profession || "Not assigned" }}
                     </span>
@@ -416,10 +430,16 @@ function escalationColor(
               v-else
               class="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-default bg-elevated/20 p-6 text-center"
             >
-              <UIcon name="i-lucide-badge-check" class="mb-3 size-8 text-success" />
-              <p class="font-medium text-highlighted">No expiration attention required</p>
+              <UIcon
+                name="i-lucide-badge-check"
+                class="mb-3 size-8 text-success"
+              />
+              <p class="font-medium text-highlighted">
+                No expiration attention required
+              </p>
               <p class="text-sm text-muted">
-                No {{ selectedExpirationTab }} records are expired or due within 30 days.
+                No {{ selectedExpirationTab }} records are expired or due within
+                30 days.
               </p>
             </div>
           </UCard>
@@ -547,7 +567,10 @@ function escalationColor(
                   </div>
                 </div>
 
-                <div v-if="issue.dutyReports.length" class="mt-3 border-t border-default pt-3">
+                <div
+                  v-if="issue.dutyReports.length"
+                  class="mt-3 border-t border-default pt-3"
+                >
                   <p class="mb-2 text-xs text-muted">Related duty reports</p>
                   <div class="flex flex-wrap gap-1.5">
                     <UBadge
@@ -573,7 +596,8 @@ function escalationColor(
               />
               <p class="font-medium text-highlighted">No matching issues</p>
               <p class="mt-1 text-sm text-muted">
-                No {{ selectedIssueStatus === "all" ? "" : selectedIssueStatus }}
+                No
+                {{ selectedIssueStatus === "all" ? "" : selectedIssueStatus }}
                 issue was recorded during the last month.
               </p>
             </div>

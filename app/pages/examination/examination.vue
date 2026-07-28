@@ -9,6 +9,10 @@ interface AppRatingItem {
     rating: string;
     description?: string;
   } | null;
+  examinationInvalidations?: Array<{
+    id: number;
+    createdAt?: string | null;
+  }>;
 }
 
 interface ApplicationDocsItem {
@@ -107,6 +111,7 @@ interface SubmitEssayCorrectionItem {
 interface ExaminationSubmitResponse {
   finalValue?: number | null;
   passingGrade?: number | null;
+  awaitingPractical?: boolean;
   falseAnswer?: SubmitFalseAnswerItem[] | null;
   essayCorrection?: SubmitEssayCorrectionItem[] | null;
   [key: string]: unknown;
@@ -120,6 +125,7 @@ interface TableRow {
   quantity: number;
   persentage: number;
   minutes: number;
+  isReExamination: boolean;
 }
 
 const { token } = useAuth();
@@ -352,6 +358,7 @@ function getRowsForQuestion(question: EventQuestionItem): TableRow[] {
     quantity: question.quantity,
     persentage: question.persentage,
     minutes: question.minutes,
+    isReExamination: (item.examinationInvalidations?.length || 0) > 0,
   }));
 }
 
@@ -592,10 +599,14 @@ onBeforeUnmount(() => {
                     <td class="px-3 py-2">
                       <UButton
                         v-if="canShowGoButton(question, row)"
-                        label="Go"
+                        :label="row.isReExamination ? 'Re-execute' : 'Go'"
                         size="md"
-                        icon="i-lucide-plane"
-                        color="primary"
+                        :icon="
+                          row.isReExamination
+                            ? 'i-lucide-rotate-ccw'
+                            : 'i-lucide-plane'
+                        "
+                        :color="row.isReExamination ? 'warning' : 'primary'"
                         variant="soft"
                         :disabled="
                           isActionSubmitting ||
@@ -662,6 +673,15 @@ onBeforeUnmount(() => {
         >
           This result popup will close automatically in
           <strong>{{ submitResultCountdown }}</strong> seconds.
+        </div>
+
+        <div
+          v-if="submitResultData?.awaitingPractical"
+          class="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
+        >
+          Theory passed. The overall examination remains pending until every
+          required practical item is completed and passed. No user rating has
+          been activated yet.
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">

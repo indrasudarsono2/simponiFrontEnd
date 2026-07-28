@@ -1,6 +1,8 @@
 ﻿<script setup lang="ts">
 import ip from "../../utils/config.json";
 
+definePageMeta({ alias: ["/mandatoryQuestion/matsAnalysis"] });
+
 interface CheckerStatisticQuestionItem {
   id: number;
   question?: string | null;
@@ -23,6 +25,17 @@ interface CheckerStatisticQuestionItem {
 type SortKey = "no" | "question" | "isTrue" | "isFalse" | "percentageTrue";
 
 const { token } = useAuth();
+const route = useRoute();
+const isMatsAnalysis = computed(
+  () =>
+    route.path === "/mandatoryQuestion/matsAnalysis" ||
+    String(route.query.type || "").toUpperCase() === "MATS",
+);
+const pageTitle = computed(() =>
+  isMatsAnalysis.value
+    ? "MATS Question Analysis"
+    : "Checker Statistic - Question",
+);
 
 const isDetailModalOpen = ref(false);
 const selectedQuestion = ref<CheckerStatisticQuestionItem | null>(null);
@@ -31,7 +44,7 @@ const sortDirection = ref<"asc" | "desc">("asc");
 
 const { data, status, error, refresh } = await useFetch<
   CheckerStatisticQuestionItem[]
->(`http://${ip.ipBackEnd}/api/checkerStatisticQuestion`, {
+>(`http://${ip.ipBackEnd}/api/checkerStatisticQuestion${isMatsAnalysis.value ? "?type=MATS" : ""}`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -124,6 +137,13 @@ const answerSlices = computed(() => {
   });
 });
 
+const fullAnswerSlice = computed(
+  () =>
+    answerSlices.value.find(
+      (slice) => slice.value > 0 && slice.percent >= 99.999,
+    ) || null,
+);
+
 function polarToCartesian(cx: number, cy: number, r: number, angle: number) {
   return {
     x: cx + r * Math.cos(angle),
@@ -158,7 +178,7 @@ const initialErrorMessage = computed(() => {
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar title="Checker Statistic - Question">
+      <UDashboardNavbar :title="pageTitle">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -168,7 +188,14 @@ const initialErrorMessage = computed(() => {
     <template #body>
       <UCard>
         <template #header>
-          <h2 class="text-lg font-semibold">Question Statistic</h2>
+          <div>
+            <h2 class="text-lg font-semibold">
+              {{ isMatsAnalysis ? "MATS Question Statistics" : "Question Statistic" }}
+            </h2>
+            <p v-if="isMatsAnalysis" class="mt-1 text-sm text-muted">
+              Global MATS performance across all branches, sectors, ratings, and examinations.
+            </p>
+          </div>
         </template>
 
         <div
@@ -253,7 +280,7 @@ const initialErrorMessage = computed(() => {
               </tr>
               <tr v-if="rows.length === 0">
                 <td class="px-3 py-3 text-muted border border-default text-center" colspan="6">
-                  No question statistic data available.
+                  {{ isMatsAnalysis ? "No MATS question statistics available." : "No question statistic data available." }}
                 </td>
               </tr>
             </tbody>
@@ -263,7 +290,7 @@ const initialErrorMessage = computed(() => {
 
       <UModal
         :open="isDetailModalOpen"
-        title="Question Detail"
+        :title="isMatsAnalysis ? 'MATS Question Detail' : 'Question Detail'"
         :ui="{ content: 'max-w-3xl w-full' }"
         @update:open="(value) => (!value ? closeDetail() : null)"
       >
@@ -298,7 +325,14 @@ const initialErrorMessage = computed(() => {
               <h3 class="font-semibold mb-3">Answer Summary</h3>
               <div class="flex flex-col md:flex-row items-start gap-4">
                 <svg viewBox="0 0 160 160" class="w-40 h-40">
-                  <template v-if="answerSlices.some((item) => item.value > 0)">
+                  <circle
+                    v-if="fullAnswerSlice"
+                    cx="80"
+                    cy="80"
+                    r="64"
+                    :fill="fullAnswerSlice.color"
+                  />
+                  <template v-else-if="answerSlices.some((item) => item.value > 0)">
                     <path
                       v-for="slice in answerSlices"
                       :key="slice.key"
@@ -315,6 +349,15 @@ const initialErrorMessage = computed(() => {
                     stroke="rgba(148,163,184,0.6)"
                     stroke-width="12"
                   />
+                  <text
+                    v-if="!answerSlices.some((item) => item.value > 0)"
+                    x="80"
+                    y="84"
+                    text-anchor="middle"
+                    class="fill-muted text-xs"
+                  >
+                    No answers
+                  </text>
                 </svg>
 
                 <div class="grid grid-cols-2 gap-2 text-sm w-full">

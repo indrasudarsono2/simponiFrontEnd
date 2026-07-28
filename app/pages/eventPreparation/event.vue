@@ -212,7 +212,8 @@ function handleUsersViewed() {
 }
 
 // Format date helper
-function formatDate(dateString: string): string {
+function formatDate(dateString?: string | null): string {
+  if (!dateString) return "-";
   try {
     return format(parseISO(dateString), "dd MMM yyyy");
   } catch {

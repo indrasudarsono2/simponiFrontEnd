@@ -29,9 +29,9 @@ const schema = z.object({
   time: z.coerce
     .number()
     .int("Time must be a whole number")
-    .min(15, "Time must be at least 15 minutes")
-    .refine((value) => value % 15 === 0, {
-      message: "Time must be a multiple of 15 minutes",
+    .min(0, "Time must be 0 or greater")
+    .refine((value) => value === 0 || value % 15 === 0, {
+      message: "Time must be 0 or a multiple of 15 minutes",
     }),
 });
 
@@ -50,7 +50,7 @@ watch(
     if (!escalationLevel) return;
 
     state.level = Number(escalationLevel.level);
-    state.time = escalationLevel.time || undefined;
+    state.time = escalationLevel.time ?? undefined;
     open.value = true;
   },
 );
@@ -133,7 +133,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           variant="soft"
           icon="i-lucide-clock"
           title="15-minute notification schedule"
-          description="Time is cumulative from when the ongoing issue starts. Emails are processed every 15 minutes and may be sent up to 15 minutes after the threshold is reached."
+          description="Time is cumulative from when the ongoing issue starts. Use 0 to send email as soon as possible after an ongoing issue is created."
         />
 
         <UFormField label="Level" name="level" required>
@@ -151,9 +151,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             v-model="state.time"
             class="w-full"
             type="number"
-            min="15"
+            min="0"
             step="15"
-            placeholder="e.g., 15, 30, or 45"
+            placeholder="e.g., 0, 15, 30, or 45"
           >
             <template #trailing>
               <span class="text-xs text-muted">minutes</span>

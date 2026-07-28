@@ -5,8 +5,25 @@ interface PracticalTestItem {
   id?: number;
   score?: number | null;
   file?: string | null;
+  createdAt?: string | null;
   kindOfPractical?: {
     kind?: string | null;
+  } | null;
+  checkerGroup?: {
+    userChecker?: {
+      name?: string | null;
+    } | null;
+  } | null;
+  recheckAttempts?: PracticalRecheckAttemptItem[] | null;
+}
+
+interface PracticalRecheckAttemptItem {
+  id?: number;
+  score?: number | null;
+  file?: string | null;
+  updatedAt?: string | null;
+  authorization?: {
+    status?: string | null;
   } | null;
   checkerGroup?: {
     userChecker?: {
@@ -56,9 +73,12 @@ interface PracticalExamRow {
   status: string;
   showStatus: boolean;
   statusRowSpan: number;
+  attempt: string;
+  attemptStatus: string | null;
   kindOfPractical: string;
   checkerName: string;
   score: string;
+  examDate: string;
   file: string | null;
 }
 
@@ -78,6 +98,17 @@ function formatScore(value: unknown): string {
   const score = Number(value);
   if (!Number.isFinite(score)) return "-";
   return Number.isInteger(score) ? String(score) : score.toFixed(2);
+}
+
+function formatDate(value?: string | null): string {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Jakarta",
+  }).format(date);
 }
 
 function resolveFileUrl(filePath?: string | null): string | null {
@@ -114,7 +145,10 @@ function closeFileModal() {
 }
 
 function getRatingRowCount(appRating?: AppRatingItem | null): number {
-  const count = appRating?.practicalTests?.length || 0;
+  const count = (appRating?.practicalTests || []).reduce(
+    (sum, test) => sum + 1 + (test.recheckAttempts?.length || 0),
+    0,
+  );
   return Math.max(1, count);
 }
 
@@ -183,32 +217,61 @@ const rows = computed<PracticalExamRow[]>(() => {
               ];
         const ratingRowSpan = getRatingRowCount(appRating);
 
+        let ratingRowIndex = 0;
         safeTests.forEach((test, testIndex) => {
-          result.push({
-            id: `${itemIndex}-${docIndex}-${ratingIndex}-${test.id || testIndex}`,
-            no: itemIndex + 1,
-            showNo: isFirstEventRow,
-            noRowSpan: eventRowSpan,
-            event: eventName,
-            showEvent: isFirstEventRow,
-            eventRowSpan,
-            applicationDocument: documentNumber,
-            showApplicationDocument: isFirstApplicationDocumentRow,
-            applicationDocumentRowSpan,
-            rating: ratingName,
-            showRating: testIndex === 0,
-            ratingRowSpan,
-            status: ratingStatus,
-            showStatus: testIndex === 0,
-            statusRowSpan: ratingRowSpan,
-            kindOfPractical: test.kindOfPractical?.kind || "-",
-            checkerName: test.checkerGroup?.userChecker?.name || "-",
-            score: formatScore(test.score),
-            file: test.file || null,
-          });
+          const attempts = [
+            {
+              id: `original-${test.id || testIndex}`,
+              label: "Attempt 1",
+              status: null,
+              checkerName: test.checkerGroup?.userChecker?.name || "-",
+              score: test.score,
+              examDate: test.createdAt,
+              file: test.file || null,
+            },
+            ...(test.recheckAttempts || []).map((attempt) => ({
+              id: `recheck-${attempt.id}`,
+              label: "Attempt 2 (Recheck)",
+              status: attempt.authorization?.status || "ACTIVE",
+              checkerName:
+                attempt.checkerGroup?.userChecker?.name || "Unassigned",
+              score: attempt.score,
+              examDate: attempt.score == null ? null : attempt.updatedAt,
+              file: attempt.file || null,
+            })),
+          ];
 
-          isFirstEventRow = false;
-          isFirstApplicationDocumentRow = false;
+          attempts.forEach((attempt) => {
+            result.push({
+              id: `${itemIndex}-${docIndex}-${ratingIndex}-${attempt.id}`,
+              no: itemIndex + 1,
+              showNo: isFirstEventRow,
+              noRowSpan: eventRowSpan,
+              event: eventName,
+              showEvent: isFirstEventRow,
+              eventRowSpan,
+              applicationDocument: documentNumber,
+              showApplicationDocument: isFirstApplicationDocumentRow,
+              applicationDocumentRowSpan,
+              rating: ratingName,
+              showRating: ratingRowIndex === 0,
+              ratingRowSpan,
+              status: ratingStatus,
+              showStatus: ratingRowIndex === 0,
+              statusRowSpan: ratingRowSpan,
+              attempt: attempt.label,
+              attemptStatus: attempt.status,
+              kindOfPractical: test.kindOfPractical?.kind || "-",
+              checkerName: attempt.checkerName,
+              score: formatScore(attempt.score),
+              examDate: formatDate(attempt.examDate),
+              file: attempt.file,
+            });
+
+            isFirstEventRow = false;
+            isFirstApplicationDocumentRow = false;
+            ratingRowIndex += 1;
+          });
         });
       });
     });
@@ -302,6 +365,11 @@ const errorMessage = computed(() => {
                   <th
                     class="px-3 py-2 text-center font-medium border border-default"
                   >
+                    Attempt
+                  </th>
+                  <th
+                    class="px-3 py-2 text-center font-medium border border-default"
+                  >
                     Kind of Practical
                   </th>
                   <th
@@ -313,6 +381,11 @@ const errorMessage = computed(() => {
                     class="px-3 py-2 text-center font-medium border border-default"
                   >
                     Score
+                  </th>
+                  <th
+                    class="px-3 py-2 text-center font-medium border border-default"
+                  >
+                    Exam Date
                   </th>
                   <th
                     class="px-3 py-2 text-center font-medium border border-default"
@@ -372,6 +445,25 @@ const errorMessage = computed(() => {
                     </UBadge>
                   </td>
                   <td class="px-3 py-2 border border-default text-center">
+                    <div class="flex flex-col items-center gap-1">
+                      <span>{{ row.attempt }}</span>
+                      <UBadge
+                        v-if="row.attemptStatus"
+                        :color="
+                          row.attemptStatus === 'SUCCESS'
+                            ? 'success'
+                            : row.attemptStatus === 'FAILED'
+                              ? 'error'
+                              : 'warning'
+                        "
+                        variant="soft"
+                        size="xs"
+                      >
+                        {{ row.attemptStatus }}
+                      </UBadge>
+                    </div>
+                  </td>
+                  <td class="px-3 py-2 border border-default text-center">
                     {{ row.kindOfPractical }}
                   </td>
                   <td class="px-3 py-2 border border-default text-center">
@@ -379,6 +471,9 @@ const errorMessage = computed(() => {
                   </td>
                   <td class="px-3 py-2 border border-default text-center">
                     {{ row.score }}
+                  </td>
+                  <td class="px-3 py-2 border border-default text-center">
+                    {{ row.examDate }}
                   </td>
                   <td class="px-3 py-2 border border-default text-center">
                     <UButton
@@ -396,7 +491,7 @@ const errorMessage = computed(() => {
                 <tr v-if="rows.length === 0">
                   <td
                     class="px-3 py-3 text-muted border border-default"
-                    colspan="9"
+                    colspan="11"
                   >
                     No practical exam data available.
                   </td>

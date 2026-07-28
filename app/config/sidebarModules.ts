@@ -59,6 +59,7 @@ export type ModuleKey =
   | "logbookUser"
   | "logbookBranchUnit"
   | "logbookGeneralAdmin"
+  | "pfcScore"
   | "shiftManagement";
 
 export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
@@ -204,6 +205,8 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     children: [
       { label: "Mandatory Items", to: "/mandatoryQuestion/mandatory" },
       { label: "Mandatory Rating", to: "/mandatoryQuestion/mandatoryRating" },
+      { label: "MATS Questions", to: "/mandatoryQuestion/mats" },
+      { label: "MATS Analysis", to: "/mandatoryQuestion/matsAnalysis" },
     ],
   },
   ///////////////////////////////////////////////GENERAL ADMIN////////////////////////////////////////////////////
@@ -484,6 +487,8 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     children: [
       { label: "Daily Logbook", to: "/logbookBranchUnit/dailyLogbook" },
       { label: "Personal Logbook", to: "/logbookBranchUnit/personalLogbook" },
+      { label: "On Going Issue", to: "/logbookBranchUnit/onGoingIssues" },
+      { label: "LHD Reports", to: "/logbookBranchUnit/lhdReports" },
     ],
   },
 
@@ -496,6 +501,8 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     children: [
       { label: "Daily Logbook", to: "/logbookGeneralAdmin/dailyLogbook" },
       { label: "Personal Logbook", to: "/logbookGeneralAdmin/personalLogbook" },
+      { label: "On Going Issue", to: "/logbookGeneralAdmin/onGoingIssues" },
+      { label: "LHD Reports", to: "/logbookGeneralAdmin/lhdReports" },
     ],
   },
 
@@ -522,7 +529,25 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
 
   monitorMedicalTest: {
     label: "Monitor Medical Test",
-    icon: "i-lucide-home",
-    to: "/doctor/monitorMedicalTest",
+    icon: "i-lucide-book",
+    to: "i-lucide-home",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Verification", to: "/doctor/monitorMedicalTest" },
+      { label: "History", to: "/doctor/medicalTestHistory" },
+    ],
+  },
+
+  pfcScore: {
+    label: "Perf Check Score",
+    icon: "i-lucide-notepad-text",
+    to: "/pfcScore",
+    type: "trigger",
+    defaultOpen: true,
+    children: [
+      { label: "Score Recap", to: "/pfcScore/scoreRecap" },
+      { label: "Individual Score", to: "/pfcScore/individual" },
+    ],
   },
 };

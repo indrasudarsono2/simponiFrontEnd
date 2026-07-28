@@ -10,23 +10,24 @@ useHead({
     { key: 'theme-color', name: 'theme-color', content: color }
   ],
   link: [
-    { rel: 'icon', href: '/favicon.ico' }
+    { rel: 'icon', type: 'image/png', href: '/performa-favicon-circle.png?v=3' },
+    { rel: 'apple-touch-icon', href: '/performa-favicon-circle.png?v=3' }
   ],
   htmlAttrs: {
     lang: 'en'
   }
 })
 
-const title = 'Nuxt Dashboard Template'
-const description = 'A professional dashboard template built with Nuxt UI, featuring multiple pages, data visualization, and comprehensive management capabilities for creating powerful admin interfaces.'
+const title = 'PERFORMA'
+const description = 'Performance and Operational Record Management Application'
 
 useSeoMeta({
   title,
   description,
   ogTitle: title,
   ogDescription: description,
-  ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
-  twitterImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
+  ogImage: '/performa-logo.png',
+  twitterImage: '/performa-logo.png',
   twitterCard: 'summary_large_image'
 })
 </script>

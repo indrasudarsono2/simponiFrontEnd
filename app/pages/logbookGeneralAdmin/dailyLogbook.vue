@@ -77,6 +77,21 @@ interface DutyReport {
       rating: { id: number, rating: string } | null
     } | null
   }[]
+  lhdReports?: {
+    id: number
+    time: string | null
+    message: string | null
+    lhdBook: {
+      id: number
+      code: string | null
+      lhd: string | null
+    } | null
+  }[]
+  otherReports?: {
+    id: number
+    time: string | null
+    report: string | null
+  }[]
 }
 
 interface OnGoingIssue {
@@ -166,6 +181,15 @@ const lhdReportRows = computed(() =>
 )
 
 // ── Frequency Status Rows (with rowspan metadata) ──
+const otherReportRows = computed(() =>
+  selectedReports.value.flatMap(dutyReport =>
+    (dutyReport.otherReports || []).map(otherReport => ({
+      dutyReport,
+      otherReport
+    }))
+  )
+)
+
 const frequencyStatusRows = computed(() => {
   const rows: FrequencyStatusRow[] = []
 
@@ -196,20 +220,24 @@ const frequencyStatusRows = computed(() => {
   let i = 0
   let groupNo = 1
   while (i < rows.length) {
-    const currentGroup = `${rows[i].dutyReportId}-${rows[i].cwp}`
+    const currentRow = rows[i]
+    if (!currentRow) break
+
+    const currentGroup = `${currentRow.dutyReportId}-${currentRow.cwp}`
     let span = 1
-    while (
-      i + span < rows.length
-      && `${rows[i + span].dutyReportId}-${rows[i + span].cwp}` === currentGroup
-    ) {
+    while (i + span < rows.length) {
+      const nextRow = rows[i + span]
+      if (!nextRow || `${nextRow.dutyReportId}-${nextRow.cwp}` !== currentGroup) break
       span++
     }
-    rows[i]._rowspanCwp = span
-    rows[i]._isFirstInGroup = true
-    rows[i]._groupNo = groupNo
+    currentRow._rowspanCwp = span
+    currentRow._isFirstInGroup = true
+    currentRow._groupNo = groupNo
     for (let j = 1; j < span; j++) {
-      rows[i + j]._rowspanCwp = 0
-      rows[i + j]._isFirstInGroup = false
+      const row = rows[i + j]
+      if (!row) continue
+      row._rowspanCwp = 0
+      row._isFirstInGroup = false
     }
     i += span
     groupNo++
@@ -244,7 +272,7 @@ function formatShiftLabel(
   const lastShift = shifts[shifts.length - 1]
   const startTime = formatTimeOnly(firstShift?.start)
   const endTime = formatTimeOnly(lastShift?.end)
-  return `${shiftName.shift || 'Shift'} (${startTime}-${endTime})`
+  return `${shiftName.shift || 'Shift'} (${startTime}-${endTime} UTC)`
 }
 
 function formatTimeOnly(isoString: string | null | undefined): string {
@@ -304,10 +332,33 @@ function formatDateTime(value?: string | null) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
 
-  return new Intl.DateTimeFormat('en-US', {
+  return `${new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium',
-    timeStyle: 'short'
-  }).format(date)
+    timeStyle: 'short',
+    hour12: false,
+    timeZone: 'UTC'
+  }).format(date)} UTC`
+}
+
+function formatUtcTime(value?: string | null) {
+  if (!value) return '-'
+  const trimmed = String(value).trim()
+
+  const timeMatch = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)
+  if (timeMatch) {
+    const hours = Number(timeMatch[1])
+    const minutes = Number(timeMatch[2])
+    if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} UTC`
+    }
+  }
+
+  const date = new Date(trimmed)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  const hours = String(date.getUTCHours()).padStart(2, '0')
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
+  return `${hours}:${minutes} UTC`
 }
 
 function getRequestError(error: unknown, fallback: string) {
@@ -699,10 +750,10 @@ onMounted(() => {
                         {{ row.cwp?.cwp || "-" }}
                       </td>
                       <td class="border border-default px-4 py-3 text-center">
-                        {{ row.timeIn || "-" }}
+                        {{ formatUtcTime(row.timeIn) }}
                       </td>
                       <td class="border border-default px-4 py-3 text-center">
-                        {{ row.timeOut || "-" }}
+                        {{ formatUtcTime(row.timeOut) }}
                       </td>
                       <td class="border border-default px-4 py-3 text-center">
                         {{ formatDuration(row.duration) }}
@@ -917,6 +968,73 @@ onMounted(() => {
                         class="border border-default px-4 py-3 align-top whitespace-pre-wrap text-muted"
                       >
                         {{ lhdReport.message || "-" }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </UCard>
+
+            <!-- 5. Other Report UCard -->
+            <UCard>
+              <template #header>
+                <div class="flex flex-col gap-1">
+                  <h2 class="font-semibold text-highlighted">Other Report</h2>
+                  <p class="text-sm text-muted">
+                    Other operational reports for the selected shift.
+                  </p>
+                </div>
+              </template>
+
+              <div
+                v-if="!otherReportRows.length"
+                class="rounded-xl border border-dashed border-default bg-elevated/20 p-6 text-center text-sm text-muted"
+              >
+                No other report found for this shift.
+              </div>
+
+              <div
+                v-else
+                class="overflow-x-auto rounded-lg border border-default"
+              >
+                <table class="min-w-full border-collapse text-sm">
+                  <thead class="bg-elevated/50">
+                    <tr>
+                      <th class="border border-default px-4 py-3 text-left">No</th>
+                      <th class="border border-default px-4 py-3 text-left">
+                        Supervisor / CWP
+                      </th>
+                      <th class="border border-default px-4 py-3 text-left">
+                        Report Time
+                      </th>
+                      <th class="border border-default px-4 py-3 text-left">
+                        Report
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="({ dutyReport, otherReport }, index) in otherReportRows"
+                      :key="otherReport.id"
+                    >
+                      <td class="border border-default px-4 py-3 align-top">
+                        {{ index + 1 }}
+                      </td>
+                      <td class="border border-default px-4 py-3 align-top">
+                        <div class="font-medium text-highlighted">
+                          {{ dutyReport.spv?.name || "-" }}
+                        </div>
+                        <div class="text-xs text-muted">
+                          {{ formatSupervisorCwps(dutyReport.supervisorCwp) }}
+                        </div>
+                      </td>
+                      <td class="border border-default px-4 py-3 align-top">
+                        {{ formatDateTime(otherReport.time) }}
+                      </td>
+                      <td
+                        class="border border-default px-4 py-3 align-top whitespace-pre-wrap text-muted"
+                      >
+                        {{ otherReport.report || "-" }}
                       </td>
                     </tr>
                   </tbody>

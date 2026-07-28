@@ -1,8 +1,10 @@
+import { getDashboardRoute } from "~/utils/dashboardRoute";
+
 export default defineNuxtRouteMiddleware((to) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, getRoleNames } = useAuth();
 
   if (to.path === "/login" && isAuthenticated.value) {
-    return navigateTo("/");
+    return navigateTo(getDashboardRoute(getRoleNames()));
   }
 
   if (to.path !== "/login" && !isAuthenticated.value) {

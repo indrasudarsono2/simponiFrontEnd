@@ -29,6 +29,12 @@ interface ScoreCheckerAppRatingItem {
   previews?: Array<{
     id?: number;
   }> | null;
+  examinationInvalidations?: Array<{
+    id?: number;
+    reason?: string | null;
+    fraudCategory?: string | null;
+    createdAt?: string | null;
+  }> | null;
 }
 
 interface ScoreCheckerApplicationDocItem {
@@ -73,7 +79,7 @@ interface ScoreCheckerRow {
   hasEvidence: boolean;
 }
 
-const { token } = useAuth();
+const { token, getRoleNames } = useAuth();
 const toast = useToast();
 
 const selectedRemarkId = ref<number | undefined>(undefined);
@@ -85,6 +91,24 @@ const isEvidenceModalOpen = ref(false);
 const selectedEvidenceAppRatingId = ref<number | null>(null);
 const evidenceItems = ref<ScoreCheckerEvidenceItem[]>([]);
 const isEvidenceFetching = ref(false);
+const isInvalidationModalOpen = ref(false);
+const invalidationLoading = ref(false);
+const invalidationReason = ref("");
+const fraudCategory = ref<string | undefined>(undefined);
+const invalidationConfirmed = ref(false);
+
+const fraudCategoryOptions = [
+  { label: "Unauthorized assistance", value: "UNAUTHORIZED_ASSISTANCE" },
+  { label: "Impersonation", value: "IMPERSONATION" },
+  { label: "Prohibited material or device", value: "PROHIBITED_MATERIAL" },
+  { label: "Evidence manipulation", value: "EVIDENCE_MANIPULATION" },
+  { label: "Other", value: "OTHER" },
+];
+
+const canInvalidateAttempt = computed(() => {
+  const roles = getRoleNames().map((role) => role.trim().toUpperCase());
+  return roles.includes("CHECKER ADMIN") || roles.includes("GENERAL CHECKER");
+});
 
 const { data, status, error, refresh } = await useFetch<
   ScoreCheckerRemarkItem[]
@@ -186,10 +210,19 @@ const rows = computed<ScoreCheckerRow[]>(() => {
       safeRatings.forEach((appRating, ratingIndex) => {
         const ratingName = appRating.rating?.rating || "-";
         const finalScores = appRating.finalScores || [];
+        const requiresReExamination =
+          finalScores.length === 0 &&
+          (appRating.examinationInvalidations?.length || 0) > 0;
         const safeFinalScores =
           finalScores.length > 0
             ? finalScores
-            : [{ id: undefined, finalScore: null }];
+            : [{
+                id: undefined,
+                finalScore: null,
+                status: requiresReExamination
+                  ? { status: "RE-EXAMINATION REQUIRED" }
+                  : null,
+              }];
         const ratingRowSpan = getRatingRowCount(appRating);
         const hasEvidence = (appRating.previews?.length || 0) > 0;
 
@@ -314,6 +347,72 @@ async function handleOpenEvidence(appRatingId: number | null) {
   } finally {
     isEvidenceFetching.value = false;
     evidenceLoadingId.value = null;
+  }
+}
+
+function openInvalidationModal() {
+  invalidationReason.value = "";
+  fraudCategory.value = undefined;
+  invalidationConfirmed.value = false;
+  isEvidenceModalOpen.value = false;
+  isInvalidationModalOpen.value = true;
+}
+
+async function handleInvalidateAttempt() {
+  if (!selectedEvidenceAppRatingId.value) return;
+  if (invalidationReason.value.trim().length < 10) {
+    toast.add({
+      title: "Validation",
+      description: "Please provide a reason of at least 10 characters.",
+      color: "warning",
+    });
+    return;
+  }
+  if (!invalidationConfirmed.value) {
+    toast.add({
+      title: "Confirmation required",
+      description: "Please confirm that the evidence has been reviewed.",
+      color: "warning",
+    });
+    return;
+  }
+
+  try {
+    invalidationLoading.value = true;
+    const response = await $fetch<{ message?: string }>(
+      `http://${ip.ipBackEnd}/api/scoreChecker/invalidate-attempt`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: token.value ? `Bearer ${token.value}` : "",
+        },
+        body: {
+          appRatingId: selectedEvidenceAppRatingId.value,
+          reason: invalidationReason.value.trim(),
+          fraudCategory: fraudCategory.value,
+        },
+      },
+    );
+
+    isInvalidationModalOpen.value = false;
+    await handleSearch();
+    toast.add({
+      title: "Re-examination required",
+      description:
+        response.message || "The examination attempt has been invalidated.",
+      color: "success",
+    });
+  } catch (fetchError: any) {
+    toast.add({
+      title: "Unable to invalidate attempt",
+      description:
+        fetchError?.data?.message ||
+        fetchError?.message ||
+        "The request could not be completed.",
+      color: "error",
+    });
+  } finally {
+    invalidationLoading.value = false;
   }
 }
 
@@ -529,6 +628,12 @@ const initialErrorMessage = computed(() => {
                             ? 'error'
                             : row.status?.toUpperCase() === 'RECHECK'
                               ? 'warning'
+                              : row.status?.toUpperCase() ===
+                                  'RE-EXAMINATION REQUIRED'
+                                ? 'warning'
+                                : row.status?.toUpperCase() ===
+                                    'WAITING PRACTICAL'
+                                  ? 'warning'
                               : 'neutral'
                       "
                       variant="soft"
@@ -607,6 +712,80 @@ const initialErrorMessage = computed(() => {
                 </a>
               </div>
               <p v-else class="text-sm text-muted">No evidence data.</p>
+            </div>
+          </template>
+          <template #footer>
+            <div class="flex w-full justify-end">
+              <UButton
+                v-if="canInvalidateAttempt && evidenceImageItems.length > 0"
+                label="Require Re-examination"
+                icon="i-lucide-shield-alert"
+                color="error"
+                variant="soft"
+                @click="openInvalidationModal"
+              />
+            </div>
+          </template>
+        </UModal>
+
+        <UModal
+          v-model:open="isInvalidationModalOpen"
+          title="Invalidate Examination Attempt"
+          description="The existing result will remain in the audit history but will no longer be valid."
+          :ui="{ content: 'max-w-xl w-full' }"
+        >
+          <template #body>
+            <div class="space-y-4">
+              <UFormField label="Fraud category">
+                <USelect
+                  v-model="fraudCategory"
+                  :items="fraudCategoryOptions"
+                  placeholder="Select category (optional)"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Reason" required>
+                <UTextarea
+                  v-model="invalidationReason"
+                  :rows="5"
+                  :maxlength="2000"
+                  placeholder="Describe the evidence and reason for requiring re-examination..."
+                  class="w-full"
+                />
+                <template #hint>
+                  {{ invalidationReason.trim().length }}/2000
+                </template>
+              </UFormField>
+
+              <UCheckbox
+                v-model="invalidationConfirmed"
+                label="I have reviewed the evidence and confirm that this attempt must be invalidated."
+              />
+            </div>
+          </template>
+
+          <template #footer>
+            <div class="flex w-full justify-end gap-2">
+              <UButton
+                label="Cancel"
+                color="neutral"
+                variant="outline"
+                :disabled="invalidationLoading"
+                @click="isInvalidationModalOpen = false"
+              />
+              <UButton
+                label="Invalidate & Require Re-examination"
+                icon="i-lucide-shield-alert"
+                color="error"
+                :loading="invalidationLoading"
+                :disabled="
+                  invalidationLoading ||
+                  invalidationReason.trim().length < 10 ||
+                  !invalidationConfirmed
+                "
+                @click="handleInvalidateAttempt"
+              />
             </div>
           </template>
         </UModal>
