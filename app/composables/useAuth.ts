@@ -1,5 +1,3 @@
-import ip from "../utils/config.json";
-
 type RoleMenu = {
   menu: {
     menu: string;
@@ -44,10 +42,18 @@ export type UseAuthReturn = {
 };
 
 export const useAuth = (): UseAuthReturn => {
+  const config = useRuntimeConfig();
+  const apiBaseUrl = String(config.public.apiBaseUrl).replace(/\/+$/, "");
+  const secureCookies = import.meta.env.PROD;
+
+  if (import.meta.env.PROD && !apiBaseUrl.startsWith("https://")) {
+    throw new Error("NUXT_PUBLIC_API_BASE_URL must use HTTPS in production");
+  }
+
   // Token cookie - expires in 3 hours
   const token = useCookie<string | null>("auth_token", {
     sameSite: "lax",
-    secure: false,
+    secure: secureCookies,
     default: () => null,
     maxAge: 60 * 60 * 3, // 3 hours
   });
@@ -55,7 +61,7 @@ export const useAuth = (): UseAuthReturn => {
   // User data cookie - expires in 3 hours
   const userCookie = useCookie<AuthUser | null>("auth_user", {
     sameSite: "lax",
-    secure: false,
+    secure: secureCookies,
     default: () => null,
     maxAge: 60 * 60 * 3, // 3 hours
   });
@@ -63,7 +69,7 @@ export const useAuth = (): UseAuthReturn => {
   // Store login timestamp for expiration check
   const loginTimestamp = useCookie<number | null>("auth_timestamp", {
     sameSite: "lax",
-    secure: false,
+    secure: secureCookies,
     default: () => null,
     maxAge: 60 * 60 * 3, // 3 hours
   });
@@ -93,7 +99,7 @@ export const useAuth = (): UseAuthReturn => {
 
   const loginWithApi = async (nik: string, password: string) => {
     const response = await $fetch<LoginSuccessResponse>(
-      `http://${ip.ipBackEnd}/api/auth/login`,
+      `${apiBaseUrl}/api/auth/login`,
       {
         method: "POST",
         body: {

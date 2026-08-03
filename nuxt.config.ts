@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     ipBackEnd: "localhost:3001",
     public: {
+      apiBaseUrl: "http://localhost:3001",
       screenMonitoringEnabled: true,
     },
   },
