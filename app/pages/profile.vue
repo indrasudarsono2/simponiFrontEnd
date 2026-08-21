@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 
@@ -46,7 +46,7 @@ interface ProfileResponse {
 }
 
 const { data, status, error, refresh } = await useFetch<ProfileResponse>(
-  `http://${ip.ipBackEnd}/api/profile`,
+  `${apiBaseUrl}/api/profile`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -142,7 +142,7 @@ function openUpdateModal() {
 async function onManualSubmit(event: FormSubmitEvent<UpdateSchema>) {
   isUpdating.value = true;
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/profile/${profile.value?.nik}`, {
+    await $fetch(`${apiBaseUrl}/api/profile/${profile.value?.nik}`, {
       method: "PUT",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

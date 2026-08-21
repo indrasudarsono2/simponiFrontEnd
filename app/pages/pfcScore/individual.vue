@@ -1,5 +1,5 @@
-﻿<script setup lang="ts">
-import ip from "../../utils/config.json";
+<script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl();
 import {
   CalendarDate,
   DateFormatter,
@@ -51,6 +51,8 @@ interface CheckerStatisticAnsweredResponse {
     rating?: StatisticAllRatingItem[];
   } | null;
   detail?: StatisticDetailItem[];
+  mats?: { statistic?: StatisticGroupItem[] } | null;
+  matsDetail?: StatisticDetailItem[];
 }
 
 const { token } = useAuth();
@@ -97,12 +99,15 @@ const periodOptions = [
   { label: "Particular Period", value: "period" },
 ];
 
-const { data, status, error, refresh } = await useFetch<IndividualOptionsResponse>(
-  `http://${ip.ipBackEnd}/api/pfcScore/individual`, {
-  headers: {
-    Authorization: token.value ? `Bearer ${token.value}` : "",
-  },
-});
+const { data, status, error, refresh } =
+  await useFetch<IndividualOptionsResponse>(
+    `${apiBaseUrl}/api/pfcScore/individual`,
+    {
+      headers: {
+        Authorization: token.value ? `Bearer ${token.value}` : "",
+      },
+    },
+  );
 
 const branchOptions = computed(() =>
   (data.value?.branches || []).map((item) => ({
@@ -120,7 +125,9 @@ const memberOptions = computed(() => {
 
 const selectedMember = computed(() => {
   if (!selectedMemberNik.value) return null;
-  return users.value.find((item) => item.nik === selectedMemberNik.value) || null;
+  return (
+    users.value.find((item) => item.nik === selectedMemberNik.value) || null
+  );
 });
 
 watch(selectedMemberNik, () => {
@@ -143,7 +150,7 @@ watch(selectedBranchId, async (branchId) => {
   usersLoading.value = true;
   try {
     const response = await $fetch<IndividualOptionsResponse>(
-      `http://${ip.ipBackEnd}/api/pfcScore/individual`,
+      `${apiBaseUrl}/api/pfcScore/individual`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
         query: { branchId },
@@ -153,7 +160,10 @@ watch(selectedBranchId, async (branchId) => {
   } catch (fetchError: any) {
     toast.add({
       title: "Error",
-      description: fetchError?.data?.message || fetchError?.message || "Failed to load users.",
+      description:
+        fetchError?.data?.message ||
+        fetchError?.message ||
+        "Failed to load users.",
       color: "error",
     });
   } finally {
@@ -261,6 +271,10 @@ function radarPolygonPoints(statistics: StatisticGroupItem[]): string {
 }
 
 const allRadarData = computed(() => answeredData.value?.all?.rating || []);
+const matsRadarData = computed(() => {
+  const statistic = answeredData.value?.mats?.statistic || [];
+  return statistic.length ? [{ rating: "", statistic }] : [];
+});
 
 const detailLineData = computed(() => {
   const detail = answeredData.value?.detail || [];
@@ -274,7 +288,9 @@ const detailLineData = computed(() => {
   });
 
   return Array.from(map.entries()).map(([rating, items]) => {
-    const sortedItems = [...items].sort((a, b) => a.finalScoreId - b.finalScoreId);
+    const sortedItems = [...items].sort(
+      (a, b) => a.finalScoreId - b.finalScoreId,
+    );
     const xTicks = sortedItems.map((i, idx) => {
       return {
         value: idx + 1,
@@ -348,11 +364,7 @@ function linePointX(
   return padding + ((x - minX) / (safeMaxX - minX)) * chartW;
 }
 
-function linePointY(
-  y: number,
-  height: number,
-  padding: number,
-): number {
+function linePointY(y: number, height: number, padding: number): number {
   const chartH = height - padding * 2;
   return padding + (1 - Math.max(0, Math.min(100, y)) / 100) * chartH;
 }
@@ -389,7 +401,7 @@ async function handleSubmit() {
     submitLoading.value = true;
 
     const response = await $fetch<CheckerStatisticAnsweredResponse>(
-      `http://${ip.ipBackEnd}/api/pfcScore/individual`,
+      `${apiBaseUrl}/api/pfcScore/individual`,
       {
         method: "POST",
         headers: {
@@ -433,11 +445,7 @@ const initialErrorMessage = computed(() => {
     data?: { message?: string };
     message?: string;
   };
-  return (
-    err.data?.message ||
-    err.message ||
-    "Failed to load branch options."
-  );
+  return err.data?.message || err.message || "Failed to load branch options.";
 });
 </script>
 
@@ -480,7 +488,10 @@ const initialErrorMessage = computed(() => {
             />
           </div>
 
-          <div v-else class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <div
+            v-else
+            class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5"
+          >
             <UFormField label="Branch">
               <USelect
                 v-model="selectedBranchId"
@@ -512,7 +523,11 @@ const initialErrorMessage = computed(() => {
               />
             </UFormField>
 
-            <UFormField v-if="periodMode === 'period'" label="Event Created Date" required>
+            <UFormField
+              v-if="periodMode === 'period'"
+              label="Event Created Date"
+              required
+            >
               <UPopover :content="{ align: 'start' }" :modal="true">
                 <UButton
                   color="neutral"
@@ -523,18 +538,27 @@ const initialErrorMessage = computed(() => {
                   <span class="truncate">
                     <template v-if="dateRange.start">
                       <template v-if="dateRange.end">
-                        {{ df.format(dateRange.start.toDate(getLocalTimeZone())) }}
+                        {{
+                          df.format(dateRange.start.toDate(getLocalTimeZone()))
+                        }}
                         -
-                        {{ df.format(dateRange.end.toDate(getLocalTimeZone())) }}
+                        {{
+                          df.format(dateRange.end.toDate(getLocalTimeZone()))
+                        }}
                       </template>
                       <template v-else>
-                        {{ df.format(dateRange.start.toDate(getLocalTimeZone())) }}
+                        {{
+                          df.format(dateRange.start.toDate(getLocalTimeZone()))
+                        }}
                       </template>
                     </template>
                     <template v-else>Pick a date range</template>
                   </span>
                   <template #trailing>
-                    <UIcon name="i-lucide-chevron-down" class="size-5 shrink-0 text-dimmed" />
+                    <UIcon
+                      name="i-lucide-chevron-down"
+                      class="size-5 shrink-0 text-dimmed"
+                    />
                   </template>
                 </UButton>
                 <template #content>
@@ -571,20 +595,25 @@ const initialErrorMessage = computed(() => {
           <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <p class="text-xs text-muted">Name</p>
-              <p class="font-medium">{{ selectedMember.name || '-' }}</p>
+              <p class="font-medium">{{ selectedMember.name || "-" }}</p>
             </div>
             <div>
               <p class="text-xs text-muted">NIK</p>
-              <p class="font-medium">{{ selectedMember.nik || '-' }}</p>
+              <p class="font-medium">{{ selectedMember.nik || "-" }}</p>
             </div>
             <div>
               <p class="text-xs text-muted">License ID</p>
-              <p class="font-medium">{{ selectedMember.licenseUserId || '-' }}</p>
+              <p class="font-medium">
+                {{ selectedMember.licenseUserId || "-" }}
+              </p>
             </div>
             <div>
               <p class="text-xs text-muted">Profession</p>
               <p class="font-medium">
-                {{ selectedMember.professionInBranch?.profession?.profession || '-' }}
+                {{
+                  selectedMember.professionInBranch?.profession?.profession ||
+                  "-"
+                }}
               </p>
             </div>
           </div>
@@ -592,7 +621,29 @@ const initialErrorMessage = computed(() => {
 
         <UCard>
           <template #header>
-            <h2 class="text-lg font-semibold">All (Radar)</h2>
+            <h2 class="text-lg font-semibold">
+              MATS by Mandatory Item (Radar Chart)
+            </h2>
+          </template>
+          <div v-if="!answeredData" class="text-sm text-muted">
+            No data yet. Please submit filter first.
+          </div>
+          <div
+            v-else-if="matsRadarData.length === 0"
+            class="text-sm text-muted"
+          >
+            No categorized MATS answers available.
+          </div>
+          <StatisticsMandatoryRadar
+            v-else
+            :ratings="matsRadarData"
+            :show-rating="false"
+          />
+        </UCard>
+
+        <UCard>
+          <template #header>
+            <h2 class="text-lg font-semibold">All (Radar Chart)</h2>
           </template>
 
           <div

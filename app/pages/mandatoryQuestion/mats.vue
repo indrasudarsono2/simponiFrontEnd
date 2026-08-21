@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel } from '@tanstack/table-core'
-import ip from '../../utils/config.json'
+
+const apiBaseUrl = useApiBaseUrl()
 
 type MatsQuestion = {
   id: number
+  mandatoryItemId: number
+  mandatoryItem?: { id: number, mandatory: string } | null
   question: string
   image: string | null
   a: string
@@ -18,13 +21,16 @@ type MatsQuestion = {
 }
 
 type MatsResponse = {
-  configuration: { id: number, quantity: number }
+  configuration: { id: number, quantity: number, mode: 'SEPARATE_POOL' | 'CATEGORY_PORTION' }
   questions: MatsQuestion[]
+  mandatoryItems: Array<{ id: number, mandatory: string }>
+  allocations: Array<{ id: number, mandatoryItemId: number, quantity: number }>
 }
 
 const { token, getRoleNames } = useAuth()
 const toast = useToast()
 const UButton = resolveComponent('UButton')
+const USelect = resolveComponent('USelect')
 const table = useTemplateRef('table')
 const isGeneralAdmin = computed(() =>
   getRoleNames().some(role => role.trim().toUpperCase() === 'GENERAL ADMIN')
@@ -35,12 +41,15 @@ const authHeaders = computed(() => ({
 }))
 
 const { data, status, error, refresh } = await useFetch<MatsResponse>(
-  `http://${ip.ipBackEnd}/api/mats`,
+  `${apiBaseUrl}/api/mats`,
   { headers: authHeaders }
 )
 
 const search = ref('')
 const quantity = ref(0)
+const mode = ref<'SEPARATE_POOL' | 'CATEGORY_PORTION'>('SEPARATE_POOL')
+const allocationValues = ref<Record<number, number>>({})
+const savingAllocations = ref(false)
 const savingQuantity = ref(false)
 const editorOpen = ref(false)
 const deleteOpen = ref(false)
@@ -80,6 +89,7 @@ const emptyForm = () => ({
   c: '',
   d: '',
   key: 'A' as MatsQuestion['key'],
+  mandatoryItemId: undefined as number | undefined,
   isActive: true
 })
 const form = reactive(emptyForm())
@@ -91,6 +101,24 @@ watch(
   },
   { immediate: true }
 )
+watch(() => data.value?.configuration.mode, (value) => {
+  if (value) mode.value = value
+}, { immediate: true })
+watch(() => data.value?.allocations, (values) => {
+  allocationValues.value = Object.fromEntries((values || []).map(item => [item.mandatoryItemId, item.quantity]))
+}, { immediate: true })
+
+const mandatoryItemOptions = computed(() => (data.value?.mandatoryItems || []).map(item => ({
+  label: item.mandatory,
+  value: item.id
+})))
+const activeMode = computed(() => data.value?.configuration.mode || 'SEPARATE_POOL')
+const activeModeLabel = computed(() => activeMode.value === 'CATEGORY_PORTION'
+  ? 'Category Portion'
+  : 'Separate Global Pool')
+const hasUnsavedModeChange = computed(() => mode.value !== activeMode.value)
+const categorySaveStatus = ref<Record<number, 'saving' | 'saved' | 'error' | undefined>>({})
+const categoryRequestId = new Map<number, number>()
 
 const activeCount = computed(
   () => data.value?.questions.filter(question => question.isActive).length || 0
@@ -101,7 +129,7 @@ const filteredQuestions = computed(() => {
   const questions = data.value?.questions || []
   if (!query) return questions
   return questions.filter(item =>
-    [item.question, item.a, item.b, item.c, item.d, item.key]
+    [item.question, item.a, item.b, item.c, item.d, item.key, item.mandatoryItem?.mandatory]
       .some(value => stripHtml(value).toLowerCase().includes(query))
   )
 })
@@ -124,7 +152,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 function resolveImageUrl(value?: string | null) {
   const path = String(value || '').trim()
   if (!path || /^(https?:|data:|blob:)/i.test(path)) return path
-  return `http://${ip.ipBackEnd}${path.startsWith('/') ? path : `/${path}`}`
+  return `${apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`
 }
 
 function openTableImage(value?: string | null) {
@@ -132,7 +160,75 @@ function openTableImage(value?: string | null) {
   tableImagePreviewOpen.value = Boolean(tableImagePreviewSrc.value)
 }
 
+async function updateQuestionCategory(question: MatsQuestion, value: number) {
+  const mandatoryItemId = Number(value)
+  if (!mandatoryItemId || mandatoryItemId === question.mandatoryItemId) return
+  const mandatoryItem = data.value?.mandatoryItems.find(item => item.id === mandatoryItemId)
+  if (!mandatoryItem) return
+
+  const previousId = question.mandatoryItemId
+  const previousItem = question.mandatoryItem
+  const requestId = (categoryRequestId.get(question.id) || 0) + 1
+  categoryRequestId.set(question.id, requestId)
+  question.mandatoryItemId = mandatoryItemId
+  question.mandatoryItem = mandatoryItem
+  categorySaveStatus.value[question.id] = 'saving'
+
+  try {
+    await $fetch(`${apiBaseUrl}/api/mats/questions/${question.id}/category`, {
+      method: 'PATCH',
+      headers: authHeaders.value,
+      body: { mandatoryItemId }
+    })
+    if (categoryRequestId.get(question.id) !== requestId) return
+    categorySaveStatus.value[question.id] = 'saved'
+    window.setTimeout(() => {
+      if (categorySaveStatus.value[question.id] === 'saved') categorySaveStatus.value[question.id] = undefined
+    }, 1500)
+  } catch (requestError: unknown) {
+    if (categoryRequestId.get(question.id) !== requestId) return
+    question.mandatoryItemId = previousId
+    question.mandatoryItem = previousItem
+    categorySaveStatus.value[question.id] = 'error'
+    toast.add({
+      title: 'Unable to update Mandatory Item',
+      description: getErrorMessage(requestError, 'The category assignment was not saved.'),
+      color: 'error'
+    })
+  }
+}
+
 const columns: TableColumn<MatsQuestion>[] = [
+  {
+    accessorKey: 'mandatoryItem',
+    header: 'Mandatory Item',
+    cell: ({ row }) => h('div', { class: 'flex min-w-52 flex-col gap-1' }, [
+      h(USelect, {
+        'modelValue': row.original.mandatoryItemId,
+        'items': mandatoryItemOptions.value,
+        'valueKey': 'value',
+        'disabled': categorySaveStatus.value[row.original.id] === 'saving',
+        'class': 'w-full',
+        'onUpdate:modelValue': (value: number) => updateQuestionCategory(row.original, value)
+      }),
+      h('span', {
+        class: [
+          'block min-h-4 text-xs',
+          categorySaveStatus.value[row.original.id] === 'error'
+            ? 'text-error'
+            : categorySaveStatus.value[row.original.id] === 'saved'
+              ? 'text-success'
+              : 'text-muted'
+        ]
+      }, categorySaveStatus.value[row.original.id] === 'saving'
+        ? 'Saving...'
+        : categorySaveStatus.value[row.original.id] === 'saved'
+          ? 'Saved'
+          : categorySaveStatus.value[row.original.id] === 'error'
+            ? 'Save failed'
+            : '')
+    ])
+  },
   {
     id: 'no',
     header: 'NO',
@@ -226,6 +322,7 @@ function openEdit(question: MatsQuestion) {
     c: question.c,
     d: question.d,
     key: question.key,
+    mandatoryItemId: question.mandatoryItemId,
     isActive: question.isActive
   })
   selectedFile.value = null
@@ -263,10 +360,10 @@ async function saveConfiguration() {
   }
   savingQuantity.value = true
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/mats/configuration`, {
+    await $fetch(`${apiBaseUrl}/api/mats/configuration`, {
       method: 'PUT',
       headers: authHeaders.value,
-      body: { quantity: quantity.value }
+      body: { quantity: quantity.value, mode: mode.value }
     })
     toast.add({ title: 'Configuration saved', description: `${quantity.value} MATS questions will appear in each examination.`, color: 'success' })
     await refresh()
@@ -277,10 +374,32 @@ async function saveConfiguration() {
   }
 }
 
+async function saveAllocations() {
+  savingAllocations.value = true
+  try {
+    await $fetch(`${apiBaseUrl}/api/mats/allocations`, {
+      method: 'PUT', headers: authHeaders.value,
+      body: { allocations: (data.value?.mandatoryItems || []).map(item => ({
+        mandatoryItemId: item.id, quantity: Number(allocationValues.value[item.id] || 0)
+      })) }
+    })
+    toast.add({ title: 'Category allocations saved', color: 'success' })
+    await refresh()
+  } catch (requestError: unknown) {
+    toast.add({ title: 'Unable to save allocations', description: getErrorMessage(requestError, 'Failed to save category allocations.'), color: 'error' })
+  } finally {
+    savingAllocations.value = false
+  }
+}
+
 async function saveQuestion() {
   const values = [form.question, form.a, form.b, form.c, form.d]
   if (values.some(value => !stripHtml(value))) {
     toast.add({ title: 'Incomplete question', description: 'Question and all four options are required.', color: 'error' })
+    return
+  }
+  if (!form.mandatoryItemId) {
+    toast.add({ title: 'Mandatory Item required', color: 'error' })
     return
   }
   savingQuestion.value = true
@@ -292,14 +411,15 @@ async function saveQuestion() {
     body.append('c', form.c)
     body.append('d', form.d)
     body.append('key', form.key)
+    body.append('mandatoryItemId', String(form.mandatoryItemId))
     body.append('isActive', String(form.isActive))
     if (selectedFile.value) body.append('image', selectedFile.value)
 
     const id = editingQuestion.value?.id
     await $fetch(
       id
-        ? `http://${ip.ipBackEnd}/api/mats/questions/${id}`
-        : `http://${ip.ipBackEnd}/api/mats/questions`,
+        ? `${apiBaseUrl}/api/mats/questions/${id}`
+        : `${apiBaseUrl}/api/mats/questions`,
       { method: id ? 'PUT' : 'POST', headers: authHeaders.value, body }
     )
     toast.add({ title: id ? 'Question updated' : 'Question created', color: 'success' })
@@ -317,7 +437,7 @@ async function deleteQuestion() {
   if (!deletingItem.value) return
   deletingQuestion.value = true
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/mats/questions/${deletingItem.value.id}`, {
+    await $fetch(`${apiBaseUrl}/api/mats/questions/${deletingItem.value.id}`, {
       method: 'DELETE',
       headers: authHeaders.value
     })
@@ -350,17 +470,17 @@ function downloadCsv(filename: string, rows: unknown[][]) {
 
 function downloadCsvTemplate() {
   downloadCsv('mats-question-template.csv', [
-    ['matsQuestionId', 'question', 'a', 'b', 'c', 'd', 'key', 'isActive'],
-    ['', '<p>What is the purpose of this MATS procedure?</p>', 'Option A', 'Option B', 'Option C', 'Option D', 'A', 'true']
+    ['matsQuestionId', 'mandatoryItemId', 'question', 'a', 'b', 'c', 'd', 'key', 'isActive'],
+    ['', data.value?.mandatoryItems?.[0]?.id || '', '<p>What is the purpose of this MATS procedure?</p>', 'Option A', 'Option B', 'Option C', 'Option D', 'A', 'true']
   ])
 }
 
 function downloadCurrentQuestions() {
   const rows = (data.value?.questions || []).map(item => [
-    item.id, item.question, item.a, item.b, item.c, item.d, item.key, item.isActive
+    item.id, item.mandatoryItemId, item.question, item.a, item.b, item.c, item.d, item.key, item.isActive
   ])
   downloadCsv(`mats-questions-${new Date().toISOString().slice(0, 10)}.csv`, [
-    ['matsQuestionId', 'question', 'a', 'b', 'c', 'd', 'key', 'isActive'],
+    ['matsQuestionId', 'mandatoryItemId', 'question', 'a', 'b', 'c', 'd', 'key', 'isActive'],
     ...rows
   ])
 }
@@ -391,7 +511,7 @@ async function importCsv() {
     const body = new FormData()
     body.append('csv', selectedCsvFile.value)
     const response = await $fetch<{ imported: number, created: number, updated: number }>(
-      `http://${ip.ipBackEnd}/api/mats/questions/import-csv`,
+      `${apiBaseUrl}/api/mats/questions/import-csv`,
       { method: 'POST', headers: authHeaders.value, body }
     )
     toast.add({
@@ -469,11 +589,33 @@ async function importCsv() {
                 Applied globally to every branch, sector, and rating.
               </p>
               <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                <UBadge
+                  :label="`Active Mode: ${activeModeLabel}`"
+                  :color="activeMode === 'CATEGORY_PORTION' ? 'primary' : 'info'"
+                  variant="solid"
+                />
+                <UBadge
+                  v-if="hasUnsavedModeChange"
+                  label="Mode change not saved"
+                  color="warning"
+                  variant="subtle"
+                />
                 <UBadge :label="`${activeCount} active questions`" color="success" variant="subtle" />
                 <UBadge :label="`${data?.questions.length || 0} total questions`" color="neutral" variant="subtle" />
               </div>
             </div>
             <div class="flex items-end gap-2">
+              <UFormField label="Examination mode">
+                <USelect
+                  v-model="mode"
+                  :items="[
+                    { label: 'Separate Global Pool', value: 'SEPARATE_POOL' },
+                    { label: 'Category Portion', value: 'CATEGORY_PORTION' }
+                  ]"
+                  value-key="value"
+                  class="w-56"
+                />
+              </UFormField>
               <UFormField label="MATS quantity">
                 <UInput
                   v-model.number="quantity"
@@ -481,6 +623,7 @@ async function importCsv() {
                   min="0"
                   :max="activeCount"
                   class="w-32"
+                  :disabled="mode === 'CATEGORY_PORTION'"
                 />
               </UFormField>
               <UButton
@@ -490,6 +633,41 @@ async function importCsv() {
                 @click="saveConfiguration"
               />
             </div>
+          </div>
+        </UCard>
+
+        <UCard v-if="mode === 'CATEGORY_PORTION'">
+          <template #header>
+            <div>
+              <h2 class="font-semibold">
+                MATS Portion by Mandatory Item
+              </h2>
+              <p class="text-sm text-muted">
+                Each value consumes part of the branch category quantity.
+              </p>
+            </div>
+          </template>
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <UFormField
+              v-for="item in data?.mandatoryItems || []"
+              :key="item.id"
+              :label="item.mandatory"
+            >
+              <UInput
+                v-model.number="allocationValues[item.id]"
+                type="number"
+                min="0"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+          <div class="mt-4 flex justify-end">
+            <UButton
+              label="Save category allocations"
+              icon="i-lucide-save"
+              :loading="savingAllocations"
+              @click="saveAllocations"
+            />
           </div>
         </UCard>
 
@@ -589,6 +767,15 @@ async function importCsv() {
           </UFormField>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
+          <UFormField label="Mandatory Item" required>
+            <USelect
+              v-model="form.mandatoryItemId"
+              :items="mandatoryItemOptions"
+              value-key="value"
+              placeholder="Select Mandatory Item"
+              class="w-full"
+            />
+          </UFormField>
           <UFormField label="Correct answer" required>
             <USelect v-model="form.key" :items="['A', 'B', 'C', 'D']" class="w-full" />
           </UFormField>
@@ -651,7 +838,7 @@ async function importCsv() {
       <form class="space-y-4" @submit.prevent="importCsv">
         <UAlert
           title="CSV format"
-          description="Use: matsQuestionId, question, a, b, c, d, key, isActive. Leave matsQuestionId empty to create a question; keep it to update an existing MATS question."
+          description="Use: matsQuestionId, mandatoryItemId, question, a, b, c, d, key, isActive. Leave matsQuestionId empty to create a question; keep it to update an existing MATS question."
           color="info"
           icon="i-lucide-info"
         />

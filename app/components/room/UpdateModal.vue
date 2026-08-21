@@ -1,11 +1,11 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import {
   CalendarDate,
   DateFormatter,
   getLocalTimeZone,
   parseDate,
 } from "@internationalized/date";
-import ip from "../../utils/config.json";
 
 interface RatingItem {
   rating?: {
@@ -69,9 +69,7 @@ interface RoomItem {
   startDate?: string | null;
   finishDate?: string | null;
   attendances?: {
-    eventUser?: {
-      id: number;
-    } | null;
+    eventUser?: EventUserItem | null;
   }[];
 }
 
@@ -104,18 +102,50 @@ const startTime = ref("00:00");
 const endTime = ref("23:59");
 
 const eventUserOptions = computed(() => {
-  if (props.eventUserOptions && props.eventUserOptions.length > 0) {
-    return props.eventUserOptions.map((item) => ({
+  const options: { id: number; name: string; label: string; value: number }[] =
+    (props.eventUserOptions || []).map((item) => ({
       id: item.value,
       name: item.label,
       label: item.label,
       value: item.value,
     }));
+
+  const seen = new Set(options.map((item) => item.value));
+
+  for (const attendance of props.room?.attendances || []) {
+    const eventUser = attendance.eventUser;
+    const eventUserId = Number(eventUser?.id);
+    if (!eventUserId || seen.has(eventUserId) || !eventUser) continue;
+
+    const appDoc = Array.isArray(eventUser.applicationDocs)
+      ? eventUser.applicationDocs[0] || {}
+      : eventUser.applicationDocs || {};
+    const fallbackDoc = Array.isArray(eventUser.applicationDoc)
+      ? eventUser.applicationDoc[0] || {}
+      : eventUser.applicationDoc || {};
+    const activeDoc = Object.keys(appDoc).length ? appDoc : fallbackDoc;
+    const name =
+      activeDoc.name ||
+      activeDoc.user?.name ||
+      activeDoc.userNik ||
+      eventUser.name ||
+      eventUser.user?.name ||
+      "Unknown";
+    const ratings = (activeDoc.appRatings || [])
+      .map((item: any) => item?.rating?.rating || item?.rating || "")
+      .filter(Boolean)
+      .join(", ");
+    const label = `${name} [${ratings || "-"}]`;
+
+    options.push({ id: eventUserId, name: label, label, value: eventUserId });
+    seen.add(eventUserId);
   }
 
-  const options: { id: number; name: string; label: string; value: number }[] =
-    [];
-  const seen = new Set<number>();
+  const currentRoomUserIds = new Set(
+    (props.room?.attendances || [])
+      .map((attendance) => Number(attendance.eventUser?.id))
+      .filter((id) => Number.isFinite(id) && id > 0),
+  );
 
   const events = Array.isArray(props.events) ? props.events : [];
   events.forEach((eventItem) => {
@@ -147,7 +177,12 @@ const eventUserOptions = computed(() => {
         .join(", ");
 
       const eventUserId = Number(eventUser.id);
-      if (!eventUserId || seen.has(eventUserId)) return;
+      if (
+        !eventUserId ||
+        seen.has(eventUserId) ||
+        !currentRoomUserIds.has(eventUserId)
+      )
+        return;
       seen.add(eventUserId);
 
       options.push({
@@ -332,13 +367,13 @@ async function onSubmit() {
       payload.append("finishDate", formState.finishDate);
       payload.append("file", formState.file);
 
-      await $fetch(`http://${ip.ipBackEnd}/api/room/${props.room.id}`, {
+      await $fetch(`${apiBaseUrl}/api/room/${props.room.id}`, {
         method: "PUT",
         headers: commonHeaders,
         body: payload,
       });
     } else {
-      await $fetch(`http://${ip.ipBackEnd}/api/room/${props.room.id}`, {
+      await $fetch(`${apiBaseUrl}/api/room/${props.room.id}`, {
         method: "PUT",
         headers: commonHeaders,
         body: {

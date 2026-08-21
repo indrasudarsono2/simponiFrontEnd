@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface Event {
   id: number;
@@ -78,7 +78,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     );
 
     // Call API to create event question
-    await $fetch(`http://${ip.ipBackEnd}/api/eventQuestions`, {
+    await $fetch(`${apiBaseUrl}/api/eventQuestions`, {
       method: "POST",
       body: {
         eventId: event.data.eventId,

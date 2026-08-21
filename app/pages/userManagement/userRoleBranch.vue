@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -66,7 +66,7 @@ const pagination = ref({
 });
 
 const { data, status, refresh } = await useFetch<UserRoleBranchResponse>(
-  `http://${ip.ipBackEnd}/api/userRoleBranch`,
+  `${apiBaseUrl}/api/userRoleBranch`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

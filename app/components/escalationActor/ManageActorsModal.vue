@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 
 interface UserOption {
   nik: string;
@@ -65,7 +65,7 @@ const userSelectItems = computed(() =>
 
 async function loadUsers() {
   userOptions.value = await $fetch<UserOption[]>(
-    `http://${ip.ipBackEnd}/api/escalationActors/users`,
+    `${apiBaseUrl}/api/escalationActors/users`,
     {
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -119,7 +119,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/escalationActors/${props.escalationLevel.id}`,
+      `${apiBaseUrl}/api/escalationActors/${props.escalationLevel.id}`,
       {
         method: "PUT",
         body: {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
 interface Profession {
@@ -42,7 +42,7 @@ async function onSubmit() {
   try {
     // Call API to delete profession
     await $fetch(
-      `http://${ip.ipBackEnd}/api/professions/${props.profession.id}`,
+      `${apiBaseUrl}/api/professions/${props.profession.id}`,
       {
         method: "DELETE",
         headers: {

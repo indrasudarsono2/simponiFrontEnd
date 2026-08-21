@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface EssayItem {
   id?: number;
@@ -235,7 +235,7 @@ async function handleSubmit() {
 
   try {
     isSubmitting.value = true;
-    await $fetch(`http://${ip.ipBackEnd}/api/performanceCheck`, {
+    await $fetch(`${apiBaseUrl}/api/performanceCheck`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

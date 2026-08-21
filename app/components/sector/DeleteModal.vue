@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
 interface Sector {
@@ -52,7 +52,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete sector
-    await $fetch(`http://${ip.ipBackEnd}/api/sectors/${props.sector.id}`, {
+    await $fetch(`${apiBaseUrl}/api/sectors/${props.sector.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

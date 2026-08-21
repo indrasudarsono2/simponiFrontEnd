@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 interface Profession {
@@ -46,7 +46,7 @@ const state = reactive<Partial<Schema>>({
 
 // Fetch regions for dropdown
 const { data: professions } = await useFetch<Profession[]>(
-  `http://${ip.ipBackEnd}/api/professions`,
+  `${apiBaseUrl}/api/professions`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -96,7 +96,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to update rating
-    await $fetch(`http://${ip.ipBackEnd}/api/ratings/${props.rating.id}`, {
+    await $fetch(`${apiBaseUrl}/api/ratings/${props.rating.id}`, {
       method: "PUT",
       body: {
         rating: event.data.rating,

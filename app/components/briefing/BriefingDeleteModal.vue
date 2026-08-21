@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface Profession {
   profession: string;
@@ -73,7 +73,7 @@ async function submit() {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/briefings/${props.briefing.id}`, {
+    await $fetch(`${apiBaseUrl}/api/briefings/${props.briefing.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

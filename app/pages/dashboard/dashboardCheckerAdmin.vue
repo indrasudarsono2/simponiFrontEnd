@@ -1,8 +1,8 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import { sub } from "date-fns";
 import type { DropdownMenuItem } from "@nuxt/ui";
 import type { Period, Range } from "~/types";
-import ip from "../../utils/config.json";
 
 const { isNotificationsSlideoverOpen } = useDashboard();
 const { token } = useAuth();
@@ -94,7 +94,7 @@ const formattedUTCTime = computed(() => {
 
 // Fetch dashboard operational data
 const { data: dashboardData, refresh: refreshDashboardData } = await useFetch(
-  `http://${ip.ipBackEnd}/api/dashboardOperational`,
+  `${apiBaseUrl}/api/dashboardOperational`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -104,7 +104,7 @@ const { data: dashboardData, refresh: refreshDashboardData } = await useFetch(
 
 const { data: dashboardBriefings, refresh: refreshDashboardBriefings } =
   await useFetch<DashboardBriefing[]>(
-    `http://${ip.ipBackEnd}/api/dashboardBriefings`,
+    `${apiBaseUrl}/api/dashboardBriefings`,
     {
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

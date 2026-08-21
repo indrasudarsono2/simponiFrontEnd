@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 
 const { token } = useAuth();
 const toast = useToast();
@@ -73,7 +73,7 @@ const statusOptions = [
 ];
 
 const { data, status, refresh } = await useFetch<MedicalCheckResponse>(
-  `http://${ip.ipBackEnd}/api/medicalCheck/monitor`,
+  `${apiBaseUrl}/api/medicalCheck/monitor`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -180,7 +180,7 @@ async function submitVerification() {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/medicalCheck/${medicalCheckToVerify.value.id}/verify`,
+      `${apiBaseUrl}/api/medicalCheck/${medicalCheckToVerify.value.id}/verify`,
       {
         method: "PUT",
         headers: {

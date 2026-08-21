@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 defineOptions({
   name: "IELPDeleteModal",
@@ -55,7 +55,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete IELP
-    await $fetch(`http://${ip.ipBackEnd}/api/ielpUser/${props.ielpUser.id}`, {
+    await $fetch(`${apiBaseUrl}/api/ielpUser/${props.ielpUser.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

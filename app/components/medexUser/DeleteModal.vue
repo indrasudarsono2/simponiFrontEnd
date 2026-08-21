@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 defineOptions({
   name: "MedexUserDeleteModal",
@@ -53,7 +53,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete MedexUser
-    await $fetch(`http://${ip.ipBackEnd}/api/medexUser/${props.medexUser.id}`, {
+    await $fetch(`${apiBaseUrl}/api/medexUser/${props.medexUser.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

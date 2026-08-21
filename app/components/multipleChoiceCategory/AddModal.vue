@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface SubBranchUnitRating {
   id: number;
@@ -268,7 +268,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     }
 
     // Call API to create question group
-    await $fetch(`http://${ip.ipBackEnd}/api/questionGroupsMultipleChoice`, {
+    await $fetch(`${apiBaseUrl}/api/questionGroupsMultipleChoice`, {
       method: "POST",
       body,
       headers: {

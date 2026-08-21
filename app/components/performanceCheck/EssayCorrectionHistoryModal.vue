@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface EssayCorrectionItem {
   id?: number;
@@ -113,7 +113,7 @@ function resolveImageUrl(imagePath?: string | null): string {
   const trimmed = (imagePath || "").trim();
   if (!trimmed) return "";
   if (/^(data|blob|https?):/i.test(trimmed)) return trimmed;
-  return `http://${ip.ipBackEnd}${trimmed}`;
+  return `${apiBaseUrl}${trimmed}`;
 }
 
 function hasImage(imagePath?: string | null): boolean {

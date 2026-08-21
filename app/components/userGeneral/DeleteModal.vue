@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 defineOptions({
   name: "UserGeneralDeleteModal",
@@ -34,7 +34,7 @@ async function onDelete() {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/userGeneral/${props.user.nik}`, {
+    await $fetch(`${apiBaseUrl}/api/userGeneral/${props.user.nik}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

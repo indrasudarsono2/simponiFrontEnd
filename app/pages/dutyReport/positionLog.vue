@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftDetail {
   id: number;
@@ -125,7 +125,7 @@ const {
   data: dutyReports,
   status,
   refresh,
-} = await useFetch<DutyReport[]>(`http://${ip.ipBackEnd}/api/dutyReports/my`, {
+} = await useFetch<DutyReport[]>(`${apiBaseUrl}/api/dutyReports/my`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -152,7 +152,7 @@ const selectedDutyReport = computed(() => {
 
 const positionLogUrl = computed(() =>
   selectedDutyReportId.value
-    ? `http://${ip.ipBackEnd}/api/positionLogs/${selectedDutyReportId.value}`
+    ? `${apiBaseUrl}/api/positionLogs/${selectedDutyReportId.value}`
     : null,
 );
 
@@ -794,7 +794,7 @@ async function savePositionLogs(options: { auto?: boolean } = {}) {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/positionLogs/${selectedDutyReportId.value}`,
+      `${apiBaseUrl}/api/positionLogs/${selectedDutyReportId.value}`,
       {
         method: "POST",
         body: {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 defineOptions({
   name: "UserRoleGeneralUpdateModal",
@@ -114,7 +114,7 @@ async function onSubmit() {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/userRoleBranchUnit/${props.user.nik}`,
+      `${apiBaseUrl}/api/userRoleBranchUnit/${props.user.nik}`,
       {
         method: "PUT",
         headers: {

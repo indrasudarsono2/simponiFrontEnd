@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 defineOptions({
@@ -89,7 +89,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Submit to API - assign multiple users to a branchUnit
-    await $fetch(`http://${ip.ipBackEnd}/api/userBranch/assign-unit`, {
+    await $fetch(`${apiBaseUrl}/api/userBranch/assign-unit`, {
       method: "POST",
       body: {
         branchUnitId: event.data.branchUnitId,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from '../../utils/config.json'
+const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftDetail {
   id: number
@@ -402,7 +402,7 @@ async function loadDutyReportRecap() {
 
   try {
     recapRows.value = await $fetch<DutyReportRecap[]>(
-      `http://${ip.ipBackEnd}/api/dutyReports/recap?date=${selectedDate.value}`,
+      `${apiBaseUrl}/api/dutyReports/recap?date=${selectedDate.value}`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : ''

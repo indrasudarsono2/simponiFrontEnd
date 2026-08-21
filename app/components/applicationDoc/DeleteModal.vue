@@ -1,6 +1,6 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
-import ip from "../../utils/config.json";
 defineOptions({ name: "ApplicationDocDeleteModal" });
 
 interface ApplicationDoc {
@@ -44,7 +44,7 @@ async function onSubmit() {
   loading.value = true;
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/applicationDocument/${props.applicationDoc.id}`,
+      `${apiBaseUrl}/api/applicationDocument/${props.applicationDoc.id}`,
       {
         method: "DELETE",
         headers: {

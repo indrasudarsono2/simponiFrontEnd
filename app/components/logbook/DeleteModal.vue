@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
 interface Logbook {
@@ -46,7 +46,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete logbook
-    await $fetch(`http://${ip.ipBackEnd}/api/logbookUser/${props.logbook.id}`, {
+    await $fetch(`${apiBaseUrl}/api/logbookUser/${props.logbook.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

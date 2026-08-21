@@ -1,6 +1,6 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import { useRoute } from "vue-router";
-import ip from "../../utils/config.json";
 import { useApplicationDocStore } from "../../stores/applicationDoc";
 const { token } = useAuth();
 
@@ -209,7 +209,7 @@ const {
   status: dataStatus,
   error: dataError,
 } = await useFetch<ApiResponse>(
-  `http://${ip.ipBackEnd}/api/applicationDocument`,
+  `${apiBaseUrl}/api/applicationDocument`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 
 interface Rating {
   id: number;
@@ -91,7 +91,7 @@ async function loadOptions() {
 
   try {
     options.value = await $fetch<OptionsResponse>(
-      `http://${ip.ipBackEnd}/api/cwpSectors/options`,
+      `${apiBaseUrl}/api/cwpSectors/options`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -173,7 +173,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     ];
 
     await $fetch(
-      `http://${ip.ipBackEnd}/api/cwpSectors/${props.sector?.id || event.data.sectorId}`,
+      `${apiBaseUrl}/api/cwpSectors/${props.sector?.id || event.data.sectorId}`,
       {
         method: "PUT",
         body: {

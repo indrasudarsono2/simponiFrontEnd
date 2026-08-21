@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
 
@@ -54,7 +54,7 @@ async function fetchAssignedUsers(eventId: number) {
   dataLoading.value = true;
   try {
     const response = await $fetch<AssignedUser[]>(
-      `http://${ip.ipBackEnd}/api/eventsGetEventUser/${eventId}`,
+      `${apiBaseUrl}/api/eventsGetEventUser/${eventId}`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -93,7 +93,7 @@ async function deleteSelectedUsers() {
 
   try {
     // Send array of IDs to delete in a single POST request
-    await $fetch(`http://${ip.ipBackEnd}/api/eventsDeleteEventUser`, {
+    await $fetch(`${apiBaseUrl}/api/eventsDeleteEventUser`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

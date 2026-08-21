@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface Rating {
   id: number;
@@ -34,7 +34,7 @@ const page = ref(1);
 const pageSize = 10;
 
 const { data, status, refresh } = await useFetch<Sector[]>(
-  `http://${ip.ipBackEnd}/api/cwpSectors`,
+  `${apiBaseUrl}/api/cwpSectors`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

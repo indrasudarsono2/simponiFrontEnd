@@ -21,7 +21,7 @@ export type AuthUser = {
 export type LoginSuccessResponse = {
   success: boolean;
   message: string;
-  token: string;
+  csrfToken: string;
   user: AuthUser;
 };
 
@@ -34,7 +34,7 @@ export type UseAuthReturn = {
     nik: string,
     password: string,
   ) => Promise<LoginSuccessResponse>;
-  logout: () => void;
+  logout: () => Promise<void>;
   getRoleNames: () => string[];
   getRoleModules: (roleName: string) => string[];
   getAllModules: () => string[];
@@ -52,6 +52,7 @@ export const useAuth = (): UseAuthReturn => {
 
   // Token cookie - expires in 3 hours
   const token = useCookie<string | null>("auth_token", {
+    httpOnly: true,
     sameSite: "lax",
     secure: secureCookies,
     default: () => null,
@@ -88,10 +89,15 @@ export const useAuth = (): UseAuthReturn => {
     { immediate: true },
   );
 
-  const isAuthenticated = computed(() => Boolean(token.value));
+  const isAuthenticated = computed(() => Boolean(authUser.value));
 
   const setAuthFromResponse = (payload: LoginSuccessResponse) => {
-    token.value = payload.token;
+    const csrfToken = useCookie<string | null>("csrf_token", {
+      sameSite: "lax",
+      secure: secureCookies,
+      maxAge: 60 * 60 * 3,
+    });
+    csrfToken.value = payload.csrfToken;
     userCookie.value = payload.user;
     authUser.value = payload.user;
     loginTimestamp.value = Date.now();
@@ -102,6 +108,7 @@ export const useAuth = (): UseAuthReturn => {
       `${apiBaseUrl}/api/auth/login`,
       {
         method: "POST",
+        credentials: "include",
         body: {
           nik,
           password,
@@ -109,7 +116,7 @@ export const useAuth = (): UseAuthReturn => {
       },
     );
 
-    if (!response?.success || !response?.token) {
+    if (!response?.success || !response?.user) {
       throw new Error(response?.message || "Login gagal");
     }
 
@@ -117,16 +124,28 @@ export const useAuth = (): UseAuthReturn => {
     return response;
   };
 
-  const logout = () => {
-    token.value = null;
+  const logout = async () => {
+    const csrfToken = useCookie<string | null>("csrf_token");
+    const selectedRole = useState<string>("selectedRole", () => "");
+
+    await $fetch(`${apiBaseUrl}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers: csrfToken.value
+        ? { "X-CSRF-Token": csrfToken.value }
+        : undefined,
+    }).catch(() => {});
+
     userCookie.value = null;
+    csrfToken.value = null;
     authUser.value = null;
     loginTimestamp.value = null;
+    selectedRole.value = "";
   };
 
   // Check if session has expired (3 hours = 10800000 ms)
   const checkSessionExpiration = () => {
-    if (!loginTimestamp.value || !token.value) return false;
+    if (!loginTimestamp.value || !authUser.value) return false;
 
     const threeHours = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
     const elapsed = Date.now() - loginTimestamp.value;

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -55,7 +55,7 @@ const pagination = ref({
 
 // Fetch logbooks data
 const { data, status, refresh } = await useFetch<Logbook[]>(
-  `http://${ip.ipBackEnd}/api/logbookUser`,
+  `${apiBaseUrl}/api/logbookUser`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -180,7 +180,7 @@ const columns = computed((): TableColumn<Logbook>[] => [
       }
       // Build full backend URL for the file
       const fileUrl = row.original.file.startsWith("/")
-        ? `http://${ip.ipBackEnd}${row.original.file}`
+        ? `${apiBaseUrl}${row.original.file}`
         : row.original.file;
       // Link to file viewer page
       const viewerUrl = `/file/view?url=${encodeURIComponent(fileUrl)}`;

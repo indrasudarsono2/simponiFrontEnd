@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface CompetenceItem {
   id?: number;
@@ -43,7 +43,7 @@ const isFileModalOpen = ref(false);
 const selectedFilePath = ref<string | null>(null);
 
 const { data, status, error, refresh } = await useFetch<CompetenceApiItem[]>(
-  `http://${ip.ipBackEnd}/api/dataCheckerCompetence`,
+  `${apiBaseUrl}/api/dataCheckerCompetence`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -66,7 +66,7 @@ function formatDate(dateString?: string | null): string {
 function resolveFileUrl(filePath?: string | null): string | null {
   if (!filePath) return null;
   if (/^https?:\/\//i.test(filePath)) return filePath;
-  return `http://${ip.ipBackEnd}${filePath}`;
+  return `${apiBaseUrl}${filePath}`;
 }
 
 function getFileExtension(filePath?: string | null): string {

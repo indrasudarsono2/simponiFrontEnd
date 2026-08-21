@@ -1,8 +1,8 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import { h } from "vue";
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 
 interface AppRatingItem {
   rating?: {
@@ -106,7 +106,7 @@ const {
   data: apiResponse,
   status,
   refresh,
-} = await useFetch<ExaminationResponse>(`http://${ip.ipBackEnd}/api/room`, {
+} = await useFetch<ExaminationResponse>(`${apiBaseUrl}/api/room`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -334,7 +334,7 @@ async function deleteRoom() {
   try {
     isDeleting.value = true;
 
-    await $fetch(`http://${ip.ipBackEnd}/api/room/${roomToDelete.value.id}`, {
+    await $fetch(`${apiBaseUrl}/api/room/${roomToDelete.value.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -417,7 +417,7 @@ const columns: TableColumn<RoomItem>[] = [
       }
 
       const fileUrl = filePath.startsWith("/")
-        ? `http://${ip.ipBackEnd}${filePath}`
+        ? `${apiBaseUrl}${filePath}`
         : filePath;
       const viewerUrl = `/file/view?url=${encodeURIComponent(fileUrl)}`;
 

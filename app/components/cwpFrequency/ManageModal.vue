@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface Rating {
   id: number;
@@ -107,7 +107,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/cwpFrequencies/${props.cwp.id}`, {
+    await $fetch(`${apiBaseUrl}/api/cwpFrequencies/${props.cwp.id}`, {
       method: "PUT",
       body: {
         frequencies: frequencies.value

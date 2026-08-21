@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftDetail {
   id: number;
@@ -269,7 +269,7 @@ const {
   data: shiftNames,
   status,
   refresh,
-} = await useFetch<ShiftName[]>(`http://${ip.ipBackEnd}/api/shifts`, {
+} = await useFetch<ShiftName[]>(`${apiBaseUrl}/api/shifts`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -280,7 +280,7 @@ const {
   status: supervisorsStatus,
   refresh: refreshSupervisors,
 } = await useFetch<CwpSupervisorResponse>(
-  `http://${ip.ipBackEnd}/api/cwpSupervisors`,
+  `${apiBaseUrl}/api/cwpSupervisors`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -295,7 +295,7 @@ const dutyReportUrl = computed(() => {
     date: confirmedDutyReportFilter.value.date,
   });
 
-  return `http://${ip.ipBackEnd}/api/dutyReports?${params.toString()}`;
+  return `${apiBaseUrl}/api/dutyReports?${params.toString()}`;
 });
 
 const { data: dutyReports, status: dutyReportsStatus } = await useFetch<
@@ -423,7 +423,7 @@ function formatLhdTime(value: string | null) {
 async function loadLhdBooks() {
   try {
     lhdBooks.value = await $fetch<LhdBook[]>(
-      `http://${ip.ipBackEnd}/api/lhdBooks`,
+      `${apiBaseUrl}/api/lhdBooks`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
       },
@@ -446,7 +446,7 @@ async function loadLhdReports() {
   lhdLoading.value = true;
   try {
     lhdReports.value = await $fetch<LhdReport[]>(
-      `http://${ip.ipBackEnd}/api/dutyReports/${selectedLhdDutyReportId.value}/lhdReports`,
+      `${apiBaseUrl}/api/dutyReports/${selectedLhdDutyReportId.value}/lhdReports`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
       },
@@ -471,7 +471,7 @@ async function loadOtherReports() {
   otherReportLoading.value = true;
   try {
     otherReports.value = await $fetch<OtherReport[]>(
-      `http://${ip.ipBackEnd}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports`,
+      `${apiBaseUrl}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
       },
@@ -504,7 +504,7 @@ async function saveLhdReport() {
 
   lhdSaving.value = true;
   try {
-    const baseUrl = `http://${ip.ipBackEnd}/api/dutyReports/${selectedLhdDutyReportId.value}/lhdReports`;
+    const baseUrl = `${apiBaseUrl}/api/dutyReports/${selectedLhdDutyReportId.value}/lhdReports`;
     await $fetch(
       editingLhdReportId.value
         ? `${baseUrl}/${editingLhdReportId.value}`
@@ -556,7 +556,7 @@ async function saveOtherReport() {
 
   otherReportSaving.value = true;
   try {
-    const baseUrl = `http://${ip.ipBackEnd}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports`;
+    const baseUrl = `${apiBaseUrl}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports`;
     await $fetch(
       editingOtherReportId.value
         ? `${baseUrl}/${editingOtherReportId.value}`
@@ -611,7 +611,7 @@ async function deleteLhdReport() {
   lhdActionKey.value = `delete-${report.id}`;
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/dutyReports/${selectedLhdDutyReportId.value}/lhdReports/${report.id}`,
+      `${apiBaseUrl}/api/dutyReports/${selectedLhdDutyReportId.value}/lhdReports/${report.id}`,
       {
         method: "DELETE",
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
@@ -639,7 +639,7 @@ async function deleteOtherReport() {
   otherReportSaving.value = true;
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports/${report.id}`,
+      `${apiBaseUrl}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports/${report.id}`,
       {
         method: "DELETE",
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
@@ -763,7 +763,7 @@ async function loadOnGoingIssues() {
   issueLoading.value = true;
   try {
     const response = await $fetch<OnGoingIssueResponse>(
-      `http://${ip.ipBackEnd}/api/onGoingIssues`,
+      `${apiBaseUrl}/api/onGoingIssues`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -789,7 +789,7 @@ async function attachExistingIssue() {
   issueActionKey.value = "attach";
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/dutyReports/${selectedIssueDutyReportId.value}/issues`,
+      `${apiBaseUrl}/api/dutyReports/${selectedIssueDutyReportId.value}/issues`,
       {
         method: "POST",
         headers: {
@@ -829,7 +829,7 @@ async function createAndAttachIssue() {
 
   issueActionKey.value = "create";
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/onGoingIssues`, {
+    await $fetch(`${apiBaseUrl}/api/onGoingIssues`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -868,7 +868,7 @@ async function addIssueMessage(issue: OnGoingIssue) {
   issueActionKey.value = `message-${issue.id}`;
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/onGoingIssues/${issue.id}/messages`,
+      `${apiBaseUrl}/api/onGoingIssues/${issue.id}/messages`,
       {
         method: "POST",
         headers: {
@@ -895,7 +895,7 @@ async function closeIssue(issue: OnGoingIssue) {
 
   issueActionKey.value = `close-${issue.id}`;
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/onGoingIssues/${issue.id}/close`, {
+    await $fetch(`${apiBaseUrl}/api/onGoingIssues/${issue.id}/close`, {
       method: "PATCH",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -934,8 +934,8 @@ async function confirmCancelEscalation() {
   cancelEscalationLoading.value = true;
   try {
     const endpoint = escalationLevelToCancel.value
-      ? `http://${ip.ipBackEnd}/api/onGoingIssues/${issue.id}/escalations/${escalationLevelToCancel.value.escalationLevelId}/cancel`
-      : `http://${ip.ipBackEnd}/api/onGoingIssues/${issue.id}/escalation/cancel`;
+      ? `${apiBaseUrl}/api/onGoingIssues/${issue.id}/escalations/${escalationLevelToCancel.value.escalationLevelId}/cancel`
+      : `${apiBaseUrl}/api/onGoingIssues/${issue.id}/escalation/cancel`;
 
     await $fetch(endpoint, {
       method: "PATCH",
@@ -972,7 +972,7 @@ async function detachIssue(issue: OnGoingIssue) {
   issueActionKey.value = `detach-${issue.id}`;
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/dutyReports/${selectedIssueDutyReportId.value}/issues/${issue.id}`,
+      `${apiBaseUrl}/api/dutyReports/${selectedIssueDutyReportId.value}/issues/${issue.id}`,
       {
         method: "DELETE",
         headers: {
@@ -1000,7 +1000,7 @@ async function openDeleteConfirmation(dutyReportId: number) {
 
   try {
     deleteSummary.value = await $fetch<DutyReportDeletionSummary>(
-      `http://${ip.ipBackEnd}/api/dutyReports/${dutyReportId}/deletion-summary`,
+      `${apiBaseUrl}/api/dutyReports/${dutyReportId}/deletion-summary`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -1028,7 +1028,7 @@ async function confirmDeleteDutyReport() {
   deleteLoading.value = true;
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/dutyReports/${deleteSummary.value.dutyReport.id}`,
+      `${apiBaseUrl}/api/dutyReports/${deleteSummary.value.dutyReport.id}`,
       {
         method: "DELETE",
         headers: {
@@ -1101,7 +1101,7 @@ async function loadDutyReports() {
   loadDutyReportLoading.value = true;
   try {
     const reports = await $fetch<DutyReport[]>(
-      `http://${ip.ipBackEnd}/api/dutyReports?date=${requestedReport.date}`,
+      `${apiBaseUrl}/api/dutyReports?date=${requestedReport.date}`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -1148,7 +1148,7 @@ async function confirmCreateDutyReport() {
 
   try {
     const response = await $fetch<{ alreadyExists?: boolean }>(
-      `http://${ip.ipBackEnd}/api/dutyReports/supervisor`,
+      `${apiBaseUrl}/api/dutyReports/supervisor`,
       {
         method: "POST",
         body: requestedReport,

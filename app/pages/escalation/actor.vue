@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
 const toast = useToast();
@@ -28,7 +28,7 @@ const searchQuery = ref("");
 const selectedEscalationLevel = ref<EscalationLevel | null>(null);
 
 const { data, status, refresh } = await useFetch<EscalationLevel[]>(
-  `http://${ip.ipBackEnd}/api/escalationActors`,
+  `${apiBaseUrl}/api/escalationActors`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

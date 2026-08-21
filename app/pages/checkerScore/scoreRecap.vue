@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface ScoreCheckerEventItem {
   id: number;
@@ -112,7 +112,7 @@ const canInvalidateAttempt = computed(() => {
 
 const { data, status, error, refresh } = await useFetch<
   ScoreCheckerRemarkItem[]
->(`http://${ip.ipBackEnd}/api/scoreChecker`, {
+>(`${apiBaseUrl}/api/scoreChecker`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -273,7 +273,7 @@ async function handleSearch() {
     resultLoading.value = true;
     const response = await $fetch<
       ScoreCheckerResultItem[] | ScoreCheckerResultItem
-    >(`http://${ip.ipBackEnd}/api/scoreChecker`, {
+    >(`${apiBaseUrl}/api/scoreChecker`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -323,7 +323,7 @@ async function handleOpenEvidence(appRatingId: number | null) {
 
     const response = await $fetch<
       ScoreCheckerEvidenceItem[] | ScoreCheckerEvidenceItem
-    >(`http://${ip.ipBackEnd}/api/scoreCheckerEvidance`, {
+    >(`${apiBaseUrl}/api/scoreCheckerEvidance`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -380,7 +380,7 @@ async function handleInvalidateAttempt() {
   try {
     invalidationLoading.value = true;
     const response = await $fetch<{ message?: string }>(
-      `http://${ip.ipBackEnd}/api/scoreChecker/invalidate-attempt`,
+      `${apiBaseUrl}/api/scoreChecker/invalidate-attempt`,
       {
         method: "POST",
         headers: {
@@ -419,7 +419,7 @@ async function handleInvalidateAttempt() {
 function resolveEvidenceUrl(filePath?: string | null): string {
   if (!filePath) return "";
   if (/^https?:\/\//i.test(filePath)) return filePath;
-  return `http://${ip.ipBackEnd}${filePath}`;
+  return `${apiBaseUrl}${filePath}`;
 }
 
 function formatEvidenceTime(value?: string | null): string {

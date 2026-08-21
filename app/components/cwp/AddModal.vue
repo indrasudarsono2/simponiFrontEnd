@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 
 interface Rating {
   id: number;
@@ -33,7 +33,7 @@ const {
   data: ratings,
   status: ratingsStatus,
   refresh: refreshRatings,
-} = await useFetch<Rating[]>(`http://${ip.ipBackEnd}/api/cwps/ratings`, {
+} = await useFetch<Rating[]>(`${apiBaseUrl}/api/cwps/ratings`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -68,7 +68,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/cwps`, {
+    await $fetch(`${apiBaseUrl}/api/cwps`, {
       method: "POST",
       body: {
         cwp: event.data.cwp,

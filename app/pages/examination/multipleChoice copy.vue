@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface MultipleChoiceItem {
   id: number;
@@ -258,7 +258,7 @@ function resolveImageUrl(imagePath?: string | null): string {
   if (!trimmed) return "";
   if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
   if (/^(data|blob):/i.test(trimmed)) return trimmed;
-  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+  return `${apiBaseUrl}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
 }
 
 function shuffleOptionKeys(): OptionKey[] {
@@ -402,7 +402,7 @@ async function postMonitorTime(payload: ExaminationMultipleChoiceResponse) {
   if (!eventQuestionId || !Number.isFinite(currentAppRatingId)) return;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/postTime`, {
+    await $fetch(`${apiBaseUrl}/api/postTime`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -512,7 +512,7 @@ async function submitAnswers(isAutoSubmit = false) {
   try {
     isSubmittingAnswers.value = true;
     const submitPayload = await $fetch<ExaminationSubmitResponse>(
-      `http://${ip.ipBackEnd}/api/examinationMultipleChoiceAnswer`,
+      `${apiBaseUrl}/api/examinationMultipleChoiceAnswer`,
       {
         method: "POST",
         headers: {
@@ -639,7 +639,7 @@ async function loadMultipleChoiceData() {
         examinationMultipleChoiceResponse.value as ExaminationMultipleChoiceResponse;
     } else {
       payload = await $fetch<ExaminationMultipleChoiceResponse>(
-        `http://${ip.ipBackEnd}/api/examinationMultipleChoice`,
+        `${apiBaseUrl}/api/examinationMultipleChoice`,
         {
           method: "POST",
           headers: {

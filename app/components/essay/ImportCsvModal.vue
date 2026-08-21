@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
 const toast = useToast();
@@ -115,7 +115,7 @@ async function onSubmit() {
       updated: number;
       versioned: number;
     }>(
-      `http://${ip.ipBackEnd}/api/essays/import-csv`,
+      `${apiBaseUrl}/api/essays/import-csv`,
       {
         method: "POST",
         body: formData,

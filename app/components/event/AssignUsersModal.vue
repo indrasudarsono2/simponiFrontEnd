@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 
 const { token } = useAuth();
 
@@ -84,7 +84,7 @@ async function fetchEventData(eventId: number) {
   dataLoading.value = true;
   try {
     const response = await $fetch<EventResponse>(
-      `http://${ip.ipBackEnd}/api/eventsGetUser/${eventId}`,
+      `${apiBaseUrl}/api/eventsGetUser/${eventId}`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -109,7 +109,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/eventsPostUser`, {
+    await $fetch(`${apiBaseUrl}/api/eventsPostUser`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

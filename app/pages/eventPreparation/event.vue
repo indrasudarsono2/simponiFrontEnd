@@ -1,8 +1,8 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
 import { format, parseISO } from "date-fns";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -138,7 +138,7 @@ const availableRemarkDocs = computed(() => {
 
 // Fetch events data
 const { data, status, refresh } = await useFetch<EventsResponse>(
-  `http://${ip.ipBackEnd}/api/events`,
+  `${apiBaseUrl}/api/events`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -440,7 +440,7 @@ const columns: TableColumn<EventItem>[] = [
       }
       // Build full backend URL for the file
       const fileUrl = row.original.briefingFile.startsWith("/")
-        ? `http://${ip.ipBackEnd}${row.original.briefingFile}`
+        ? `${apiBaseUrl}${row.original.briefingFile}`
         : row.original.briefingFile;
       // Link to file viewer page
       const viewerUrl = `/file/view?url=${encodeURIComponent(fileUrl)}`;

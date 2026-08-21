@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 defineOptions({
   name: "CompetenceUserDeleteModal",
@@ -65,7 +65,7 @@ async function onSubmit() {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/competenceUser/${props.competenceUser.id}`,
+      `${apiBaseUrl}/api/competenceUser/${props.competenceUser.id}`,
       {
         method: "DELETE",
         headers: {

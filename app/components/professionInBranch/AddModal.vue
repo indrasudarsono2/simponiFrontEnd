@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 defineOptions({
   name: "ProfessionInBranchAddModal",
@@ -52,7 +52,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/professionInBranch`, {
+    await $fetch(`${apiBaseUrl}/api/professionInBranch`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

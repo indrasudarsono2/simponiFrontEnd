@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 interface RatingInfo {
@@ -70,7 +70,7 @@ const state = reactive<Partial<Schema>>({
 
 // Fetch ratings from API
 const { data: ratings } = await useFetch<Rating[]>(
-  `http://${ip.ipBackEnd}/api/allRatings`,
+  `${apiBaseUrl}/api/allRatings`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -123,7 +123,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     // Call API to update rating checker
     await $fetch(
-      `http://${ip.ipBackEnd}/api/ratingCheckerAdmins/${props.ratingChecker.id}`,
+      `${apiBaseUrl}/api/ratingCheckerAdmins/${props.ratingChecker.id}`,
       {
         method: "PUT",
         body: {

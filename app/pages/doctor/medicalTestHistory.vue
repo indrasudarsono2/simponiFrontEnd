@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface MedicalUser {
   nik: string;
@@ -56,7 +56,7 @@ const resultOptions = [
 ];
 
 const { data, status, error, refresh } = await useFetch<MedicalHistoryResponse>(
-  `http://${ip.ipBackEnd}/api/medicalCheck/history`,
+  `${apiBaseUrl}/api/medicalCheck/history`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -142,7 +142,7 @@ async function saveEdit() {
   try {
     saving.value = true;
     await $fetch(
-      `http://${ip.ipBackEnd}/api/medicalCheck/history/${selectedRecord.value.id}`,
+      `${apiBaseUrl}/api/medicalCheck/history/${selectedRecord.value.id}`,
       {
         method: "PUT",
         headers: {

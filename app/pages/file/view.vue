@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 // Ensure this page uses the default layout with proper sidebar
 definePageMeta({
@@ -21,7 +21,7 @@ const fileUrl = computed(() => {
 
   // If URL is relative, prepend backend IP
   if (url.startsWith("/")) {
-    return `http://${ip.ipBackEnd}${url}`;
+    return `${apiBaseUrl}${url}`;
   }
   return url;
 });

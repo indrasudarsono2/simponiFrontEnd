@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 
 const { token } = useAuth();
 const toast = useToast();
@@ -42,7 +42,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/escalationLevels`, {
+    await $fetch(`${apiBaseUrl}/api/escalationLevels`, {
       method: "POST",
       body: {
         level: event.data.level,

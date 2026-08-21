@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 import { useScreenMonitoring } from "../../composables/useScreenMonitoring";
 
 interface EssayQuestionPayload {
@@ -480,7 +480,7 @@ async function postMonitoringSnapshot(
   }
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/preview`, {
+    await $fetch(`${apiBaseUrl}/api/preview`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -595,7 +595,7 @@ async function postMonitorTime(payload: ExaminationEssayResponse) {
   if (!eventQuestionId || !Number.isFinite(currentAppRatingId)) return;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/postTime`, {
+    await $fetch(`${apiBaseUrl}/api/postTime`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -705,7 +705,7 @@ async function submitAnswers(isAutoSubmit = false) {
   try {
     isSubmittingAnswers.value = true;
     const submitResponse = await $fetch<{ message?: string }>(
-      `http://${ip.ipBackEnd}/api/examinationAnswer`,
+      `${apiBaseUrl}/api/examinationAnswer`,
       {
         method: "POST",
         headers: {
@@ -838,7 +838,7 @@ async function loadEssayData() {
       payload = examinationEssayResponse.value as ExaminationEssayResponse;
     } else {
       payload = await $fetch<ExaminationEssayResponse>(
-        `http://${ip.ipBackEnd}/api/examinationEssay`,
+        `${apiBaseUrl}/api/examinationEssay`,
         {
           method: "POST",
           headers: {

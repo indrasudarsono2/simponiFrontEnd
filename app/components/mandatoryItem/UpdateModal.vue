@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface MandatoryItem {
   id: number;
@@ -54,7 +54,7 @@ async function onSubmit() {
   loading.value = true;
   try {
     const response = await $fetch<{ message?: string }>(
-      `http://${ip.ipBackEnd}/api/mandatoryItem/${props.mandatoryItem.id}`,
+      `${apiBaseUrl}/api/mandatoryItem/${props.mandatoryItem.id}`,
       {
         method: "PUT",
         headers: {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
 
@@ -67,7 +67,7 @@ const formattedUTCTime = computed(() => {
 
 const { data: dashboardBriefings, refresh: refreshDashboardBriefings } =
   await useFetch<DashboardBriefing[]>(
-    `http://${ip.ipBackEnd}/api/dashboardBriefings`,
+    `${apiBaseUrl}/api/dashboardBriefings`,
     {
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,8 +1,8 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
 import type { Row } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -44,7 +44,7 @@ const rowSelection = ref({});
 // Fetch sectors data - filtered for ACC branch unit only (Branch Unit Admin context)
 // TODO: Replace with actual API endpoint that filters by current user's branch unit
 const { data, status, refresh } = await useFetch<Sector[]>(
-  `http://${ip.ipBackEnd}/api/sectors`,
+  `${apiBaseUrl}/api/sectors`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

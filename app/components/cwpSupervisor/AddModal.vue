@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface Rating {
   id: number;
@@ -89,7 +89,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/cwpSupervisors`, {
+    await $fetch(`${apiBaseUrl}/api/cwpSupervisors`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

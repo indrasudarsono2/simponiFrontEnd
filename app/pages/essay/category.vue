@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -91,7 +91,7 @@ interface ApiResponse {
 }
 // Fetch question groups data
 const { data, status, refresh } = await useFetch<ApiResponse>(
-  `http://${ip.ipBackEnd}/api/questionGroupsEssay`,
+  `${apiBaseUrl}/api/questionGroupsEssay`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

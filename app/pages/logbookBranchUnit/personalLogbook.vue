@@ -1,11 +1,11 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import {
   DateFormatter,
   getLocalTimeZone,
   CalendarDate,
   parseDate,
 } from "@internationalized/date";
-import ip from "../../utils/config.json";
 
 const { token } = useAuth();
 const toast = useToast();
@@ -194,7 +194,7 @@ async function loadUsers() {
   loadingUsers.value = true;
   try {
     const response = await $fetch<{ users: BranchUser[] }>(
-      `http://${ip.ipBackEnd}/api/personalLogbook/users`,
+      `${apiBaseUrl}/api/personalLogbook/users`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -247,7 +247,7 @@ async function loadPersonalLogbook() {
       logBooks: LogBookEntry[];
       user: BranchUser;
     }>(
-      `http://${ip.ipBackEnd}/api/personalLogbook?startDate=${start}&endDate=${end}&userNik=${selectedUserNik.value}`,
+      `${apiBaseUrl}/api/personalLogbook?startDate=${start}&endDate=${end}&userNik=${selectedUserNik.value}`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",

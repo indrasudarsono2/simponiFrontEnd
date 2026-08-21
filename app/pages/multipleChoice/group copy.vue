@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -112,7 +112,7 @@ const rowSelection = ref({});
 
 // Fetch multiple choice groups data
 const { data, status, refresh } = await useFetch<MultipleChoiceGroupResponse>(
-  `http://${ip.ipBackEnd}/api/multipleChoiceGroups`,
+  `${apiBaseUrl}/api/multipleChoiceGroups`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

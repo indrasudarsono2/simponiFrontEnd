@@ -1,6 +1,6 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 defineOptions({ name: "ApplicationDocAddModal" });
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 // ─── Types ────────────────────────────────────────────────────────────────
 interface EventItem {
@@ -604,7 +604,7 @@ async function onSubmit() {
         }
       }
 
-    await $fetch(`http://${ip.ipBackEnd}/api/applicationDocument`, {
+    await $fetch(`${apiBaseUrl}/api/applicationDocument`, {
       method: "POST",
       body: {
         eventId: selectedEventId.value,

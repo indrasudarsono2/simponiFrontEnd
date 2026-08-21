@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
 interface Region {
@@ -41,7 +41,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete region
-    await $fetch(`http://${ip.ipBackEnd}/api/regions/${props.region.id}`, {
+    await $fetch(`${apiBaseUrl}/api/regions/${props.region.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

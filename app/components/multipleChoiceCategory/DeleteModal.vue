@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface QuestionGroup {
   id: number;
@@ -81,7 +81,7 @@ async function onSubmit() {
   try {
     // Call API to delete question group
     await $fetch(
-      `http://${ip.ipBackEnd}/api/questionGroupsMultipleChoice/${props.questionGroup.id}`,
+      `${apiBaseUrl}/api/questionGroupsMultipleChoice/${props.questionGroup.id}`,
       {
         method: "DELETE",
         headers: {

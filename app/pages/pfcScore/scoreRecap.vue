@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 import {
   CalendarDate,
   DateFormatter,
@@ -78,6 +78,7 @@ const professionsLoading = ref(false);
 const eventsLoading = ref(false);
 const loading = ref(false);
 const reportError = ref("");
+const selectedStatus = ref<"SUCCESS" | "FAILED" | null>(null);
 let eventRequestId = 0;
 
 function parseDateString(value: string): CalendarDate | null {
@@ -106,7 +107,7 @@ const dateRange = computed({
 });
 
 const { data, error: initialError } = await useFetch<ScoreRecapResponse>(
-  `http://${ip.ipBackEnd}/api/pfcScore/scoreRecap`,
+  `${apiBaseUrl}/api/pfcScore/scoreRecap`,
   {
     headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
   },
@@ -114,11 +115,16 @@ const { data, error: initialError } = await useFetch<ScoreRecapResponse>(
 
 const branches = computed(() => data.value?.branches || []);
 const rows = computed(() => data.value?.rows || []);
+const ALL_BRANCHES_ID = 0;
+const isAllBranches = computed(() => selectedBranchId.value === ALL_BRANCHES_ID);
 const branchOptions = computed(() =>
-  branches.value.map((branch) => ({
-    label: branch.branch || `Branch ${branch.id}`,
-    value: branch.id,
-  })),
+  [
+    { label: "All Branches", value: ALL_BRANCHES_ID },
+    ...branches.value.map((branch) => ({
+      label: branch.branch || `Branch ${branch.id}`,
+      value: branch.id,
+    })),
+  ],
 );
 const eventOptions = computed(() =>
   events.value.map((event) => ({
@@ -139,6 +145,10 @@ const passedCount = computed(
 const failedCount = computed(
   () => rows.value.filter((row) => row.status?.toUpperCase() === "FAILED").length,
 );
+const filteredRows = computed(() => {
+  if (!selectedStatus.value) return rows.value;
+  return rows.value.filter((row) => row.status?.toUpperCase() === selectedStatus.value);
+});
 const representedBranches = computed(
   () => new Set(rows.value.map((row) => row.branch?.id).filter(Boolean)).size,
 );
@@ -168,8 +178,12 @@ function statusColor(status?: string | null) {
   return "neutral";
 }
 
+function toggleStatusFilter(status: "SUCCESS" | "FAILED") {
+  selectedStatus.value = selectedStatus.value === status ? null : status;
+}
+
 async function loadRecap() {
-  if (!startDate.value || !endDate.value || !selectedBranchId.value || !selectedProfessionId.value) {
+  if (!startDate.value || !endDate.value || selectedBranchId.value == null || !selectedProfessionId.value) {
     toast.add({ title: "Date range, branch, and profession are required", color: "warning" });
     return;
   }
@@ -181,7 +195,7 @@ async function loadRecap() {
     });
     return;
   }
-  if (selectedEventIds.value.length === 0) {
+  if (!isAllBranches.value && selectedEventIds.value.length === 0) {
     toast.add({ title: "Select at least one event", color: "warning" });
     return;
   }
@@ -190,10 +204,16 @@ async function loadRecap() {
   reportError.value = "";
   try {
     data.value = await $fetch<ScoreRecapResponse>(
-      `http://${ip.ipBackEnd}/api/pfcScore/scoreRecap`,
+      `${apiBaseUrl}/api/pfcScore/scoreRecap`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
-        query: {
+        query: isAllBranches.value ? {
+          mode: "scores",
+          startDate: startDate.value,
+          endDate: endDate.value,
+          branchId: "all",
+          professionId: selectedProfessionId.value,
+        } : {
           mode: "scores",
           startDate: startDate.value,
           endDate: endDate.value,
@@ -216,6 +236,7 @@ async function loadEvents() {
   const requestId = ++eventRequestId;
   events.value = [];
   selectedEventIds.value = [];
+  if (isAllBranches.value) return;
   if (!startDate.value || !endDate.value || !selectedBranchId.value || !selectedProfessionId.value) return;
   if (startDate.value > endDate.value) return;
 
@@ -223,7 +244,7 @@ async function loadEvents() {
   reportError.value = "";
   try {
     const response = await $fetch<ScoreRecapResponse>(
-      `http://${ip.ipBackEnd}/api/pfcScore/scoreRecap`,
+      `${apiBaseUrl}/api/pfcScore/scoreRecap`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
         query: {
@@ -250,16 +271,19 @@ async function loadProfessions() {
   selectedProfessionId.value = undefined;
   selectedEventIds.value = [];
   events.value = [];
-  if (!selectedBranchId.value) return;
+  if (selectedBranchId.value == null) return;
 
   professionsLoading.value = true;
   reportError.value = "";
   try {
     const response = await $fetch<ScoreRecapResponse>(
-      `http://${ip.ipBackEnd}/api/pfcScore/scoreRecap`,
+      `${apiBaseUrl}/api/pfcScore/scoreRecap`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
-        query: { mode: "professions", branchId: selectedBranchId.value },
+        query: {
+          mode: "professions",
+          branchId: isAllBranches.value ? "all" : selectedBranchId.value,
+        },
       },
     );
     professions.value = response.professions || [];
@@ -295,7 +319,7 @@ const errorMessage = computed(() => {
           <template #header>
             <div>
               <h2 class="font-semibold">Report Filter</h2>
-              <p class="text-sm text-muted">Choose a date range, branch, and profession, then select one or more matching events.</p>
+              <p class="text-sm text-muted">Choose a date range, branch, and profession. For a specific branch, select one or more matching events.</p>
             </div>
           </template>
 
@@ -355,7 +379,7 @@ const errorMessage = computed(() => {
                 value-key="value"
                 placeholder="Select profession"
                 :loading="professionsLoading"
-                :disabled="!selectedBranchId || professionsLoading"
+                :disabled="selectedBranchId == null || professionsLoading"
                 class="w-full"
               />
             </UFormField>
@@ -366,10 +390,13 @@ const errorMessage = computed(() => {
                 value-key="value"
                 placeholder="Select events"
                 :loading="eventsLoading"
-                :disabled="!selectedProfessionId || eventsLoading"
+                :disabled="isAllBranches || !selectedProfessionId || eventsLoading"
                 multiple
                 class="w-full"
               />
+              <p v-if="isAllBranches" class="mt-1 text-xs text-muted">
+                All matching events will be included.
+              </p>
             </UFormField>
             <UButton
               label="Show Recap"
@@ -384,8 +411,30 @@ const errorMessage = computed(() => {
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <UCard><p class="text-sm text-muted">Total Results</p><p class="text-2xl font-semibold">{{ rows.length }}</p></UCard>
           <UCard><p class="text-sm text-muted">Branches</p><p class="text-2xl font-semibold">{{ representedBranches }}</p></UCard>
-          <UCard><p class="text-sm text-muted">Passed</p><p class="text-2xl font-semibold text-success">{{ passedCount }}</p></UCard>
-          <UCard><p class="text-sm text-muted">Failed</p><p class="text-2xl font-semibold text-error">{{ failedCount }}</p></UCard>
+          <UCard
+            class="cursor-pointer transition hover:ring-2 hover:ring-success/40"
+            :class="selectedStatus === 'SUCCESS' ? 'ring-2 ring-success' : ''"
+            role="button"
+            tabindex="0"
+            :aria-pressed="selectedStatus === 'SUCCESS'"
+            @click="toggleStatusFilter('SUCCESS')"
+            @keydown.enter.prevent="toggleStatusFilter('SUCCESS')"
+            @keydown.space.prevent="toggleStatusFilter('SUCCESS')"
+          >
+            <p class="text-sm text-muted">Passed</p><p class="text-2xl font-semibold text-success">{{ passedCount }}</p>
+          </UCard>
+          <UCard
+            class="cursor-pointer transition hover:ring-2 hover:ring-error/40"
+            :class="selectedStatus === 'FAILED' ? 'ring-2 ring-error' : ''"
+            role="button"
+            tabindex="0"
+            :aria-pressed="selectedStatus === 'FAILED'"
+            @click="toggleStatusFilter('FAILED')"
+            @keydown.enter.prevent="toggleStatusFilter('FAILED')"
+            @keydown.space.prevent="toggleStatusFilter('FAILED')"
+          >
+            <p class="text-sm text-muted">Failed</p><p class="text-2xl font-semibold text-error">{{ failedCount }}</p>
+          </UCard>
         </div>
 
         <div v-if="errorMessage" class="rounded-lg border border-error/30 bg-error/5 p-4 text-error">
@@ -414,7 +463,7 @@ const errorMessage = computed(() => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, index) in rows" :key="row.id">
+                <tr v-for="(row, index) in filteredRows" :key="row.id">
                   <td class="border border-default px-3 py-2 text-center">{{ index + 1 }}</td>
                   <td class="border border-default px-3 py-2 text-center">{{ formatDate(row.scoreDate) }}</td>
                   <td class="border border-default px-3 py-2">{{ row.branch?.branch || '-' }}</td>
@@ -464,9 +513,11 @@ const errorMessage = computed(() => {
                     <UBadge :color="statusColor(row.status)" variant="soft">{{ row.status || '-' }}</UBadge>
                   </td>
                 </tr>
-                <tr v-if="rows.length === 0">
+                <tr v-if="filteredRows.length === 0">
                   <td colspan="13" class="border border-default px-3 py-8 text-center text-muted">
-                    No scores were found for the selected period and branch.
+                    {{ selectedStatus
+                      ? `No ${selectedStatus === 'SUCCESS' ? 'passed' : 'failed'} scores were found.`
+                      : 'No scores were found for the selected period and branch.' }}
                   </td>
                 </tr>
               </tbody>

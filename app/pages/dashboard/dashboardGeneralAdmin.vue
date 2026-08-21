@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 type DistributionItem = {
   users: number;
@@ -99,7 +99,7 @@ const selectedIssueStatus = ref("all");
 const selectedExpirationTab = ref("ratings");
 
 const { data, status, error, refresh } = await useFetch<DashboardGeneralAdmin>(
-  `http://${ip.ipBackEnd}/api/dashboardGeneralAdmin`,
+  `${apiBaseUrl}/api/dashboardGeneralAdmin`,
   {
     headers: computed(() => ({
       Authorization: token.value ? `Bearer ${token.value}` : "",

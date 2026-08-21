@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface MandatoryItem {
   id: number;
@@ -37,7 +37,7 @@ const {
   error,
   refresh,
 } = await useFetch<MandatoryRatingResponse>(
-  `http://${ip.ipBackEnd}/api/mandatoryRating`,
+  `${apiBaseUrl}/api/mandatoryRating`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -106,7 +106,7 @@ async function deleteSingleMandatoryRating(
   try {
     deletingMandatoryRatingId.value = mandatoryRatingId;
     const response = await $fetch<{ message?: string }>(
-      `http://${ip.ipBackEnd}/api/mandatoryRating/${mandatoryRatingId}`,
+      `${apiBaseUrl}/api/mandatoryRating/${mandatoryRatingId}`,
       {
         method: "DELETE",
         headers: {

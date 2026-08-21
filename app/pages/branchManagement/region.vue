@@ -1,8 +1,8 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
 import type { Row } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 const UButton = resolveComponent("UButton");
@@ -34,7 +34,7 @@ const rowSelection = ref({});
 
 // Fetch regions data from real API
 const { data, status, refresh } = await useFetch<Region[]>(
-  `http://${ip.ipBackEnd}/api/regions`,
+  `${apiBaseUrl}/api/regions`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

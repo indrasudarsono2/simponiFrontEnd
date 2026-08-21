@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface UserRole {
   id: number;
@@ -119,7 +119,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create defining checker
-    await $fetch(`http://${ip.ipBackEnd}/api/groups`, {
+    await $fetch(`${apiBaseUrl}/api/groups`, {
       method: "POST",
       body: {
         eventId: event.data.eventId,

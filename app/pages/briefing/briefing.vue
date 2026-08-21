@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import {
   CalendarDate,
@@ -6,7 +7,6 @@ import {
   getLocalTimeZone,
   parseDate,
 } from "@internationalized/date";
-import ip from "../../utils/config.json";
 
 interface Profession {
   profession: string;
@@ -299,7 +299,7 @@ async function getBriefings(showSuccessToast = true) {
 
   try {
     const response = await $fetch<Briefing[]>(
-      `http://${ip.ipBackEnd}/api/briefings`,
+      `${apiBaseUrl}/api/briefings`,
       {
         method: "POST",
         headers: {

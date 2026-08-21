@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 
 defineOptions({
   name: "UserGeneralUpdateModal",
@@ -88,7 +88,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/userGeneral/${props.user.nik}`, {
+    await $fetch(`${apiBaseUrl}/api/userGeneral/${props.user.nik}`, {
       method: "PUT",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

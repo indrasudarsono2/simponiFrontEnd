@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 const schema = z.object({
@@ -27,7 +27,7 @@ interface Region {
 
 // Fetch regions for dropdown
 const { data: regions } = await useFetch<Region[]>(
-  `http://${ip.ipBackEnd}/api/regions`,
+  `${apiBaseUrl}/api/regions`,
 );
 
 const regionOptions = computed(() => {
@@ -47,7 +47,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create branch
-    await $fetch(`http://${ip.ipBackEnd}/api/branches`, {
+    await $fetch(`${apiBaseUrl}/api/branches`, {
       method: "POST",
       body: {
         branch: event.data.branch,

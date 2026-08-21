@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface DefiningCheckerRow {
   id: number;
@@ -58,7 +58,7 @@ async function onSubmit() {
   try {
     // Call API to delete defining checker
     await $fetch(
-      `http://${ip.ipBackEnd}/api/groups/${props.definingChecker.id}`,
+      `${apiBaseUrl}/api/groups/${props.definingChecker.id}`,
       {
         method: "DELETE",
         headers: {

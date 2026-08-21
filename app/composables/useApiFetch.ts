@@ -1,6 +1,7 @@
 // app/composables/useApiFetch.ts
 export const useApiFetch = () => {
   const { token } = useAuth();
+  const apiBaseUrl = useApiBaseUrl()
 
   const apiFetch = async (url: string, options: any = {}) => {
     const headers = {
@@ -8,7 +9,11 @@ export const useApiFetch = () => {
       Authorization: token.value ? `Bearer ${token.value}` : "",
     };
 
-    return $fetch(url, {
+    const requestUrl = /^https?:\/\//i.test(url)
+      ? url
+      : `${apiBaseUrl}${url.startsWith("/") ? url : `/${url}`}`;
+
+    return $fetch(requestUrl, {
       ...options,
       headers,
     });

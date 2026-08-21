@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 interface BranchUnit {
@@ -70,7 +70,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     // Call API to update branch unit
     await $fetch(
-      `http://${ip.ipBackEnd}/api/branchUnits/${props.branchUnit.id}`,
+      `${apiBaseUrl}/api/branchUnits/${props.branchUnit.id}`,
       {
         method: "PUT",
         body: {

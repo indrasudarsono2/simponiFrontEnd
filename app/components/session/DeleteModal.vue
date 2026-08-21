@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface Session {
   id: number;
@@ -48,7 +48,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete session
-    await $fetch(`http://${ip.ipBackEnd}/api/sessions/${props.session.id}`, {
+    await $fetch(`${apiBaseUrl}/api/sessions/${props.session.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

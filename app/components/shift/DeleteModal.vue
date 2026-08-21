@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftName {
   id: number;
@@ -37,7 +37,7 @@ async function onDelete() {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/shifts/${props.shiftName.id}`, {
+    await $fetch(`${apiBaseUrl}/api/shifts/${props.shiftName.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

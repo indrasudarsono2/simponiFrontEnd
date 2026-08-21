@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface Rating {
   id: number;
@@ -43,7 +43,7 @@ async function onDelete() {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/cwps/${props.cwp.id}`, {
+    await $fetch(`${apiBaseUrl}/api/cwps/${props.cwp.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

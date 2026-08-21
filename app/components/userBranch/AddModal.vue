@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 defineOptions({
   name: "UserBranchAddModal",
@@ -88,7 +88,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Submit to API - assign multiple users to a professionInBranch
-    await $fetch(`http://${ip.ipBackEnd}/api/userBranch`, {
+    await $fetch(`${apiBaseUrl}/api/userBranch`, {
       method: "POST",
       body: {
         professionInBranchId: event.data.professionInBranchId,

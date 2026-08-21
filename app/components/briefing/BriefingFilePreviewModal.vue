@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const props = defineProps<{
   fileName: string;
@@ -24,7 +24,7 @@ const selectedFileType = computed(() => {
 });
 
 const selectedFileFullUrl = computed(() =>
-  props.fileUrl ? `http://${ip.ipBackEnd}${props.fileUrl}` : "",
+  props.fileUrl ? `${apiBaseUrl}${props.fileUrl}` : "",
 );
 </script>
 

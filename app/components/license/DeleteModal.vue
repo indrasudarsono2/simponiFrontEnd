@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface License {
   id: number;
@@ -46,7 +46,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete license
-    await $fetch(`http://${ip.ipBackEnd}/api/licenseUser/${props.license.id}`, {
+    await $fetch(`${apiBaseUrl}/api/licenseUser/${props.license.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

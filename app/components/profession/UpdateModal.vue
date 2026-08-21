@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 interface Profession {
@@ -63,7 +63,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     // Call API to update profession
     await $fetch(
-      `http://${ip.ipBackEnd}/api/professions/${props.profession.id}`,
+      `${apiBaseUrl}/api/professions/${props.profession.id}`,
       {
         method: "PUT",
         body: {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 import { useApplicationDocStore } from "../../stores/applicationDoc";
 import ApplicationDocModal from "../../components/verification/ApplicationDocModal.vue";
 import VerificationModal from "../../components/verification/VerificationModal.vue";
@@ -115,7 +115,7 @@ const verificationData = ref<VerificationItem[]>([]);
 // Fetch events for dropdown
 const { data: initData, status: initStatus } =
   await useFetch<VerificationInitResponse>(
-    `http://${ip.ipBackEnd}/api/verificationInit`,
+    `${apiBaseUrl}/api/verificationInit`,
     {
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -156,7 +156,7 @@ async function handleSearch() {
   searchLoading.value = true;
   try {
     const response = await $fetch<VerificationItem[]>(
-      `http://${ip.ipBackEnd}/api/verification`,
+      `${apiBaseUrl}/api/verification`,
       {
         method: "POST",
         headers: {
@@ -348,7 +348,7 @@ async function fetchVerificationItem(doc: any) {
 
   try {
     const response = await $fetch<any>(
-      `http://${ip.ipBackEnd}/api/verificationItem`,
+      `${apiBaseUrl}/api/verificationItem`,
       {
         method: "POST",
         headers: {
@@ -396,7 +396,7 @@ async function fetchVerificationItemAndOpenModal(doc: any) {
 
   try {
     const response = await $fetch<any>(
-      `http://${ip.ipBackEnd}/api/verificationItem`,
+      `${apiBaseUrl}/api/verificationItem`,
       {
         method: "POST",
         headers: {

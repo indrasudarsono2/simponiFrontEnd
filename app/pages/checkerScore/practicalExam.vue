@@ -1,5 +1,5 @@
-﻿<script setup lang="ts">
-import ip from "../../utils/config.json";
+<script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 
 interface ScoreCheckerEventItem {
   id: number;
@@ -101,7 +101,7 @@ const selectedFilePath = ref<string | null>(null);
 
 const { data, status, error, refresh } = await useFetch<
   ScoreCheckerRemarkItem[]
->(`http://${ip.ipBackEnd}/api/scoreCheckerPractical`, {
+>(`${apiBaseUrl}/api/scoreCheckerPractical`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -142,7 +142,7 @@ function formatScore(value: unknown): string {
 function resolveFileUrl(filePath?: string | null): string | null {
   if (!filePath) return null;
   if (/^https?:\/\//i.test(filePath)) return filePath;
-  return `http://${ip.ipBackEnd}${filePath}`;
+  return `${apiBaseUrl}${filePath}`;
 }
 
 function getFileExtension(filePath?: string | null): string {
@@ -300,7 +300,7 @@ async function handleSearch() {
     resultLoading.value = true;
     const response = await $fetch<
       ScoreCheckerResultItem[] | ScoreCheckerResultItem
-    >(`http://${ip.ipBackEnd}/api/scoreCheckerPractical`, {
+    >(`${apiBaseUrl}/api/scoreCheckerPractical`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -335,7 +335,7 @@ async function grantRecheck() {
   if (!recheckTarget.value?.appRatingId) return;
   try {
     recheckLoading.value = true;
-    await $fetch(`http://${ip.ipBackEnd}/api/scoreCheckerPractical/recheck`, {
+    await $fetch(`${apiBaseUrl}/api/scoreCheckerPractical/recheck`, {
       method: "POST",
       headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
       body: {

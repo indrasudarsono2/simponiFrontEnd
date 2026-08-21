@@ -40,14 +40,14 @@ const user = computed(() => ({
   },
 }));
 
-const handleLogout = () => {
-  logout();
+const handleLogout = async () => {
+  await logout();
   toast.add({
     title: "Logged out",
     description: "You have been successfully logged out.",
     color: "success",
   });
-  router.push("/login");
+  await router.replace("/login");
 };
 
 const items = computed<DropdownMenuItem[][]>(() => [

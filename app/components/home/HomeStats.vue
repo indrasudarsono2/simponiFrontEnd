@@ -1,6 +1,6 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { Period, Range } from "~/types";
-import ip from "../../utils/config.json";
 
 const props = defineProps<{
   period: Period;
@@ -260,7 +260,7 @@ async function submitDashboardToken() {
   isSubmittingDashboardToken.value = true;
   try {
     const response = await $fetch<{ message?: string }>(
-      `http://${ip.ipBackEnd}/api/dashboardToken`,
+      `${apiBaseUrl}/api/dashboardToken`,
       {
         method: "POST",
         headers: {

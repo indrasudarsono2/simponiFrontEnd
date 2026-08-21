@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface SubBranchUnitRating {
   id: number;
@@ -149,7 +149,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     // Call API to update question group
     await $fetch(
-      `http://${ip.ipBackEnd}/api/questionGroupsEssay/${props.questionGroup.id}`,
+      `${apiBaseUrl}/api/questionGroupsEssay/${props.questionGroup.id}`,
       {
         method: "PUT",
         body: {

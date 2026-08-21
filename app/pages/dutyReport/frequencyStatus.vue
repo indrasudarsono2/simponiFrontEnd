@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftDetail {
   id: number;
@@ -111,7 +111,7 @@ const {
   data: dutyReports,
   status: dutyReportsStatus,
   refresh: refreshDutyReports,
-} = await useFetch<DutyReport[]>(`http://${ip.ipBackEnd}/api/dutyReports/my`, {
+} = await useFetch<DutyReport[]>(`${apiBaseUrl}/api/dutyReports/my`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -122,7 +122,7 @@ const {
   status: statusFreqStatus,
   refresh: refreshStatusFreqs,
 } = await useFetch<StatusFreqOption[]>(
-  `http://${ip.ipBackEnd}/api/statusFreqs`,
+  `${apiBaseUrl}/api/statusFreqs`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -162,7 +162,7 @@ const dutyReportOptions = computed(() =>
 
 const frequencyUrl = computed(() =>
   loadedDutyReport.value?.id
-    ? `http://${ip.ipBackEnd}/api/dutyReports/${loadedDutyReport.value.id}/frequencies`
+    ? `${apiBaseUrl}/api/dutyReports/${loadedDutyReport.value.id}/frequencies`
     : null,
 );
 
@@ -333,7 +333,7 @@ async function saveFrequencyRow(row: DutyReportFrequencyRow) {
     const response = await $fetch<{
       statusFrequency?: StatusFrequency;
     }>(
-      `http://${ip.ipBackEnd}/api/dutyReports/${loadedDutyReport.value.id}/frequencies/${row.cwpFrequencyId}`,
+      `${apiBaseUrl}/api/dutyReports/${loadedDutyReport.value.id}/frequencies/${row.cwpFrequencyId}`,
       {
         method: "PUT",
         body: {

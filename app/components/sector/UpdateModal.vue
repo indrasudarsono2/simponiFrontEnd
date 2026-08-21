@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 interface Sector {
@@ -72,7 +72,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to update sector - always for ACC branch unit
-    await $fetch(`http://${ip.ipBackEnd}/api/sectors/${props.sector.id}`, {
+    await $fetch(`${apiBaseUrl}/api/sectors/${props.sector.id}`, {
       method: "PUT",
       body: {
         sector: event.data.sector,

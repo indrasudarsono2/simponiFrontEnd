@@ -1,11 +1,11 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import {
   CalendarDate,
   DateFormatter,
   getLocalTimeZone,
   parseDate,
 } from "@internationalized/date";
-import ip from "../../utils/config.json";
 
 interface RatingItem {
   rating?: {
@@ -325,7 +325,7 @@ async function onSubmit() {
     payload.append("finishDate", formState.finishDate);
     payload.append("file", formState.file);
 
-    await $fetch(`http://${ip.ipBackEnd}/api/room`, {
+    await $fetch(`${apiBaseUrl}/api/room`, {
       method: "POST",
       headers: commonHeaders,
       body: payload,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface EscalationLevel {
   id: number;
@@ -38,7 +38,7 @@ async function onDelete() {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/escalationLevels/${props.escalationLevel.id}`,
+      `${apiBaseUrl}/api/escalationLevels/${props.escalationLevel.id}`,
       {
         method: "DELETE",
         headers: {

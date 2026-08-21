@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 defineOptions({
   name: "UserCheckerGeneralUpdateModal",
@@ -129,7 +129,7 @@ async function onSubmit() {
   try {
     loading.value = true;
 
-    await $fetch(`http://${ip.ipBackEnd}/api/checkerRating`, {
+    await $fetch(`${apiBaseUrl}/api/checkerRating`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

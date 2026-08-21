@@ -1,11 +1,22 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const productionSecurityHeaders = import.meta.env.PROD
+  ? {
+      "Content-Security-Policy": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "SAMEORIGIN",
+      "Permissions-Policy": "camera=(self), microphone=(), geolocation=()",
+    }
+  : {};
+
 export default defineNuxtConfig({
   modules: ["@nuxt/eslint", "@nuxt/ui", "@vueuse/nuxt", "@pinia/nuxt"],
 
   runtimeConfig: {
-    ipBackEnd: "localhost:3001",
+    ipBackEnd: "localhost:44441",
     public: {
-      apiBaseUrl: "http://localhost:3001",
+      apiBaseUrl: "http://localhost:44441",
       screenMonitoringEnabled: true,
     },
   },
@@ -22,6 +33,9 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    "/**": {
+      headers: productionSecurityHeaders,
+    },
     "/api/**": {
       cors: true,
     },

@@ -1,8 +1,8 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import { h } from "vue";
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 import { useApplicationDocStore } from "../../stores/applicationDoc";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
@@ -282,7 +282,7 @@ const {
   status,
   refresh,
 } = await useFetch<ApiResponse>(
-  `http://${ip.ipBackEnd}/api/applicationDocument`,
+  `${apiBaseUrl}/api/applicationDocument`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

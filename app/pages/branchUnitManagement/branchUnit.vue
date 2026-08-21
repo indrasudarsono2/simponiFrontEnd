@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -37,7 +37,7 @@ const rowSelection = ref({});
 // Fetch branch units data
 // For Jakarta admin, we show branch units from Jakarta branch
 const { data, status, refresh } = await useFetch<BranchUnit[]>(
-  `http://${ip.ipBackEnd}/api/branchUnits`,
+  `${apiBaseUrl}/api/branchUnits`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

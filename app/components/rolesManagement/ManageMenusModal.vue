@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 import { MODULE_TO_ITEM, type ModuleKey } from "../../config/sidebarModules";
 
 interface Menu {
@@ -77,7 +77,7 @@ async function loadMenuOptions() {
 
   try {
     menuOptions.value = await $fetch<Menu[]>(
-      `http://${ip.ipBackEnd}/api/rolesManagement/menus`,
+      `${apiBaseUrl}/api/rolesManagement/menus`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -140,7 +140,7 @@ async function onSubmit() {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/rolesManagement/${props.role.id}/menus`,
+      `${apiBaseUrl}/api/rolesManagement/${props.role.id}/menus`,
       {
         method: "PUT",
         headers: {

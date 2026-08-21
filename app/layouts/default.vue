@@ -19,8 +19,14 @@ const role = useState<string>("selectedRole", () => "");
 watch(
   roleModulesData,
   (list) => {
-    if (!list?.length) return;
-    if (!role.value) role.value = list[0]!.role;
+    if (!list?.length) {
+      role.value = "";
+      return;
+    }
+
+    if (!list.some((item) => item.role === role.value)) {
+      role.value = list[0]!.role;
+    }
   },
   { immediate: true },
 );

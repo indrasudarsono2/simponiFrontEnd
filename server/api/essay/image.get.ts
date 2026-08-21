@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   const normalized = rawImage.replace(/\\/g, "/");
   const normalizedNoLeadingSlash = normalized.replace(/^\/+/, "");
   const isAbsoluteUrl = /^(https?:)?\/\//i.test(normalized);
-  const host = String(config.ipBackEnd || "localhost:3001");
+  const host = String(config.ipBackEnd || "localhost:44441");
 
   const candidates = isAbsoluteUrl
     ? [normalized]

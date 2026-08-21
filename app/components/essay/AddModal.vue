@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const emit = defineEmits<{
   essayAdded: [];
@@ -99,7 +99,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     }
 
     // Call API to create essay
-    await $fetch(`http://${ip.ipBackEnd}/api/essays`, {
+    await $fetch(`${apiBaseUrl}/api/essays`, {
       method: "POST",
       body: formData,
       headers: {

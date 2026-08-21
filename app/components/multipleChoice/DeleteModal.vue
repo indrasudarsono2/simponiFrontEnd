@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface MultipleChoice {
   id: number;
@@ -51,7 +51,7 @@ async function onSubmit() {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/multipleChoices/${props.question.id}`,
+      `${apiBaseUrl}/api/multipleChoices/${props.question.id}`,
       {
         method: "DELETE",
         headers: {

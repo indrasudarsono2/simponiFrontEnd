@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface MultipleChoice {
   id: number;
@@ -106,7 +106,7 @@ function resolveImagePreviewUrl(imagePath?: string | null): string {
   if (!trimmed) return "";
   if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
   if (/^(data|blob):/i.test(trimmed)) return trimmed;
-  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+  return `${apiBaseUrl}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
 }
 
 function openImagePreview(imagePath?: string | null) {
@@ -136,7 +136,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     }
 
     await $fetch(
-      `http://${ip.ipBackEnd}/api/multipleChoices/${props.question.id}`,
+      `${apiBaseUrl}/api/multipleChoices/${props.question.id}`,
       {
         method: "PUT",
         body: formData,

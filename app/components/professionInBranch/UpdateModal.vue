@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 defineOptions({
   name: "ProfessionInBranchUpdateModal",
@@ -88,7 +88,7 @@ async function onSubmit() {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/professionInBranch/${props.professionInBranch.id}`,
+      `${apiBaseUrl}/api/professionInBranch/${props.professionInBranch.id}`,
       {
         method: "PUT",
         headers: {

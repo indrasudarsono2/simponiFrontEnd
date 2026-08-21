@@ -7,7 +7,6 @@ import {
   getLocalTimeZone,
   parseDate,
 } from "@internationalized/date";
-import ip from "../../utils/config.json";
 const { apiFetch } = useApiFetch();
 
 interface Session {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 
 const { token } = useAuth();
 const toast = useToast();
@@ -38,7 +38,7 @@ const pagination = ref({
 });
 
 const { data, status, refresh } = await useFetch<Cwp[]>(
-  `http://${ip.ipBackEnd}/api/cwps`,
+  `${apiBaseUrl}/api/cwps`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

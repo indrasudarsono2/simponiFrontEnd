@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "~/utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const route = useRoute();
 
@@ -11,7 +11,7 @@ const filePath = computed(() => {
 // Construct full file URL
 const fileUrl = computed(() => {
   if (!filePath.value) return "";
-  return `http://${ip.ipBackEnd}${filePath.value}`;
+  return `${apiBaseUrl}${filePath.value}`;
 });
 
 // Get filename from path

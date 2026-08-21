@@ -1,15 +1,17 @@
-import { readFormData } from "h3";
+import { getCookie, getHeader, readFormData } from "h3";
 
 export default defineEventHandler(async (event) => {
   try {
     // Parse FormData from the request
     const formData = await readFormData(event);
-    const authHeader = getHeader(event, "authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    if (!token) {
+    const authToken = getCookie(event, "auth_token");
+    const csrfCookie = getCookie(event, "csrf_token");
+    const csrfHeader = getHeader(event, "x-csrf-token");
+
+    if (!authToken) {
       throw createError({
         statusCode: 401,
-        statusMessage: "Unauthorized - Token required",
+        statusMessage: "Unauthorized - Session required",
       });
     }
     // Validate required fields
@@ -29,11 +31,21 @@ export default defineEventHandler(async (event) => {
     const { ipBackEnd } = useRuntimeConfig();
 
     // Forward the original FormData directly to backend using native fetch
+    const cookieHeader = [
+      `auth_token=${encodeURIComponent(authToken)}`,
+      csrfCookie
+        ? `csrf_token=${encodeURIComponent(csrfCookie)}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("; ");
+
     const response = await fetch(`http://${ipBackEnd}/api/events`, {
       method: "POST",
       body: formData, // Pass FormData directly - fetch will set correct Content-Type with boundary
       headers: {
-        Authorization: token ? `Bearer ${token}` : "",
+        Cookie: cookieHeader,
+        ...(csrfHeader ? { "X-CSRF-Token": csrfHeader } : {}),
       },
     });
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface AppRatingItem {
   id: number;
@@ -158,7 +158,7 @@ const submitResultCountdown = ref(60);
 let submitResultTimer: ReturnType<typeof setInterval> | null = null;
 
 const { data, status, error, refresh } = await useFetch<ExaminationResponse>(
-  `http://${ip.ipBackEnd}/api/examination`,
+  `${apiBaseUrl}/api/examination`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -397,7 +397,7 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
     if (isMultipleChoiceQuestion(question)) {
       const multipleChoicePayload =
         await $fetch<ExaminationMultipleChoiceResponse>(
-          `http://${ip.ipBackEnd}/api/examinationMultipleChoice`,
+          `${apiBaseUrl}/api/examinationMultipleChoice`,
           {
             method: "POST",
             headers: {
@@ -427,7 +427,7 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
     }
 
     const essayPayload = await $fetch<ExaminationEssayResponse>(
-      `http://${ip.ipBackEnd}/api/examinationEssay`,
+      `${apiBaseUrl}/api/examinationEssay`,
       {
         method: "POST",
         headers: {

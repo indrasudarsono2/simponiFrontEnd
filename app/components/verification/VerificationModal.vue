@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface VerificationItem {
   id: number;
@@ -153,7 +153,7 @@ async function submitVerification() {
     };
 
     const response = await $fetch(
-      `http://${ip.ipBackEnd}/api/verificationPost`,
+      `${apiBaseUrl}/api/verificationPost`,
       {
         method: "POST",
         headers: {

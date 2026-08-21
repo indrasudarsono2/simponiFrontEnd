@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface KindOfPracticalItem {
   kind?: string | null;
@@ -140,7 +140,7 @@ const {
   error,
   refresh,
 } = await useFetch<PracticalExamResponse>(
-  `http://${ip.ipBackEnd}/api/practicalExam`,
+  `${apiBaseUrl}/api/practicalExam`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -330,7 +330,7 @@ async function sendPracticalToEchain(test?: PracticalTestItem | null) {
   const sendKey = getPracticalSendKey(test);
   sendingEchainKeys.value = new Set(sendingEchainKeys.value).add(sendKey);
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/practicalExam/${test.id}/send-echain`, {
+    await $fetch(`${apiBaseUrl}/api/practicalExam/${test.id}/send-echain`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -365,7 +365,7 @@ async function sendRecheckToEchain(task?: PracticalRecheckItem | null) {
   const sendKey = getRecheckSendKey(task);
   sendingEchainKeys.value = new Set(sendingEchainKeys.value).add(sendKey);
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/practicalExam/recheck/${task.id}/send-echain`, {
+    await $fetch(`${apiBaseUrl}/api/practicalExam/recheck/${task.id}/send-echain`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -405,7 +405,7 @@ async function openEchainConfirmModal(test?: PracticalTestItem | null) {
 
   try {
     const response = await $fetch<{ success: boolean; data: PracticalEchainPayload }>(
-      `http://${ip.ipBackEnd}/api/practicalExam/${test.id}/echain-payload`,
+      `${apiBaseUrl}/api/practicalExam/${test.id}/echain-payload`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -438,7 +438,7 @@ async function openRecheckEchainConfirmModal(task?: PracticalRecheckItem | null)
 
   try {
     const response = await $fetch<{ success: boolean; data: PracticalEchainPayload }>(
-      `http://${ip.ipBackEnd}/api/practicalExam/recheck/${task.id}/echain-payload`,
+      `${apiBaseUrl}/api/practicalExam/recheck/${task.id}/echain-payload`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -508,7 +508,7 @@ function resolveFileUrl(filePath?: string | null): string {
   if (!trimmed) return "";
   if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
   if (/^(data|blob):/i.test(trimmed)) return trimmed;
-  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+  return `${apiBaseUrl}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
 }
 
 function getPdfPreviewUrl(url: string): string {
@@ -685,8 +685,8 @@ async function submitPracticalUpdate() {
     isSubmittingUpdate.value = true;
     const response = await $fetch<PracticalUpdateResponse>(
       selectedRecheck.value
-        ? `http://${ip.ipBackEnd}/api/practicalExam/recheck/${testId}`
-        : `http://${ip.ipBackEnd}/api/practicalExam/${testId}`,
+        ? `${apiBaseUrl}/api/practicalExam/recheck/${testId}`
+        : `${apiBaseUrl}/api/practicalExam/${testId}`,
       {
       method: "PUT",
       headers: {

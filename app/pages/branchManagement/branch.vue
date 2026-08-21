@@ -1,8 +1,8 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
 import type { Row } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 const UButton = resolveComponent("UButton");
@@ -45,7 +45,7 @@ const rowSelection = ref({});
 // Fetch branches data
 // TODO: Replace with actual API endpoint
 const { data, status, refresh } = await useFetch<Branch[]>(
-  `http://${ip.ipBackEnd}/api/branches`,
+  `${apiBaseUrl}/api/branches`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

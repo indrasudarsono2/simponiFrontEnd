@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface Essay {
   id: number;
@@ -54,7 +54,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete essay
-    await $fetch(`http://${ip.ipBackEnd}/api/essays/${props.essay.id}`, {
+    await $fetch(`${apiBaseUrl}/api/essays/${props.essay.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

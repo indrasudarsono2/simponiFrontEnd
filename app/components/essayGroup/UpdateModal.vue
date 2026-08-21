@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 interface Essay {
@@ -179,7 +179,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     }
 
     // Create assignments with array of questionGroupIds and sectorIds
-    await $fetch(`http://${ip.ipBackEnd}/api/essayGroups`, {
+    await $fetch(`${apiBaseUrl}/api/essayGroups`, {
       method: "POST",
       body: {
         essayId: props.essay.id,

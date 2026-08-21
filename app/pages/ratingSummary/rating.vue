@@ -1,5 +1,5 @@
-﻿<script setup lang="ts">
-import ip from "../../utils/config.json";
+<script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 
 interface RatingSummaryUserRatingItem {
   id?: number;
@@ -49,7 +49,7 @@ const sortDirection = ref<"asc" | "desc">("asc");
 
 const { data, status, error, refresh } = await useFetch<
   RatingSummaryUserItem[]
->(`http://${ip.ipBackEnd}/api/ratingSummary`, {
+>(`${apiBaseUrl}/api/ratingSummary`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },

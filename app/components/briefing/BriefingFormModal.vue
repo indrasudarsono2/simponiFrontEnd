@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface Profession {
   profession: string;
@@ -62,7 +62,7 @@ const {
   status: professionStatus,
   refresh: refreshProfessionDestinations,
 } = await useFetch<ProfessionInBranchResponse>(
-  `http://${ip.ipBackEnd}/api/professionInBranch`,
+  `${apiBaseUrl}/api/professionInBranch`,
   {
     immediate: false,
     headers: {
@@ -187,8 +187,8 @@ async function submit() {
 
     const url =
       props.mode === "add"
-        ? `http://${ip.ipBackEnd}/api/briefings/create`
-        : `http://${ip.ipBackEnd}/api/briefings/${props.briefing?.id}`;
+        ? `${apiBaseUrl}/api/briefings/create`
+        : `${apiBaseUrl}/api/briefings/${props.briefing?.id}`;
     const method = props.mode === "add" ? "POST" : "PUT";
 
     await $fetch(url, {

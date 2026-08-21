@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -58,7 +58,7 @@ const rowSelection = ref({});
 
 // Fetch multiple choice questions data
 const { data, status, refresh } = await useFetch<ApiResponse>(
-  `http://${ip.ipBackEnd}/api/multipleChoices`,
+  `${apiBaseUrl}/api/multipleChoices`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -103,7 +103,7 @@ function resolveImageUrl(imagePath?: string | null): string {
   if (!trimmed) return "";
   if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
   if (/^(data|blob):/i.test(trimmed)) return trimmed;
-  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+  return `${apiBaseUrl}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
 }
 
 function openImagePreview(imagePath?: string | null) {

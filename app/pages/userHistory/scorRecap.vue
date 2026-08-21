@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface ScoreUserResponseItem {
   event?: {
@@ -50,7 +50,7 @@ const { token } = useAuth();
 
 const { data, status, error, refresh } = await useFetch<
   ScoreUserResponseItem[]
->(`http://${ip.ipBackEnd}/api/scoreUser`, {
+>(`${apiBaseUrl}/api/scoreUser`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },

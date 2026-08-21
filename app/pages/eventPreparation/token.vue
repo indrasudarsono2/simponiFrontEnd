@@ -1,6 +1,6 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 import TokenCreateModal from "~/components/eventPreparation/TokenCreateModal.vue";
 import TokenEditModal from "~/components/eventPreparation/TokenEditModal.vue";
 
@@ -73,7 +73,7 @@ async function fetchTokens() {
   isLoading.value = true;
   try {
     const response = await $fetch<Token[] | Token | null>(
-      `http://${ip.ipBackEnd}/api/token`,
+      `${apiBaseUrl}/api/token`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -172,7 +172,7 @@ async function createToken() {
   }
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/token`, {
+    await $fetch(`${apiBaseUrl}/api/token`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -230,7 +230,7 @@ async function updateToken() {
   }
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/token/${selectedToken.value.id}`, {
+    await $fetch(`${apiBaseUrl}/api/token/${selectedToken.value.id}`, {
       method: "PUT",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

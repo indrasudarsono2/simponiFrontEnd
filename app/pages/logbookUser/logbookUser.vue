@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 import {
   DateFormatter,
   getLocalTimeZone,
@@ -157,7 +157,7 @@ async function loadLogbookUser() {
 
   try {
     logbookRows.value = await $fetch<any[]>(
-      `http://${ip.ipBackEnd}/api/eLogbookUser?startDate=${startDate.value}&endDate=${endDate.value}`,
+      `${apiBaseUrl}/api/eLogbookUser?startDate=${startDate.value}&endDate=${endDate.value}`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 const schema = z.object({
@@ -36,7 +36,7 @@ interface BranchUnit {
 
 // Fetch branch data (returns single object)
 const { data: branchUnitData } = await useFetch<BranchUnit>(
-  `http://${ip.ipBackEnd}/api/sectorGetBranchUnit`,
+  `${apiBaseUrl}/api/sectorGetBranchUnit`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -67,7 +67,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create sector - always for ACC branch unit
-    await $fetch(`http://${ip.ipBackEnd}/api/sectors`, {
+    await $fetch(`${apiBaseUrl}/api/sectors`, {
       method: "POST",
       body: {
         sector: event.data.sector,

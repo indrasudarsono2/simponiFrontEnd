@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface Supervisor {
   id: number;
@@ -34,7 +34,7 @@ async function handleDelete() {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/cwpSupervisors/${props.supervisorData.id}`,
+      `${apiBaseUrl}/api/cwpSupervisors/${props.supervisorData.id}`,
       {
         method: "DELETE",
         headers: {

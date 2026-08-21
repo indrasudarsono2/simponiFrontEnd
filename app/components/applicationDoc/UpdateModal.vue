@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
 
@@ -960,7 +960,7 @@ async function onSubmit() {
     };
 
     await $fetch(
-      `http://${ip.ipBackEnd}/api/applicationDocument/${props.applicationDoc.id}`,
+      `${apiBaseUrl}/api/applicationDocument/${props.applicationDoc.id}`,
       {
         method: "PUT",
         headers: {

@@ -1,11 +1,11 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import {
   DateFormatter,
   getLocalTimeZone,
   CalendarDate,
   parseDate,
 } from "@internationalized/date";
-import ip from "../../utils/config.json";
 
 const { token } = useAuth();
 const toast = useToast();
@@ -165,7 +165,7 @@ async function loadLhdReports() {
   loading.value = true;
   try {
     const response = await $fetch<{ lhdReports: LhdReport[] }>(
-      `http://${ip.ipBackEnd}/api/lhdReports/recap`,
+      `${apiBaseUrl}/api/lhdReports/recap`,
       {
         query: {
           startDate: startDate.value,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 import EssayCorrectionModal from "../../components/performanceCheck/EssayCorrectionModal.vue";
 import EssayCorrectionHistoryModal from "../../components/performanceCheck/EssayCorrectionHistoryModal.vue";
 
@@ -119,7 +119,7 @@ const selectedEventFilter = ref<number | null>(null);
 
 const { data, status, error, refresh } =
   await useFetch<PerformanceCheckResponse>(
-    `http://${ip.ipBackEnd}/api/performanceCheck`,
+    `${apiBaseUrl}/api/performanceCheck`,
     {
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

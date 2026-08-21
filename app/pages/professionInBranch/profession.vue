@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 const UButton = resolveComponent("UButton");
@@ -53,7 +53,7 @@ const rowSelection = ref({});
 
 // Fetch professions data
 const { data, status, refresh } = await useFetch<ProfessionInBranchResponse>(
-  `http://${ip.ipBackEnd}/api/professionInBranch`,
+  `${apiBaseUrl}/api/professionInBranch`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

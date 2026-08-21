@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 
 const { token } = useAuth();
 const table = useTemplateRef<any>("table");
@@ -71,7 +71,7 @@ const pagination = ref({
 });
 
 const { data, status, refresh } = await useFetch<CheckerRatingResponse>(
-  `http://${ip.ipBackEnd}/api/checkerRating`,
+  `${apiBaseUrl}/api/checkerRating`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -156,6 +156,7 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     children: [
       { label: "User List", to: "/userManagement/userGeneral" },
       { label: "User Role", to: "/userManagement/userRoleGeneral" }, ////buat mindahin user
+      { label: "User Login", to: "/userManagement/userLogin" },
     ],
   },
 
@@ -167,7 +168,7 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     defaultOpen: true,
     children: [
       { label: "User List", to: "/userManagement/userChecker" },
-      { label: "User Role", to: "/userManagement/userCheckerRole" }, ////buat mindahin user
+      // { label: "User Role", to: "/userManagement/userCheckerRole" }, ////buat mindahin user
     ],
   },
 
@@ -548,6 +549,76 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     children: [
       { label: "Score Recap", to: "/pfcScore/scoreRecap" },
       { label: "Individual Score", to: "/pfcScore/individual" },
+      { label: "Checker", to: "/pfcScore/checker" },
     ],
   },
 };
+
+const AUTHENTICATED_UTILITY_ROUTES = ["/", "/profile", "/file/view"];
+
+const ROLE_ADDITIONAL_ROUTES: Record<string, string[]> = {
+  OPERATIONAL: ["/examination/essay", "/examination/multipleChoice"],
+};
+
+function normalizePath(path: string): string {
+  const normalized = path.split(/[?#]/, 1)[0]?.replace(/\/+$/, "") || "/";
+  return normalized.startsWith("/") ? normalized : `/${normalized}`;
+}
+
+function getItemRoutes(item: NavigationMenuItem): string[] {
+  const routes: string[] = [];
+  const to = typeof item.to === "string" ? normalizePath(item.to) : null;
+
+  if (to?.startsWith("/")) routes.push(to);
+
+  if (Array.isArray(item.children)) {
+    for (const child of item.children) routes.push(...getItemRoutes(child));
+  }
+
+  return routes;
+}
+
+/**
+ * Checks frontend route access against the same menu assignments used to build
+ * the sidebar. Backend authorization remains authoritative for API requests;
+ * this prevents users from bypassing menu access by typing a URL directly.
+ */
+export function isPathAllowedForModules(
+  path: string,
+  assignedModules: string[],
+  assignedRoles: string[] = [],
+): boolean {
+  const requestedPath = normalizePath(path);
+
+  if (AUTHENTICATED_UTILITY_ROUTES.some((route) => requestedPath === route)) {
+    return true;
+  }
+
+  const normalizedModules = new Set(
+    assignedModules.map((module) => module.trim().toLowerCase()),
+  );
+
+  for (const role of assignedRoles) {
+    const roleRoutes = ROLE_ADDITIONAL_ROUTES[role.trim().toUpperCase()] || [];
+    if (
+      roleRoutes.some(
+        (route) =>
+          requestedPath === route || requestedPath.startsWith(`${route}/`),
+      )
+    ) {
+      return normalizedModules.has("examination");
+    }
+  }
+
+  for (const [moduleKey, item] of Object.entries(MODULE_TO_ITEM)) {
+    if (!normalizedModules.has(moduleKey.toLowerCase())) continue;
+
+    for (const route of getItemRoutes(item)) {
+      if (requestedPath === route || requestedPath.startsWith(`${route}/`)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}

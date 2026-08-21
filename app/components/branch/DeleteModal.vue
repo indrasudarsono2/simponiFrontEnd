@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
 interface Branch {
@@ -54,7 +54,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete branch
-    await $fetch(`http://${ip.ipBackEnd}/api/branches/${props.branch.id}`, {
+    await $fetch(`${apiBaseUrl}/api/branches/${props.branch.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

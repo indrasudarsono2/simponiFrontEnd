@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface Sector {
   id: number;
@@ -26,7 +26,7 @@ const page = ref(1);
 const pageSize = 10;
 
 const { data, status, error, refresh } = await useFetch<UserCheckerResponse>(
-  `http://${ip.ipBackEnd}/api/userBranchUnit`,
+  `${apiBaseUrl}/api/userBranchUnit`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

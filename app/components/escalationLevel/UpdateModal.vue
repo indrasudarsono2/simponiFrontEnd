@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 
 interface EscalationLevel {
   id: number;
@@ -70,7 +70,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     await $fetch(
-      `http://${ip.ipBackEnd}/api/escalationLevels/${props.escalationLevel.id}`,
+      `${apiBaseUrl}/api/escalationLevels/${props.escalationLevel.id}`,
       {
         method: "PUT",
         body: {

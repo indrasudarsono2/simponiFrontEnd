@@ -1,11 +1,11 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import {
   DateFormatter,
   getLocalTimeZone,
   CalendarDate,
   parseDate,
 } from "@internationalized/date";
-import ip from "../../utils/config.json";
 
 const { token } = useAuth();
 const toast = useToast();
@@ -201,7 +201,7 @@ function getRequestError(error: unknown, fallback: string) {
 async function loadBranches() {
   loadingBranches.value = true;
   try {
-    const response = await $fetch<Branch[]>(`http://${ip.ipBackEnd}/api/branches`, {
+    const response = await $fetch<Branch[]>(`${apiBaseUrl}/api/branches`, {
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
       },
@@ -250,7 +250,7 @@ async function loadIssues() {
   loading.value = true;
   try {
     const response = await $fetch<{ issues: OnGoingIssueRecap[] }>(
-      `http://${ip.ipBackEnd}/api/onGoingIssues/recap`,
+      `${apiBaseUrl}/api/onGoingIssues/recap`,
       {
         query: {
           branchId: selectedBranchId.value,

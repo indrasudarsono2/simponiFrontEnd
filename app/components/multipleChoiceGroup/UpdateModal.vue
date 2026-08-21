@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface MultipleChoice {
   id: number;
@@ -182,7 +182,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     }
 
     // Create assignments with array of questionGroupIds and sectorIds
-    await $fetch(`http://${ip.ipBackEnd}/api/multipleChoiceGroups`, {
+    await $fetch(`${apiBaseUrl}/api/multipleChoiceGroups`, {
       method: "POST",
       body: {
         multipleChoiceId: props.multipleChoice.id,

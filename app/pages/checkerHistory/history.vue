@@ -1,5 +1,5 @@
-﻿<script setup lang="ts">
-import ip from "../../utils/config.json";
+<script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 
 interface CheckerHistoryEventItem {
   id: number;
@@ -136,7 +136,7 @@ const selectedFileTitle = ref<string>("File Preview");
 
 const { data, status, error, refresh } = await useFetch<
   CheckerHistoryRemarkItem[]
->(`http://${ip.ipBackEnd}/api/checkerHistory`, {
+>(`${apiBaseUrl}/api/checkerHistory`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -341,7 +341,7 @@ async function handleSearch() {
     resultLoading.value = true;
     const response = await $fetch<
       CheckerHistorySearchResponse | CheckerHistorySearchResponse[]
-    >(`http://${ip.ipBackEnd}/api/checkerHistory`, {
+    >(`${apiBaseUrl}/api/checkerHistory`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -379,7 +379,7 @@ async function handleSearch() {
 function resolveFileUrl(filePath?: string | null): string | null {
   if (!filePath) return null;
   if (/^https?:\/\//i.test(filePath)) return filePath;
-  return `http://${ip.ipBackEnd}${filePath}`;
+  return `${apiBaseUrl}${filePath}`;
 }
 
 function getFileExtension(filePath?: string | null): string {

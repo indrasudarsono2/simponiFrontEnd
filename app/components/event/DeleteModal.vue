@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface Event {
   id: number;
@@ -64,7 +64,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete event
-    await $fetch(`http://${ip.ipBackEnd}/api/events/${props.event.id}`, {
+    await $fetch(`${apiBaseUrl}/api/events/${props.event.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface PracticalTestItem {
   id?: number;
@@ -88,7 +88,7 @@ const selectedFilePath = ref<string | null>(null);
 
 const { data, status, error, refresh } = await useFetch<
   ScoreUserPracticalResponseItem[]
->(`http://${ip.ipBackEnd}/api/scoreUserPractical`, {
+>(`${apiBaseUrl}/api/scoreUserPractical`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },
@@ -114,7 +114,7 @@ function formatDate(value?: string | null): string {
 function resolveFileUrl(filePath?: string | null): string | null {
   if (!filePath) return null;
   if (/^https?:\/\//i.test(filePath)) return filePath;
-  return `http://${ip.ipBackEnd}${filePath}`;
+  return `${apiBaseUrl}${filePath}`;
 }
 
 function getFileExtension(filePath?: string | null): string {

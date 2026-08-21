@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { CalendarDate } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import ip from '../../utils/config.json'
 
 const toast = useToast()
 const { token } = useAuth()
@@ -151,7 +151,7 @@ async function loadBranches() {
   loadingBranches.value = true
   try {
     const data = await $fetch<{ id: number, branch: string }[]>(
-      `http://${ip.ipBackEnd}/api/branches`, {
+      `${apiBaseUrl}/api/branches`, {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : ''
         }
@@ -179,7 +179,7 @@ async function loadUsersByBranch(branchId?: number) {
   loadingUsers.value = true
   try {
     const data = await $fetch<{ users: UserOption[] }>(
-      `http://${ip.ipBackEnd}/api/personalLogbookGa/users-by-branch/${branchId}`,
+      `${apiBaseUrl}/api/personalLogbookGa/users-by-branch/${branchId}`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : ''
@@ -217,7 +217,7 @@ async function loadPersonalLogbook() {
 
   try {
     const data = await $fetch<{ logBooks: LogBook[], user: UserOption }>(
-      `http://${ip.ipBackEnd}/api/personalLogbookGa`, {
+      `${apiBaseUrl}/api/personalLogbookGa`, {
         method: 'POST',
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : ''

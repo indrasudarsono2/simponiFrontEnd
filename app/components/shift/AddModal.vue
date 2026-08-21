@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftDetailForm {
   start: string;
@@ -99,7 +99,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(`http://${ip.ipBackEnd}/api/shifts`, {
+    await $fetch(`${apiBaseUrl}/api/shifts`, {
       method: "POST",
       body: {
         shift: shift.value,

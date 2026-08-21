@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface EventQuestion {
   id: number;
@@ -102,7 +102,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     // Call API to update event question using POST as requested
     await $fetch(
-      `http://${ip.ipBackEnd}/api/eventQuestions/${props.eventQuestion.id}`,
+      `${apiBaseUrl}/api/eventQuestions/${props.eventQuestion.id}`,
       {
         method: "PUT",
         body: {

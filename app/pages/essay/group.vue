@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 const UButton = resolveComponent("UButton");
@@ -115,7 +115,7 @@ const columnVisibility = ref();
 const rowSelection = ref({});
 
 const { data, status, refresh } = await useFetch<EssayGroupResponse>(
-  `http://${ip.ipBackEnd}/api/essayGroups`,
+  `${apiBaseUrl}/api/essayGroups`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

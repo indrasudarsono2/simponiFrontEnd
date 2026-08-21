@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -83,7 +83,7 @@ const selectedSectorId = ref<number | null>(null);
 
 // Fetch rating checkers data
 const { data, status, error, refresh } = await useFetch<RatingCheckerResponse>(
-  `http://${ip.ipBackEnd}/api/ratingCheckerAdmins`,
+  `${apiBaseUrl}/api/ratingCheckerAdmins`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

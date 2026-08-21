@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
 interface Rating {
@@ -50,7 +50,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete rating
-    await $fetch(`http://${ip.ipBackEnd}/api/ratings/${props.rating.id}`, {
+    await $fetch(`${apiBaseUrl}/api/ratings/${props.rating.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

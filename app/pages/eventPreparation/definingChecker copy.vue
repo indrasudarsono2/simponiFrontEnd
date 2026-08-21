@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -144,7 +144,7 @@ const selectedRemarkDoc = ref<string | null>(null);
 
 // Fetch defining checkers data
 const { data, status, refresh } = await useFetch<GroupsResponse>(
-  `http://${ip.ipBackEnd}/api/groups`,
+  `${apiBaseUrl}/api/groups`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface Essay {
   id: number;
@@ -91,7 +91,7 @@ function resolveImagePreviewUrl(imagePath?: string | null): string {
   if (!trimmed) return "";
   if (/^(https?:)?\/\//i.test(trimmed)) return trimmed;
   if (/^(data|blob):/i.test(trimmed)) return trimmed;
-  return `http://${ip.ipBackEnd}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
+  return `${apiBaseUrl}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`;
 }
 
 function handleFileChange(event: Event) {
@@ -154,7 +154,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     }
 
     // Call API to update essay
-    await $fetch(`http://${ip.ipBackEnd}/api/essays/${props.essay.id}`, {
+    await $fetch(`${apiBaseUrl}/api/essays/${props.essay.id}`, {
       method: "PUT",
       body: formData,
       headers: {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface MandatoryItem {
   id: number;
@@ -16,7 +16,7 @@ const {
   status,
   error,
   refresh,
-} = await useFetch<any>(`http://${ip.ipBackEnd}/api/mandatoryItem`, {
+} = await useFetch<any>(`${apiBaseUrl}/api/mandatoryItem`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },

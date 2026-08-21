@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const emit = defineEmits<{
   questionAdded: [];
@@ -49,7 +49,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       formData.append("image", selectedFile.value);
     }
 
-    await $fetch(`http://${ip.ipBackEnd}/api/multipleChoices`, {
+    await $fetch(`${apiBaseUrl}/api/multipleChoices`, {
       method: "POST",
       body: formData,
       headers: {

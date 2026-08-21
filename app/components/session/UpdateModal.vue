@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface Session {
   id: number;
@@ -62,7 +62,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to update session
-    await $fetch(`http://${ip.ipBackEnd}/api/sessions/${props.session.id}`, {
+    await $fetch(`${apiBaseUrl}/api/sessions/${props.session.id}`, {
       method: "PUT",
       body: {
         session: event.data.session,

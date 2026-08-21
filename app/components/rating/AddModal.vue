@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 const schema = z.object({
@@ -30,7 +30,7 @@ interface Profession {
 
 // Fetch regions for dropdown
 const { data: regions } = await useFetch<Profession[]>(
-  `http://${ip.ipBackEnd}/api/professions`,
+  `${apiBaseUrl}/api/professions`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -55,7 +55,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create rating
-    await $fetch(`http://${ip.ipBackEnd}/api/ratings`, {
+    await $fetch(`${apiBaseUrl}/api/ratings`, {
       method: "POST",
       body: {
         rating: event.data.rating,

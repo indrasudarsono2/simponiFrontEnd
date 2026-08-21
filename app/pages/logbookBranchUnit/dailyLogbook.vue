@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
 const toast = useToast();
@@ -324,7 +324,7 @@ async function loadDailyLogbook() {
 
   try {
     const response = await $fetch<{ dailyReport: DutyReport[] }>(
-      `http://${ip.ipBackEnd}/api/dailyLogbook?date=${selectedDate.value}`,
+      `${apiBaseUrl}/api/dailyLogbook?date=${selectedDate.value}`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",

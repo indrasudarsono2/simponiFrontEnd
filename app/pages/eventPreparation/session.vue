@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -48,7 +48,7 @@ const rowSelection = ref({});
 
 // Fetch sessions data with branch unit info
 const { data, status, refresh } = await useFetch<SessionsResponse>(
-  `http://${ip.ipBackEnd}/api/sessions`,
+  `${apiBaseUrl}/api/sessions`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

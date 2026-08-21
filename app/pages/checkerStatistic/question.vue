@@ -1,5 +1,5 @@
-﻿<script setup lang="ts">
-import ip from "../../utils/config.json";
+<script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 
 definePageMeta({ alias: ["/mandatoryQuestion/matsAnalysis"] });
 
@@ -44,7 +44,7 @@ const sortDirection = ref<"asc" | "desc">("asc");
 
 const { data, status, error, refresh } = await useFetch<
   CheckerStatisticQuestionItem[]
->(`http://${ip.ipBackEnd}/api/checkerStatisticQuestion${isMatsAnalysis.value ? "?type=MATS" : ""}`, {
+>(`${apiBaseUrl}/api/checkerStatisticQuestion${isMatsAnalysis.value ? "?type=MATS" : ""}`, {
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },

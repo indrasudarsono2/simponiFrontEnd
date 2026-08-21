@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from '../../utils/config.json'
+const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth()
 const toast = useToast()
@@ -380,7 +380,7 @@ async function loadBranches() {
   loadingBranches.value = true
   try {
     const response = await $fetch<{ id: number, branch: string }[]>(
-      `http://${ip.ipBackEnd}/api/branches`,
+      `${apiBaseUrl}/api/branches`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : ''
@@ -423,7 +423,7 @@ async function loadDailyLogbook() {
 
   try {
     const response = await $fetch<{ dailyReport: DutyReport[] }>(
-      `http://${ip.ipBackEnd}/api/dailyLogbookGa?date=${selectedDate.value}&branchId=${selectedBranchId.value}`,
+      `${apiBaseUrl}/api/dailyLogbookGa?date=${selectedDate.value}&branchId=${selectedBranchId.value}`,
       {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : ''

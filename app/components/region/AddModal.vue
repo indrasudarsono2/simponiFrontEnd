@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 const schema = z.object({
@@ -24,7 +24,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create region
-    await $fetch(`http://${ip.ipBackEnd}/api/regions`, {
+    await $fetch(`${apiBaseUrl}/api/regions`, {
       method: "POST",
       body: { region: event.data.region },
       headers: {

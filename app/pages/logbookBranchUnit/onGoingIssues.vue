@@ -1,11 +1,11 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import {
   DateFormatter,
   getLocalTimeZone,
   CalendarDate,
   parseDate,
 } from "@internationalized/date";
-import ip from "../../utils/config.json";
 
 const { token } = useAuth();
 const toast = useToast();
@@ -187,7 +187,7 @@ async function loadIssues() {
   loading.value = true;
   try {
     const response = await $fetch<{ issues: OnGoingIssueRecap[] }>(
-      `http://${ip.ipBackEnd}/api/onGoingIssues/recap`,
+      `${apiBaseUrl}/api/onGoingIssues/recap`,
       {
         query: {
           startDate: startDate.value,

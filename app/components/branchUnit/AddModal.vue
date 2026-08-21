@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 const schema = z.object({
@@ -29,7 +29,7 @@ interface Branch {
 
 // Fetch branch data (returns single object)
 const { data: branchData } = await useFetch<Branch>(
-  `http://${ip.ipBackEnd}/api/branchUnitsGetBranch`,
+  `${apiBaseUrl}/api/branchUnitsGetBranch`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -60,7 +60,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create branch unit
-    await $fetch(`http://${ip.ipBackEnd}/api/branchUnits`, {
+    await $fetch(`${apiBaseUrl}/api/branchUnits`, {
       method: "POST",
       body: {
         unit: event.data.unit,

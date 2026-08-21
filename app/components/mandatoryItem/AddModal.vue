@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
 const toast = useToast();
@@ -26,7 +26,7 @@ async function onSubmit() {
   loading.value = true;
   try {
     const response = await $fetch<{ message?: string }>(
-      `http://${ip.ipBackEnd}/api/mandatoryItem`,
+      `${apiBaseUrl}/api/mandatoryItem`,
       {
       method: "POST",
       headers: {

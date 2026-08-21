@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface DoctorDashboardResponse {
   pendingUsers: number;
@@ -13,7 +13,7 @@ const {
   error,
   refresh,
 } = await useFetch<DoctorDashboardResponse>(
-  `http://${ip.ipBackEnd}/api/dashboardDoctor`,
+  `${apiBaseUrl}/api/dashboardDoctor`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 import { MODULE_TO_ITEM, type ModuleKey } from "../config/sidebarModules";
 
 interface Menu {
@@ -28,7 +28,7 @@ const page = ref(1);
 const pageSize = 10;
 
 const { data, status, error, refresh } = await useFetch<Role[]>(
-  `http://${ip.ipBackEnd}/api/rolesManagement`,
+  `${apiBaseUrl}/api/rolesManagement`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
 const toast = useToast();
@@ -40,7 +40,7 @@ const shiftNameToDelete = ref<ShiftName | null>(null);
 const searchQuery = ref("");
 
 const { data, status, refresh } = await useFetch<ShiftName[]>(
-  `http://${ip.ipBackEnd}/api/shifts`,
+  `${apiBaseUrl}/api/shifts`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ip from "../../utils/config.json";
+const apiBaseUrl = useApiBaseUrl()
 
 interface RatingItem {
   id: number;
@@ -72,7 +72,7 @@ async function onSubmit() {
   loading.value = true;
   try {
     const response = await $fetch<{ message?: string }>(
-      `http://${ip.ipBackEnd}/api/mandatoryRating`,
+      `${apiBaseUrl}/api/mandatoryRating`,
       {
         method: "POST",
         headers: {

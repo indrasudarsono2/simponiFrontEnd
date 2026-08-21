@@ -11,22 +11,12 @@ const router = useRouter()
 
 const form = reactive({
   nik: '',
-  password: '',
-  captchaInput: ''
+  password: ''
 })
 
 const isSubmitting = ref(false)
-const captchaText = ref('')
 
-const generateCaptcha = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  captchaText.value = Array.from(
-    { length: 6 },
-    () => chars[Math.floor(Math.random() * chars.length)]
-  ).join('')
-}
-
-const validateNik = (nik: string) => /^\d{8}$/.test(nik)
+const validateNik = (nik: string) => /^[A-Za-z0-9]{8}$/.test(nik.trim())
 
 function getErrorMessage(error: unknown): string {
   if (error && typeof error === 'object') {
@@ -45,7 +35,7 @@ const handleLogin = async () => {
   if (!validateNik(form.nik)) {
     toast.add({
       title: 'Invalid e-NIK',
-      description: 'e-NIK must contain exactly 8 digits.',
+      description: 'e-NIK must contain exactly 8 letters or digits.',
       color: 'error'
     })
     return
@@ -57,17 +47,6 @@ const handleLogin = async () => {
       description: 'Password must contain at least 6 characters.',
       color: 'error'
     })
-    return
-  }
-
-  if (form.captchaInput.trim().toUpperCase() !== captchaText.value) {
-    toast.add({
-      title: 'Incorrect captcha',
-      description: 'Please enter the captcha correctly.',
-      color: 'error'
-    })
-    generateCaptcha()
-    form.captchaInput = ''
     return
   }
 
@@ -90,16 +69,12 @@ const handleLogin = async () => {
       description: getErrorMessage(error),
       color: 'error'
     })
-    generateCaptcha()
-    form.captchaInput = ''
   } finally {
     isSubmitting.value = false
   }
 }
 
 onMounted(() => {
-  generateCaptcha()
-
   if (isAuthenticated.value) {
     router.push(getDashboardRoute(getRoleNames()))
   }
@@ -125,19 +100,20 @@ onMounted(() => {
               Application Login
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-              Sign in using your e-NIK, password, and captcha
+              Sign in using your e-NIK and password
             </p>
           </div>
         </template>
 
-        <form class="space-y-5" @submit.prevent="handleLogin">
+        <form class="space-y-5" method="post" action="/login" @submit.prevent="handleLogin">
           <UFormField label="e-NIK" name="nik" required>
             <UInput
               v-model="form.nik"
-              placeholder="Enter your 8-digit e-NIK"
+              placeholder="Enter your 8-character e-NIK"
               icon="i-lucide-id-card"
               size="xl"
               :maxlength="8"
+              autocomplete="username"
               class="w-full"
             />
           </UFormField>
@@ -149,40 +125,9 @@ onMounted(() => {
               placeholder="Enter your password"
               icon="i-lucide-lock"
               size="xl"
+              autocomplete="current-password"
               class="w-full"
             />
-          </UFormField>
-
-          <UFormField label="Captcha" name="captcha" required>
-            <div class="space-y-2">
-              <div class="flex items-center gap-2">
-                <div
-                  class="flex-1 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3"
-                >
-                  <p
-                    class="text-center font-mono text-lg tracking-[0.35em] select-none text-gray-800 dark:text-gray-100"
-                  >
-                    {{ captchaText }}
-                  </p>
-                </div>
-                <UButton
-                  type="button"
-                  color="neutral"
-                  variant="soft"
-                  icon="i-lucide-refresh-cw"
-                  aria-label="Generate a new captcha"
-                  @click="generateCaptcha"
-                />
-              </div>
-
-              <UInput
-                v-model="form.captchaInput"
-                placeholder="Enter the captcha shown above"
-                icon="i-lucide-shield-check"
-                size="xl"
-                class="w-full"
-              />
-            </div>
           </UFormField>
 
           <UButton

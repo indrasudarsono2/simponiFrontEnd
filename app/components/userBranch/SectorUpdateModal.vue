@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 
 defineOptions({
@@ -89,7 +89,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     // Submit to API - update user's sector
     await $fetch(
-      `http://${ip.ipBackEnd}/api/userBranchUnit/${props.user.nik}`,
+      `${apiBaseUrl}/api/userBranchUnit/${props.user.nik}`,
       {
         method: "PUT",
         body: {

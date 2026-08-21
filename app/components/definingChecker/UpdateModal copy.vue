@@ -1,7 +1,7 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import ip from "../../utils/config.json";
 const { token } = useAuth();
 interface UserRole {
   id: number;
@@ -163,7 +163,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     // Call API to update defining checker
     await $fetch(
-      `http://${ip.ipBackEnd}/api/groups/${props.definingChecker.id}`,
+      `${apiBaseUrl}/api/groups/${props.definingChecker.id}`,
       {
         method: "PUT",
         body: {
