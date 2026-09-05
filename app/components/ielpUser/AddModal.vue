@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
+const { authUser } = useAuth();
+const canSyncEchain = computed(() => authUser.value?.authenticationType !== "LOCAL");
 
 defineOptions({
   name: "IELPUserAddModal",
@@ -257,6 +259,7 @@ const emit = defineEmits<{
               @click="toggleSyncMode"
             />
             <UButton
+              v-if="canSyncEchain"
               :label="'Sync from System'"
               :color="syncMode ? 'primary' : 'neutral'"
               :variant="syncMode ? 'solid' : 'ghost'"
@@ -266,7 +269,7 @@ const emit = defineEmits<{
           </div>
 
           <!-- Sync Mode: Sync Button -->
-          <div v-if="syncMode" class="p-4 bg-elevated/50 rounded-lg space-y-4">
+          <div v-if="syncMode && canSyncEchain" class="p-4 bg-elevated/50 rounded-lg space-y-4">
             <div class="flex items-center gap-2 mb-2">
               <UIcon name="i-lucide-refresh-cw" class="text-primary" />
               <span class="font-medium">Sync from External IELP System</span>

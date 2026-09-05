@@ -101,6 +101,7 @@ const selectedExpirationTab = ref("ratings");
 const { data, status, error, refresh } = await useFetch<DashboardGeneralAdmin>(
   `${apiBaseUrl}/api/dashboardGeneralAdmin`,
   {
+    credentials: "include",
     headers: computed(() => ({
       Authorization: token.value ? `Bearer ${token.value}` : "",
     })),

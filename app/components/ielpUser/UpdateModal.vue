@@ -2,6 +2,9 @@
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 
+const apiBaseUrl = useApiBaseUrl();
+const { apiFetch } = useApiFetch();
+
 defineOptions({
   name: "IELPUserUpdateModal",
 });
@@ -103,9 +106,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     };
 
     // Call API to update IELPUser
-    await $fetch(`/api/ielpUser`, {
+    await apiFetch(`${apiBaseUrl}/api/ielpUser/${props.ielpUser.id}`, {
       method: "PUT",
-      body: { ...body, id: props.ielpUser.id },
+      body,
     });
 
     toast.add({

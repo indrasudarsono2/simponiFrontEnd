@@ -15,6 +15,7 @@ interface User {
   nik: string;
   licenseUserId: string;
   name: string;
+  authenticationType: "AIRNAV_SSO" | "LOCAL" | null;
   branch: Branch;
 }
 

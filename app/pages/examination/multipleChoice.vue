@@ -282,7 +282,7 @@ const getGroupLabel = (groupId?: number | string): string => {
     (group) => String(group.id) === String(groupId),
   );
   return index >= 0
-    ? getGroupDisplayName(multipleChoiceGroups.value[index], index)
+    ? getGroupDisplayName(multipleChoiceGroups.value[index]!, index)
     : "Group";
 };
 

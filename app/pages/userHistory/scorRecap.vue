@@ -51,6 +51,7 @@ const { token } = useAuth();
 const { data, status, error, refresh } = await useFetch<
   ScoreUserResponseItem[]
 >(`${apiBaseUrl}/api/scoreUser`, {
+  credentials: "include",
   headers: {
     Authorization: token.value ? `Bearer ${token.value}` : "",
   },

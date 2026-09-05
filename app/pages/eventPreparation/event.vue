@@ -114,7 +114,7 @@ const branchUnitId = computed(
   () => data.value?.session?.[0]?.branchUnit?.id || 0,
 );
 
-// Available sectors from API response (branchUnit.sectors) - transform to have 'name' property
+// Available sectors from API response (branchUnit.sectors).
 const availableSectors = computed(() => {
   if (!data.value?.session || data.value.session.length === 0) return [];
   const sectors = data.value.session[0]?.branchUnit?.sectors || [];
@@ -633,8 +633,8 @@ function handleModalClose() {
       <div class="flex flex-wrap gap-4 mb-4">
         <USelect
           v-model="selectedSectorId"
-          :items="[{ id: null, sector: 'All Sectors' }, ...availableSectors]"
-          label-key="sector"
+          :items="[{ id: null, name: 'All Sectors' }, ...availableSectors]"
+          label-key="name"
           value-key="id"
           placeholder="Filter by sector"
           class="max-w-xs"

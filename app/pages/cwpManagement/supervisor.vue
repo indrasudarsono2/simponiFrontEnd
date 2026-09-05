@@ -159,12 +159,7 @@ function handleChanged() {
         variant="soft"
         icon="i-lucide-triangle-alert"
         title="Failed to load CWP supervisor"
-        :description="
-          error.data?.message ||
-          error.statusMessage ||
-          error.message ||
-          'Please restart the backend server and try again.'
-        "
+        :description="getFetchErrorMessage(error, 'Please restart the backend server and try again.')"
       />
 
       <UAlert

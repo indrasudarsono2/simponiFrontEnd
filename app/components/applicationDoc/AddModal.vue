@@ -258,7 +258,7 @@ const atsName = ref("");
 const address = ref("");
 // Dynamic rating selections and control hours based on ratings
 const selectedRatings = ref<Record<string, boolean>>({});
-const controlHours = ref<Record<string, number | null>>({});
+const controlHours = ref<Record<string, number | undefined>>({});
 const selectedCheckerGroups = ref<Record<string, string[]>>({});
 
 const selectedEvent = computed(() => {
@@ -938,7 +938,7 @@ async function onSubmit() {
                   >4. Tempat Lahir</label
                 >
                 <UInput
-                  :model-value="userData.placeOfBirth"
+                  :model-value="userData.placeOfBirth ?? undefined"
                   disabled
                   class="w-full"
                 />
@@ -948,7 +948,7 @@ async function onSubmit() {
                   >5. Residential Address</label
                 >
                 <UInput
-                  :model-value="userData.personalAddress"
+                  :model-value="userData.personalAddress ?? undefined"
                   disabled
                   class="w-full"
                 />
@@ -958,7 +958,7 @@ async function onSubmit() {
                   >6. Kebangsaan</label
                 >
                 <UInput
-                  :model-value="userData.nationality"
+                  :model-value="userData.nationality ?? undefined"
                   disabled
                   class="w-full"
                 />
@@ -968,7 +968,7 @@ async function onSubmit() {
                   >7. No Handphone</label
                 >
                 <UInput
-                  :model-value="userData.phoneNumber"
+                  :model-value="userData.phoneNumber ?? undefined"
                   disabled
                   class="w-full"
                 />

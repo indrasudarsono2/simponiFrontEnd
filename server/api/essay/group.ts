@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     const essayMap = new Map();
 
     // First, initialize all essays from essay.json
-    essayData.forEach((essay: any) => {
+    essayData.essay.forEach((essay: any) => {
       essayMap.set(Number(essay.id), {
         id: Number(essay.id),
         question: essay.question,

@@ -5,7 +5,7 @@ import type { Period, Range } from "~/types";
 const props = defineProps<{
   period: Period;
   range: Range;
-  dashboardData: any;
+  dashboardData?: any;
   refreshDashboardData?: () => Promise<void>;
 }>();
 const { token: authToken } = useAuth();

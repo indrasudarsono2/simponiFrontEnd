@@ -6,9 +6,6 @@ const { token } = useAuth();
 
 const schema = z.object({
   sector: z.string().min(2, "Sector name must be at least 2 characters"),
-  unit: z.string().min(2, "Branch unit name must be at least 2 characters"),
-  branchUnitId: z.number().min(1, "Please select a region"),
-  branch: z.string().min(2, "Branch unit name must be at least 2 characters"),
 });
 
 const open = ref(false);
@@ -18,47 +15,7 @@ type Schema = z.output<typeof schema>;
 
 const state = reactive<Partial<Schema>>({
   sector: undefined,
-  unit: undefined,
-  branchUnitId: undefined,
-  branch: undefined,
 });
-
-// Define Branch interface
-interface BranchUnit {
-  id: number;
-  unit: string;
-  branch: {
-    id: number;
-    branch: string;
-  };
-  createdAt?: string;
-}
-
-// Fetch branch data (returns single object)
-const { data: branchUnitData } = await useFetch<BranchUnit>(
-  `${apiBaseUrl}/api/sectorGetBranchUnit`,
-  {
-    headers: {
-      Authorization: token.value ? `Bearer ${token.value}` : "",
-    },
-  },
-);
-
-// Auto-populate branch field when modal opens
-watch(
-  () => open.value,
-  (isOpen) => {
-    if (isOpen && branchUnitData.value) {
-      const branchUnit = branchUnitData.value;
-      if (branchUnit.branch && branchUnit.id) {
-        state.unit = branchUnit.unit;
-        state.branchUnitId = branchUnit.id;
-        state.branch = branchUnit.branch.branch;
-      }
-    }
-  },
-  { immediate: true },
-);
 
 const toast = useToast();
 
@@ -66,13 +23,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    // Call API to create sector - always for ACC branch unit
     await $fetch(`${apiBaseUrl}/api/sectors`, {
       method: "POST",
       body: {
         sector: event.data.sector,
-        unit: event.data.unit,
-        branchUnitId: state.branchUnitId,
       },
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -81,7 +35,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     toast.add({
       title: "Success",
-      description: `Sector "${event.data.sector}" has been created successfully in ${state.unit}`,
+      description: `Sector "${event.data.sector}" has been created successfully`,
       color: "success",
     });
 
@@ -115,7 +69,7 @@ const emit = defineEmits<{
   <UModal
     v-model:open="open"
     title="Add New Sector"
-    description="Create a new sector in ACC (JAKARTA)"
+    description="Create a new sector for your branch unit"
   >
     <UButton label="Add Sector" icon="i-lucide-plus" color="primary" />
 
@@ -136,36 +90,6 @@ const emit = defineEmits<{
             v-model="state.sector"
             class="w-full"
             placeholder="e.g., WEST"
-          />
-        </UFormField>
-
-        <!-- Branch is fixed to JAKARTA for ACC Branch Unit Admin -->
-        <UFormField label="Branch" name="branch">
-          <UInput
-            :model-value="state.branch"
-            class="w-full"
-            disabled
-            color="neutral"
-            variant="subtle"
-          />
-        </UFormField>
-
-        <!-- Branch Unit is fixed to ACC for Branch Unit Admin -->
-        <UFormField label="Branch Unit" name="branchUnit">
-          <UInput
-            :model-value="state.unit"
-            class="w-full"
-            disabled
-            color="neutral"
-            variant="subtle"
-          />
-          <UInput
-            :model-value="state.branchUnitId"
-            class="w-full"
-            disabled
-            hidden
-            color="neutral"
-            variant="subtle"
           />
         </UFormField>
 

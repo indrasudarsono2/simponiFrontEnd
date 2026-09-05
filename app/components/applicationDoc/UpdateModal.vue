@@ -427,7 +427,7 @@ const atsName = ref("");
 const address = ref("");
 // Dynamic rating selections - key is rating string (e.g., "ACP", "ACS", "APP")
 const selectedRatings = ref<Record<string, boolean>>({});
-const ratingControlHours = ref<Record<string, number | null>>({});
+const ratingControlHours = ref<Record<string, number | undefined>>({});
 const selectedCheckerGroups = ref<Record<string, string[]>>({});
 
 const selectedEvent = computed(() => {
@@ -659,7 +659,7 @@ watch(
         const ratingCode = appRating.rating.rating; // e.g., "APP", "ACP", "ACS"
         selectedRatings.value[ratingCode] = true;
         ratingControlHours.value[ratingCode] =
-          Number(appRating.controlHour) || null;
+          Number(appRating.controlHour) || undefined;
         const checkerRaw = appRating.checkerGroupId;
         if (Array.isArray(checkerRaw)) {
           selectedCheckerGroups.value[ratingCode] = checkerRaw.map((id) =>
@@ -1273,7 +1273,7 @@ async function onSubmit() {
                   >4. Tempat Lahir</label
                 >
                 <UInput
-                  :model-value="userData.placeOfBirth"
+                  :model-value="userData.placeOfBirth ?? undefined"
                   disabled
                   class="w-full"
                 />
@@ -1283,7 +1283,7 @@ async function onSubmit() {
                   >5. Alamat Tinggal</label
                 >
                 <UInput
-                  :model-value="userData.personalAddress"
+                  :model-value="userData.personalAddress ?? undefined"
                   disabled
                   class="w-full"
                 />
@@ -1293,7 +1293,7 @@ async function onSubmit() {
                   >6. Kebangsaan</label
                 >
                 <UInput
-                  :model-value="userData.nationality"
+                  :model-value="userData.nationality ?? undefined"
                   disabled
                   class="w-full"
                 />
@@ -1303,7 +1303,7 @@ async function onSubmit() {
                   >7. No Handphone</label
                 >
                 <UInput
-                  :model-value="userData.phoneNumber"
+                  :model-value="userData.phoneNumber ?? undefined"
                   disabled
                   class="w-full"
                 />

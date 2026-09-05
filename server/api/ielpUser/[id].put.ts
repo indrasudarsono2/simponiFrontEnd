@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     if (!part.name) continue;
 
     if (part.filename && part.data) {
-      const blob = new Blob([part.data], {
+      const blob = new Blob([Uint8Array.from(part.data)], {
         type: part.type || "application/octet-stream",
       });
       formData.append(part.name, blob, part.filename);

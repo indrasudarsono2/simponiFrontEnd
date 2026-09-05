@@ -160,6 +160,7 @@ let submitResultTimer: ReturnType<typeof setInterval> | null = null;
 const { data, status, error, refresh } = await useFetch<ExaminationResponse>(
   `${apiBaseUrl}/api/examination`,
   {
+    credentials: "include",
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
     },
@@ -400,6 +401,7 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
           `${apiBaseUrl}/api/examinationMultipleChoice`,
           {
             method: "POST",
+            credentials: "include",
             headers: {
               Authorization: token.value ? `Bearer ${token.value}` : "",
             },
@@ -430,6 +432,7 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
       `${apiBaseUrl}/api/examinationEssay`,
       {
         method: "POST",
+        credentials: "include",
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
         },

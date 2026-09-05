@@ -119,12 +119,7 @@ function handleRefresh() {
         variant="soft"
         icon="i-lucide-triangle-alert"
         title="Failed to load user checker data"
-        :description="
-          error.data?.message ||
-          error.statusMessage ||
-          error.message ||
-          'Please restart the backend server and try again.'
-        "
+        :description="getFetchErrorMessage(error, 'Please restart the backend server and try again.')"
       />
 
       <div class="overflow-x-auto rounded-lg border border-default">

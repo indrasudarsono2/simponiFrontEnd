@@ -22,8 +22,27 @@ export function getSidebarLinksFromBackend(
   const validModules = (found?.modules ?? ["dashboard"]).filter(
     (module): module is ModuleKey => module in MODULE_TO_ITEM,
   );
-  const orderedModules = validModules.filter((module) => module.startsWith("dashboard"))
-    .concat(validModules.filter((module) => !module.startsWith("dashboard")));
+  const dashboardModules = validModules.filter((module) =>
+    module.startsWith("dashboard"),
+  );
+  const regularModules = validModules.filter(
+    (module) => !module.startsWith("dashboard"),
+  );
+
+  const sectorIndex = regularModules.indexOf("sectorManagement");
+  const ratingIndexes = ["ratingManagement", "ratingCheckerAdmin"]
+    .map((module) => regularModules.indexOf(module as ModuleKey))
+    .filter((index) => index >= 0);
+  const firstRatingIndex = ratingIndexes.length
+    ? Math.min(...ratingIndexes)
+    : -1;
+
+  if (sectorIndex >= 0 && firstRatingIndex >= 0 && sectorIndex > firstRatingIndex) {
+    const [sectorModule] = regularModules.splice(sectorIndex, 1);
+    if (sectorModule) regularModules.splice(firstRatingIndex, 0, sectorModule);
+  }
+
+  const orderedModules = dashboardModules.concat(regularModules);
   const mainLinks = orderedModules.map((module) => MODULE_TO_ITEM[module]);
 
   return [mainLinks, bottomLinks];

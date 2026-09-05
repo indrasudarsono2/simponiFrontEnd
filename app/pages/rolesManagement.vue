@@ -122,12 +122,7 @@ function handleUpdated() {
         variant="soft"
         icon="i-lucide-triangle-alert"
         title="Failed to load roles"
-        :description="
-          error.data?.message ||
-          error.statusMessage ||
-          error.message ||
-          'Please restart the backend server and try again.'
-        "
+        :description="getFetchErrorMessage(error, 'Please restart the backend server and try again.')"
       />
 
       <div class="overflow-x-auto rounded-lg border border-default">

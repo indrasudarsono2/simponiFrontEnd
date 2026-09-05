@@ -15,6 +15,7 @@ export const useApiFetch = () => {
 
     return $fetch(requestUrl, {
       ...options,
+      credentials: "include",
       headers,
     });
   };

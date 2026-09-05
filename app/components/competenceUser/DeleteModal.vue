@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
+const { apiFetch } = useApiFetch();
 defineOptions({
   name: "CompetenceUserDeleteModal",
 });
@@ -64,7 +65,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(
+    await apiFetch(
       `${apiBaseUrl}/api/competenceUser/${props.competenceUser.id}`,
       {
         method: "DELETE",

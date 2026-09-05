@@ -13,16 +13,29 @@ const productionSecurityHeaders = import.meta.env.PROD
 export default defineNuxtConfig({
   modules: ["@nuxt/eslint", "@nuxt/ui", "@vueuse/nuxt", "@pinia/nuxt"],
 
+  experimental: {
+    defaults: {
+      // Nuxt applies the complete ofetch option set at runtime, although its
+      // config type currently exposes only retry-related useFetch defaults.
+      useFetch: {
+        credentials: "include",
+      } as any,
+    },
+  },
+
   runtimeConfig: {
+    apiOrigin: "http://127.0.0.1:44441",
     ipBackEnd: "localhost:44441",
     public: {
-      apiBaseUrl: "http://localhost:44441",
+      apiBaseUrl: "/backend",
       screenMonitoringEnabled: true,
+      // Available modes: "airnav", "local", or "hybrid" (both choices).
+      authProvider: "airnav",
     },
   },
 
   devtools: {
-    enabled: true,
+    enabled: import.meta.env.DEV,
   },
 
   css: ["~/assets/css/main.css"],

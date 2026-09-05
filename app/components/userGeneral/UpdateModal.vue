@@ -12,6 +12,7 @@ const props = defineProps<{
     nik: string;
     licenseUserId: string;
     name: string;
+    authenticationType: "AIRNAV_SSO" | "LOCAL" | null;
     branch: {
       id: number;
       branch: string;
@@ -33,6 +34,7 @@ const schema = z.object({
   nik: z.string().min(8, "NIK must be at least 8 characters"),
   licenseUserId: z.string().min(1, "License Number is required"),
   branchId: z.string().min(1, "Please select a branch"),
+  authenticationType: z.enum(["AIRNAV_SSO", "LOCAL"]),
 });
 
 type Schema = z.output<typeof schema>;
@@ -42,6 +44,7 @@ const state = reactive<Partial<Schema>>({
   nik: undefined,
   licenseUserId: undefined,
   branchId: undefined,
+  authenticationType: undefined,
 });
 
 const toast = useToast();
@@ -65,11 +68,13 @@ watch(
       state.nik = newUser.nik;
       state.licenseUserId = newUser.licenseUserId;
       state.branchId = String(newUser.branch?.id);
+      state.authenticationType = newUser.authenticationType || undefined;
     } else {
       state.name = undefined;
       state.nik = undefined;
       state.licenseUserId = undefined;
       state.branchId = undefined;
+      state.authenticationType = undefined;
     }
   },
   { immediate: true },
@@ -99,6 +104,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         nik: event.data.nik,
         licenseUserId: event.data.licenseUserId,
         branchId: parseInt(event.data.branchId),
+        authenticationType: event.data.authenticationType,
       },
     });
 
@@ -137,6 +143,19 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             v-model="state.branchId"
             :items="branchOptions"
             placeholder="Select branch"
+            class="w-full"
+          />
+        </UFormField>
+
+        <!-- NIK -->
+        <UFormField label="Sign-in Method" name="authenticationType" required>
+          <USelect
+            v-model="state.authenticationType"
+            :items="[
+              { value: 'AIRNAV_SSO', label: 'AirNav SSO' },
+              { value: 'LOCAL', label: 'Non-AirNav' },
+            ]"
+            placeholder="Select sign-in method"
             class="w-full"
           />
         </UFormField>

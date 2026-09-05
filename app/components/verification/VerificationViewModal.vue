@@ -43,7 +43,7 @@ const ratingsList = computed(() => {
   <UModal
     :model-value="modelValue"
     @update:model-value="$emit('update:modelValue', $event)"
-    :ui="{ width: 'max-w-6xl' }"
+    :ui="{ content: 'max-w-6xl' }"
   >
     <template #header>
       <div class="flex items-center justify-between w-full">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
+const { apiFetch } = useApiFetch();
 
 interface Logbook {
   id: number;
@@ -46,7 +47,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete logbook
-    await $fetch(`${apiBaseUrl}/api/logbookUser/${props.logbook.id}`, {
+    await apiFetch(`${apiBaseUrl}/api/logbookUser/${props.logbook.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

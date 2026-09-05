@@ -37,12 +37,6 @@ const state = reactive<Partial<Schema>>({
   sector: undefined,
 });
 
-// Fixed context for ACC Branch Unit Admin
-const ACC_BRANCH_UNIT_ID = 1;
-const ACC_BRANCH_UNIT_NAME = "ACC";
-const JAKARTA_BRANCH_ID = 1;
-const JAKARTA_BRANCH_NAME = "JAKARTA";
-
 // Watch for sector prop changes to populate form
 watch(
   () => props.sector,
@@ -71,13 +65,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    // Call API to update sector - always for ACC branch unit
     await $fetch(`${apiBaseUrl}/api/sectors/${props.sector.id}`, {
       method: "PUT",
       body: {
         sector: event.data.sector,
-        branchId: JAKARTA_BRANCH_ID,
-        branchUnitId: ACC_BRANCH_UNIT_ID,
       },
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -138,28 +129,6 @@ const emit = defineEmits<{
             v-model="state.sector"
             class="w-full"
             placeholder="e.g., WEST"
-          />
-        </UFormField>
-
-        <!-- Branch is fixed to JAKARTA for ACC Branch Unit Admin -->
-        <UFormField label="Branch" name="branch">
-          <UInput
-            :model-value="JAKARTA_BRANCH_NAME"
-            class="w-full"
-            disabled
-            color="neutral"
-            variant="subtle"
-          />
-        </UFormField>
-
-        <!-- Branch Unit is fixed to ACC for Branch Unit Admin -->
-        <UFormField label="Branch Unit" name="branchUnit">
-          <UInput
-            :model-value="ACC_BRANCH_UNIT_NAME"
-            class="w-full"
-            disabled
-            color="neutral"
-            variant="subtle"
           />
         </UFormField>
 

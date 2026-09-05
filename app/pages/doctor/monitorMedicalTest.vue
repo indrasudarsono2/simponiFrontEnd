@@ -56,7 +56,7 @@ const pagination = ref({
 });
 
 const medicalCheckToVerify = ref<MedicalCheck | null>(null);
-const selectedVerification = ref<{ value: boolean; label: string } | null>(null);
+const selectedVerification = ref<{ value: boolean; label: string }>();
 const unNormalCondition = ref("");
 const loading = ref(false);
 
@@ -155,14 +155,14 @@ function openVerifyModal(medicalCheck: MedicalCheck) {
   selectedVerification.value =
     medicalCheck.doctor && typeof medicalCheck.isFit === "boolean"
       ? verificationOptions.find((option) => option.value === medicalCheck.isFit) ||
-        null
-      : null;
+        undefined
+      : undefined;
   unNormalCondition.value = medicalCheck.unNormalCondition || "";
 }
 
 function closeVerifyModal() {
   medicalCheckToVerify.value = null;
-  selectedVerification.value = null;
+  selectedVerification.value = undefined;
   unNormalCondition.value = "";
 }
 

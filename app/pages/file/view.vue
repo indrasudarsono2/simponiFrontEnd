@@ -19,16 +19,26 @@ const fileUrl = computed(() => {
   const url = route.query.url as string;
   if (!url) return null;
 
-  // If URL is relative, prepend backend IP
+  const normalizedApiBaseUrl = apiBaseUrl.replace(/\/$/, "");
+
+  // Paths produced by the same-origin backend gateway are already complete.
+  if (
+    url === normalizedApiBaseUrl ||
+    url.startsWith(`${normalizedApiBaseUrl}/`)
+  ) {
+    return url;
+  }
+
+  // Legacy backend-relative paths still need the gateway prefix.
   if (url.startsWith("/")) {
-    return `${apiBaseUrl}${url}`;
+    return `${normalizedApiBaseUrl}${url}`;
   }
   return url;
 });
 
 const fileName = computed(() => {
   if (!fileUrl.value) return "Unknown File";
-  const url = new URL(fileUrl.value);
+  const url = new URL(fileUrl.value, "http://localhost");
   const pathname = url.pathname;
   return pathname.split("/").pop() || "File";
 });

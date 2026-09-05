@@ -6,8 +6,20 @@ definePageMeta({
 })
 
 const { loginWithApi, isAuthenticated, getRoleNames } = useAuth()
+const config = useRuntimeConfig()
 const toast = useToast()
 const router = useRouter()
+const route = useRoute()
+const apiBaseUrl = String(config.public.apiBaseUrl || '').replace(/\/+$/, '')
+const authProvider = computed(() => String(config.public.authProvider || 'airnav').toLowerCase())
+const showsAirnavSso = computed(() => ['airnav', 'hybrid'].includes(authProvider.value))
+const showsLocalLogin = computed(() => ['local', 'hybrid'].includes(authProvider.value))
+const loginDescription = computed(() => {
+  if (authProvider.value === 'hybrid') return 'AirNav users sign in with SSO. Non-AirNav users use their PERFORMA account.'
+  return showsAirnavSso.value
+    ? 'Continue securely using AirNav AUTH.'
+    : 'Sign in using your e-NIK and password.'
+})
 
 const form = reactive({
   nik: '',
@@ -15,6 +27,10 @@ const form = reactive({
 })
 
 const isSubmitting = ref(false)
+
+const startAirnavLogin = () => {
+  window.location.assign(`${apiBaseUrl}/api/auth/airnav/start`)
+}
 
 const validateNik = (nik: string) => /^[A-Za-z0-9]{8}$/.test(nik.trim())
 
@@ -78,6 +94,15 @@ onMounted(() => {
   if (isAuthenticated.value) {
     router.push(getDashboardRoute(getRoleNames()))
   }
+
+  const authError = typeof route.query.auth_error === 'string' ? route.query.auth_error : ''
+  if (authError) {
+    toast.add({
+      title: 'AirNav sign-in failed',
+      description: authError,
+      color: 'error'
+    })
+  }
 })
 </script>
 
@@ -100,12 +125,36 @@ onMounted(() => {
               Application Login
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-              Sign in using your e-NIK and password
+              {{ loginDescription }}
             </p>
           </div>
         </template>
 
-        <form class="space-y-5" method="post" action="/login" @submit.prevent="handleLogin">
+        <div v-if="showsAirnavSso" class="space-y-5">
+          <UButton
+            block
+            size="xl"
+            icon="i-lucide-log-in"
+            @click="startAirnavLogin"
+          >
+            Sign in with AirNav
+          </UButton>
+
+          <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+            You will be redirected to AirNav AUTH to enter your credentials.
+          </p>
+        </div>
+
+        <div v-if="showsAirnavSso && showsLocalLogin" class="my-6 flex items-center gap-3 text-xs text-gray-400">
+          <div class="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+          <span>OR</span>
+          <div class="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+        </div>
+
+        <form v-if="showsLocalLogin" class="space-y-5" method="post" action="/login" @submit.prevent="handleLogin">
+          <p v-if="showsAirnavSso" class="text-center text-sm font-medium text-gray-700 dark:text-gray-200">
+            Non-AirNav Sign In
+          </p>
           <UFormField label="e-NIK" name="nik" required>
             <UInput
               v-model="form.nik"
@@ -140,6 +189,14 @@ onMounted(() => {
           >
             Sign In
           </UButton>
+          <div class="text-center">
+            <UButton
+              to="/forgot-password"
+              label="Forgot Password?"
+              color="neutral"
+              variant="link"
+            />
+          </div>
         </form>
       </UCard>
     </div>

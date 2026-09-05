@@ -56,6 +56,7 @@ interface CheckerStatisticAnsweredResponse {
 }
 
 const { token } = useAuth();
+const csrfToken = useCookie<string | null>("csrf_token");
 const toast = useToast();
 const df = new DateFormatter("en-US", { dateStyle: "medium" });
 
@@ -103,6 +104,7 @@ const { data, status, error, refresh } =
   await useFetch<IndividualOptionsResponse>(
     `${apiBaseUrl}/api/pfcScore/individual`,
     {
+      credentials: "include",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
       },
@@ -152,6 +154,7 @@ watch(selectedBranchId, async (branchId) => {
     const response = await $fetch<IndividualOptionsResponse>(
       `${apiBaseUrl}/api/pfcScore/individual`,
       {
+        credentials: "include",
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
         query: { branchId },
       },
@@ -404,8 +407,12 @@ async function handleSubmit() {
       `${apiBaseUrl}/api/pfcScore/individual`,
       {
         method: "POST",
+        credentials: "include",
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
+          ...(csrfToken.value
+            ? { "X-CSRF-Token": csrfToken.value }
+            : {}),
         },
         body: {
           branchId: selectedBranchId.value,

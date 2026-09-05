@@ -2,6 +2,8 @@
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 const { apiFetch } = useApiFetch();
+const { authUser } = useAuth();
+const canSyncEchain = computed(() => authUser.value?.authenticationType !== "LOCAL");
 const schema = z.object({
   note: z.string().min(2, "Note must be at least 2 characters"),
   licenseExpiredDate: z.string().min(1, "License expired date is required"),
@@ -183,7 +185,7 @@ const emit = defineEmits<{
         @submit="onSubmit"
       >
         <!-- Sync Button -->
-        <div class="flex items-center gap-2 p-3 bg-elevated/50 rounded-lg">
+        <div v-if="canSyncEchain" class="flex items-center gap-2 p-3 bg-elevated/50 rounded-lg">
           <UIcon name="i-lucide-refresh-cw" class="text-primary" />
           <div class="flex-1">
             <p class="text-sm font-medium">Sync from External System</p>

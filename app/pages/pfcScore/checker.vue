@@ -65,6 +65,7 @@ const assignedRatingCount = computed(() =>
 async function loadBranches() {
   try {
     const response = await $fetch<CheckerResponse>(`${apiBaseUrl}/api/pfcScore/checker`, {
+      credentials: 'include',
       headers: { Authorization: token.value ? `Bearer ${token.value}` : '' }
     })
     branches.value = response.branches || []
@@ -83,6 +84,7 @@ async function loadCheckers() {
   loading.value = true
   try {
     const response = await $fetch<CheckerResponse>(`${apiBaseUrl}/api/pfcScore/checker`, {
+      credentials: 'include',
       headers: { Authorization: token.value ? `Bearer ${token.value}` : '' },
       query: {
         branchId: selectedBranchId.value === ALL_BRANCHES_ID

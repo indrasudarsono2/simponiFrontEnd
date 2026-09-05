@@ -58,6 +58,7 @@ const pagination = ref({
 const { data, status, refresh } = await useFetch<License[]>(
   `${apiBaseUrl}/api/licenseUser`,
   {
+    credentials: "include",
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
     },

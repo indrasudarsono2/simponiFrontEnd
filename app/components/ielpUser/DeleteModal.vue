@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const apiBaseUrl = useApiBaseUrl();
+const { apiFetch } = useApiFetch();
 defineOptions({
   name: "IELPUserDeleteModal",
 });
@@ -52,7 +54,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete IELPUser
-    await $fetch(`/api/ielpUser?id=${props.ielpUser.id}`, {
+    await apiFetch(`${apiBaseUrl}/api/ielpUser/${props.ielpUser.id}`, {
       method: "DELETE",
     });
 

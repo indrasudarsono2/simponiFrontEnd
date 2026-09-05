@@ -86,6 +86,26 @@ const cwpOptions = computed(() =>
   })),
 );
 
+function getCwpOptionsForRow(index: number) {
+  const selectedByOtherRows = new Set(
+    state.cwps
+      .filter((_, rowIndex) => rowIndex !== index)
+      .map((row) => row.cwpId)
+      .filter(Boolean),
+  );
+
+  return cwpOptions.value.filter(
+    (option) =>
+      option.value === state.cwps[index]?.cwpId ||
+      !selectedByOtherRows.has(option.value),
+  );
+}
+
+const canAddCwp = computed(() => {
+  const selectedCwpIds = new Set(state.cwps.map((row) => row.cwpId).filter(Boolean));
+  return cwpOptions.value.some((option) => !selectedCwpIds.has(option.value));
+});
+
 async function loadOptions() {
   optionsLoading.value = true;
 
@@ -93,6 +113,9 @@ async function loadOptions() {
     options.value = await $fetch<OptionsResponse>(
       `${apiBaseUrl}/api/cwpSectors/options`,
       {
+        query: {
+          sectorId: props.sector?.id,
+        },
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
         },
@@ -123,6 +146,7 @@ function resetForm(sector: Sector | null) {
 }
 
 function addCwpRow() {
+  if (!canAddCwp.value) return;
   state.cwps.push({
     cwpId: 0,
   });
@@ -264,7 +288,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               <USelectMenu
                 v-model="cwpRow.cwpId"
                 class="w-full"
-                :items="cwpOptions"
+                :items="getCwpOptionsForRow(index)"
                 value-key="value"
                 label-key="label"
                 searchable
@@ -293,7 +317,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           icon="i-lucide-plus"
           color="neutral"
           variant="outline"
-          :disabled="loading || cwpOptions.length === 0"
+          :disabled="loading || optionsLoading || !canAddCwp"
           @click="addCwpRow"
         />
 

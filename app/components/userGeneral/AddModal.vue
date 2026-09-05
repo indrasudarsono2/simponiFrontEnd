@@ -23,6 +23,7 @@ const schema = z.object({
   nik: z.string().min(8, "NIK must be at least 8 characters"),
   licenseUserId: z.string().min(1, "License Number is required"),
   branchId: z.string().min(1, "Please select a branch"),
+  authenticationType: z.enum(["AIRNAV_SSO", "LOCAL"]),
 });
 
 const open = ref(false);
@@ -34,6 +35,7 @@ const state = reactive<Partial<Schema>>({
   nik: undefined,
   licenseUserId: undefined,
   branchId: undefined,
+  authenticationType: "LOCAL",
 });
 
 const toast = useToast();
@@ -63,6 +65,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         nik: event.data.nik,
         licenseUserId: event.data.licenseUserId,
         branchId: parseInt(event.data.branchId),
+        authenticationType: event.data.authenticationType,
       },
     });
 
@@ -80,6 +83,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.nik = undefined;
     state.licenseUserId = undefined;
     state.branchId = undefined;
+    state.authenticationType = "LOCAL";
   } catch (error: any) {
     console.error("Add user error:", error);
 
@@ -129,6 +133,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               v-model="state.branchId"
               :items="branchOptions"
               placeholder="Select branch"
+              class="w-full"
+            />
+          </UFormField>
+
+          <!-- NIK -->
+          <UFormField label="Sign-in Method" name="authenticationType" required>
+            <USelect
+              v-model="state.authenticationType"
+              :items="[
+                { value: 'AIRNAV_SSO', label: 'AirNav SSO' },
+                { value: 'LOCAL', label: 'Non-AirNav' },
+              ]"
               class="w-full"
             />
           </UFormField>

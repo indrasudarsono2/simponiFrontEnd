@@ -33,6 +33,7 @@ interface CheckerHistoryPracticalTestItem {
 interface CheckerHistoryAppRatingItem {
   id?: number;
   rating?: {
+    id?: number;
     rating?: string | null;
   } | null;
   status?: {
@@ -40,6 +41,33 @@ interface CheckerHistoryAppRatingItem {
   } | null;
   finalScores?: Array<{
     finalScore?: number | null;
+    cwpSnapshots?: Array<{
+      cwpId: number;
+      cwpName?: string | null;
+      sectorName?: string | null;
+      frequencies?: Array<{
+        id: number;
+        frequency?: string | null;
+        isPrimary?: boolean | null;
+      }> | null;
+    }> | null;
+    event?: {
+      sector?: {
+        sector?: string | null;
+        sectorCwps?: Array<{
+          cwp?: {
+            id: number;
+            cwp?: string | null;
+            ratingId?: number | null;
+            cwpFrequencies?: Array<{
+              id: number;
+              frequency?: string | null;
+              isPrimary?: boolean | null;
+            }> | null;
+          } | null;
+        }> | null;
+      } | null;
+    } | null;
     status?: {
       status?: string | null;
     } | null;
@@ -108,6 +136,12 @@ interface CheckerHistoryRow {
   ielpFile: string | null;
   logbookFile: string | null;
   rating: string;
+  authorityCwps: Array<{
+    id: number;
+    name: string;
+    sector: string;
+    frequencies: Array<{ id: number; frequency: string; isPrimary: boolean }>;
+  }>;
   showRating: boolean;
   ratingRowSpan: number;
   remark: string;
@@ -129,6 +163,19 @@ const selectedEventIds = ref<number[]>([]);
 const resultLoading = ref(false);
 const resultData = ref<CheckerHistoryResultItem[] | null>(null);
 const selectedEventMeta = ref<CheckerHistorySearchResponse["event"] | null>(null);
+
+const isAuthorityModalOpen = ref(false);
+const selectedAuthority = ref<{
+  user: string;
+  applicationDoc: string;
+  rating: string;
+  cwps: Array<{
+    id: number;
+    name: string;
+    sector: string;
+    frequencies: Array<{ id: number; frequency: string; isPrimary: boolean }>;
+  }>;
+} | null>(null);
 
 const isFileModalOpen = ref(false);
 const selectedFilePath = ref<string | null>(null);
@@ -214,6 +261,82 @@ function getFinalScoreAt(
 ): string {
   const score = appRating?.finalScores?.[index]?.finalScore;
   return formatScore(score);
+}
+
+function getAuthorityCwps(appRating?: CheckerHistoryAppRatingItem | null) {
+  const ratingId = appRating?.rating?.id;
+  if (!ratingId) return [];
+
+  const authorities = new Map<
+    number,
+    {
+      id: number;
+      name: string;
+      sector: string;
+      frequencies: Array<{ id: number; frequency: string; isPrimary: boolean }>;
+    }
+  >();
+
+  const snapshots = (appRating?.finalScores || []).flatMap(
+    (finalScore) => finalScore.cwpSnapshots || [],
+  );
+  if (snapshots.length > 0) {
+    for (const snapshot of snapshots) {
+      if (!snapshot.cwpId) continue;
+      authorities.set(snapshot.cwpId, {
+        id: snapshot.cwpId,
+        name: snapshot.cwpName || `CWP ${snapshot.cwpId}`,
+        sector: snapshot.sectorName || "-",
+        frequencies: (snapshot.frequencies || []).map((item) => ({
+          id: item.id,
+          frequency: item.frequency || "-",
+          isPrimary: Boolean(item.isPrimary),
+        })),
+      });
+    }
+
+    return Array.from(authorities.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }
+
+  // Transitional fallback for a legacy score that could not be backfilled.
+  for (const finalScore of appRating?.finalScores || []) {
+    const sector = finalScore.event?.sector;
+    for (const sectorCwp of sector?.sectorCwps || []) {
+      const cwp = sectorCwp.cwp;
+      if (!cwp?.id || cwp.ratingId !== ratingId) continue;
+      authorities.set(cwp.id, {
+        id: cwp.id,
+        name: cwp.cwp || `CWP ${cwp.id}`,
+        sector: sector?.sector || "-",
+        frequencies: (cwp.cwpFrequencies || []).map((item) => ({
+          id: item.id,
+          frequency: item.frequency || "-",
+          isPrimary: Boolean(item.isPrimary),
+        })),
+      });
+    }
+  }
+
+  return Array.from(authorities.values()).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+}
+
+function openAuthorityModal(row: CheckerHistoryRow) {
+  selectedAuthority.value = {
+    user: row.name,
+    applicationDoc: row.applicationDocNumber,
+    rating: row.rating,
+    cwps: row.authorityCwps,
+  };
+  isAuthorityModalOpen.value = true;
+}
+
+function closeAuthorityModal() {
+  isAuthorityModalOpen.value = false;
+  selectedAuthority.value = null;
 }
 
 function getRatingRowCount(
@@ -305,6 +428,7 @@ const rows = computed<CheckerHistoryRow[]>(() => {
             ielpFile: doc.ielp?.file || null,
             logbookFile: doc.logbook?.file || null,
             rating: appRating.rating?.rating || "-",
+            authorityCwps: getAuthorityCwps(appRating),
             showRating: rowIndex === 0,
             ratingRowSpan,
             remark: getRatingRemark(appRating),
@@ -913,7 +1037,14 @@ ${row.showRemark ? `<td rowspan="${row.remarkRowSpan}" class="center">${escapeHt
                     class="px-3 py-2 border border-default align-middle text-center"
                     :rowspan="row.ratingRowSpan"
                   >
-                    {{ row.rating }}
+                    <UButton
+                      :label="row.rating"
+                      color="primary"
+                      variant="link"
+                      size="sm"
+                      :disabled="row.rating === '-'"
+                      @click="openAuthorityModal(row)"
+                    />
                   </td>
 
                   <td
@@ -949,6 +1080,70 @@ ${row.showRemark ? `<td rowspan="${row.remarkRowSpan}" class="center">${escapeHt
             </table>
           </div>
         </UCard>
+
+        <UModal
+          :open="isAuthorityModalOpen"
+          :title="`Authority CWP - ${selectedAuthority?.rating || ''}`"
+          description="CWP authority from the final score event sector"
+          :ui="{ content: 'max-w-lg' }"
+          @update:open="(value) => (!value ? closeAuthorityModal() : null)"
+        >
+          <template #body>
+            <div v-if="selectedAuthority" class="space-y-4">
+              <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                <dt class="text-muted">Name</dt>
+                <dd class="font-medium">{{ selectedAuthority.user }}</dd>
+                <dt class="text-muted">Application document</dt>
+                <dd class="font-medium">{{ selectedAuthority.applicationDoc }}</dd>
+                <dt class="text-muted">Rating</dt>
+                <dd class="font-medium">{{ selectedAuthority.rating }}</dd>
+              </dl>
+
+              <div
+                v-if="selectedAuthority.cwps.length === 0"
+                class="rounded-lg border border-default bg-muted/20 p-4 text-sm text-muted"
+              >
+                No CWP authority is configured for this rating in the examination sector.
+              </div>
+
+              <ul v-else class="divide-y divide-default rounded-lg border border-default">
+                <li
+                  v-for="cwp in selectedAuthority.cwps"
+                  :key="cwp.id"
+                  class="flex items-start justify-between gap-3 p-3"
+                >
+                  <div class="space-y-2">
+                    <span class="font-medium">{{ cwp.name }}</span>
+                    <div v-if="cwp.frequencies.length" class="flex flex-wrap gap-1.5">
+                      <UBadge
+                        v-for="frequency in cwp.frequencies"
+                        :key="frequency.id"
+                        :color="frequency.isPrimary ? 'success' : 'neutral'"
+                        variant="soft"
+                      >
+                        {{ frequency.frequency }}
+                        {{ frequency.isPrimary ? '(Primary)' : '(Secondary)' }}
+                      </UBadge>
+                    </div>
+                    <p v-else class="text-xs text-muted">No frequency configured</p>
+                  </div>
+                  <UBadge color="neutral" variant="outline">{{ cwp.sector }}</UBadge>
+                </li>
+              </ul>
+            </div>
+          </template>
+
+          <template #footer>
+            <div class="flex w-full justify-end">
+              <UButton
+                label="Close"
+                color="neutral"
+                variant="soft"
+                @click="closeAuthorityModal"
+              />
+            </div>
+          </template>
+        </UModal>
 
         <UModal
           :open="isFileModalOpen"

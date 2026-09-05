@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     for (const field of formData) {
       if (field.name === "file" && field.data) {
         // Create File from buffer for file upload
-        const blob = new Blob([field.data], {
+        const blob = new Blob([Uint8Array.from(field.data)], {
           type: field.type || "application/octet-stream",
         });
         const file = new File([blob], field.filename || "file", {

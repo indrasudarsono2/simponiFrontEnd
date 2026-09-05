@@ -1,6 +1,6 @@
 import type { ModuleKey } from "~/config/sidebarModules";
 
-export type RoleModulesRow = {
+export type DynamicRoleModulesRow = {
   role: string;
   modules: ModuleKey[];
 };
@@ -9,7 +9,7 @@ export function useDynamicRoleModules() {
   const { authUser, getRoleNames, getRoleModules, isAuthenticated } = useAuth();
 
   // Transform authUser roles to the format expected by sidebar
-  const roleModulesData = computed<RoleModulesRow[]>(() => {
+  const roleModulesData = computed<DynamicRoleModulesRow[]>(() => {
     if (!isAuthenticated.value || !authUser.value?.roles) {
       return [];
     }

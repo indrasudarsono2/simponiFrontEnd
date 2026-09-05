@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     const multipleChoiceMap = new Map();
 
     // First, initialize all multiple choice questions from multipleChoice.json
-    multipleChoiceData.forEach((mc: any) => {
+    multipleChoiceData.multipleChoice.forEach((mc: any) => {
       multipleChoiceMap.set(Number(mc.id), {
         id: Number(mc.id),
         question: mc.question,

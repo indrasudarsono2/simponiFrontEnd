@@ -134,7 +134,7 @@ const filteredQuestions = computed(() => {
   )
 })
 
-function stripHtml(value: string) {
+function stripHtml(value: string | null | undefined) {
   return String(value || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 

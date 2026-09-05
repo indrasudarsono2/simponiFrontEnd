@@ -15,6 +15,7 @@ export type AuthUser = {
   nik: string;
   name: string;
   email: string;
+  authenticationType: "AIRNAV_SSO" | "LOCAL" | null;
   roles: RoleData[];
 };
 
@@ -46,8 +47,9 @@ export const useAuth = (): UseAuthReturn => {
   const apiBaseUrl = String(config.public.apiBaseUrl).replace(/\/+$/, "");
   const secureCookies = import.meta.env.PROD;
 
-  if (import.meta.env.PROD && !apiBaseUrl.startsWith("https://")) {
-    throw new Error("NUXT_PUBLIC_API_BASE_URL must use HTTPS in production");
+  const isSameOriginPath = apiBaseUrl.startsWith("/");
+  if (import.meta.env.PROD && !isSameOriginPath && !apiBaseUrl.startsWith("https://")) {
+    throw new Error("NUXT_PUBLIC_API_BASE_URL must be same-origin or use HTTPS in production");
   }
 
   // Token cookie - expires in 3 hours

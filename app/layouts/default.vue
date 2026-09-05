@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from "@nuxt/ui";
+import type {
+  CommandPaletteGroup,
+  CommandPaletteItem,
+  NavigationMenuItem,
+} from "@nuxt/ui";
 import { useDynamicRoleModules } from "~/composables/useDynamicRoleModules";
 import { getSidebarLinksFromBackend } from "~/composables/sidebarLinks";
 
@@ -51,11 +55,16 @@ const links = computed<[NavigationMenuItem[], NavigationMenuItem[]]>(() => {
 });
 
 /** Search groups */
-const groups = computed(() => [
+const groups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => [
   {
     id: "links",
     label: "Go to",
-    items: links.value.flat(),
+    items: links.value.flat().map((item) => ({
+      id: String(item.label || item.to || "link"),
+      label: String(item.label || "Open"),
+      icon: item.icon,
+      to: item.to,
+    })),
   },
   {
     id: "code",

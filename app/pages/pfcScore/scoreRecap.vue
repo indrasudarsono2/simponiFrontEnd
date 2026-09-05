@@ -14,6 +14,8 @@ interface BranchOption {
 
 interface ScoreRecapRow {
   id: number;
+  appRatingId?: number | null;
+  hasEvidence?: boolean;
   scoreDate: string;
   branch?: BranchOption | null;
   user?: { nik?: string | null; name?: string | null } | null;
@@ -35,6 +37,12 @@ interface ScoreRecapRow {
     checker?: { nik?: string | null; name?: string | null } | null;
   }> | null;
   status?: string | null;
+}
+
+interface EvidenceItem {
+  id: number;
+  file?: string | null;
+  createdAt?: string | null;
 }
 
 interface ScoreRecapResponse {
@@ -67,9 +75,10 @@ function toDateInput(date: Date): string {
 }
 
 const today = new Date();
+const ALL_BRANCHES_ID = 0;
 const startDate = ref(toDateInput(new Date(today.getFullYear(), today.getMonth(), 1)));
 const endDate = ref(toDateInput(today));
-const selectedBranchId = ref<number | undefined>();
+const selectedBranchId = ref<number | undefined>(ALL_BRANCHES_ID);
 const selectedProfessionId = ref<number | undefined>();
 const selectedEventIds = ref<number[]>([]);
 const professions = ref<ProfessionOption[]>([]);
@@ -77,6 +86,9 @@ const events = ref<ScoreRecapEvent[]>([]);
 const professionsLoading = ref(false);
 const eventsLoading = ref(false);
 const loading = ref(false);
+const evidenceLoadingId = ref<number | null>(null);
+const isEvidenceModalOpen = ref(false);
+const evidenceItems = ref<EvidenceItem[]>([]);
 const reportError = ref("");
 const selectedStatus = ref<"SUCCESS" | "FAILED" | null>(null);
 let eventRequestId = 0;
@@ -109,13 +121,13 @@ const dateRange = computed({
 const { data, error: initialError } = await useFetch<ScoreRecapResponse>(
   `${apiBaseUrl}/api/pfcScore/scoreRecap`,
   {
+    credentials: "include",
     headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
   },
 );
 
 const branches = computed(() => data.value?.branches || []);
 const rows = computed(() => data.value?.rows || []);
-const ALL_BRANCHES_ID = 0;
 const isAllBranches = computed(() => selectedBranchId.value === ALL_BRANCHES_ID);
 const branchOptions = computed(() =>
   [
@@ -178,6 +190,51 @@ function statusColor(status?: string | null) {
   return "neutral";
 }
 
+function resolveEvidenceUrl(filePath?: string | null): string {
+  if (!filePath) return "";
+  if (/^https?:\/\//i.test(filePath)) return filePath;
+  return `${apiBaseUrl}${filePath}`;
+}
+
+function formatEvidenceTime(value?: string | null): string {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "medium",
+    timeZone: "Asia/Jakarta",
+  }).format(date);
+}
+
+async function openEvidence(row: ScoreRecapRow) {
+  if (!row.appRatingId || !row.hasEvidence) return;
+  evidenceLoadingId.value = row.appRatingId;
+  evidenceItems.value = [];
+  isEvidenceModalOpen.value = true;
+  try {
+    const response = await $fetch<EvidenceItem[] | EvidenceItem>(
+      `${apiBaseUrl}/api/scoreCheckerEvidance`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+        body: { appRatingId: row.appRatingId },
+      },
+    );
+    evidenceItems.value = Array.isArray(response) ? response : [response];
+  } catch (error: any) {
+    toast.add({
+      title: "Failed to load evidence",
+      description: error?.data?.message || error?.message,
+      color: "error",
+    });
+    isEvidenceModalOpen.value = false;
+  } finally {
+    evidenceLoadingId.value = null;
+  }
+}
+
 function toggleStatusFilter(status: "SUCCESS" | "FAILED") {
   selectedStatus.value = selectedStatus.value === status ? null : status;
 }
@@ -206,6 +263,7 @@ async function loadRecap() {
     data.value = await $fetch<ScoreRecapResponse>(
       `${apiBaseUrl}/api/pfcScore/scoreRecap`,
       {
+        credentials: "include",
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
         query: isAllBranches.value ? {
           mode: "scores",
@@ -246,6 +304,7 @@ async function loadEvents() {
     const response = await $fetch<ScoreRecapResponse>(
       `${apiBaseUrl}/api/pfcScore/scoreRecap`,
       {
+        credentials: "include",
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
         query: {
           mode: "events",
@@ -279,6 +338,7 @@ async function loadProfessions() {
     const response = await $fetch<ScoreRecapResponse>(
       `${apiBaseUrl}/api/pfcScore/scoreRecap`,
       {
+        credentials: "include",
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
         query: {
           mode: "professions",
@@ -295,7 +355,7 @@ async function loadProfessions() {
   }
 }
 
-watch(selectedBranchId, loadProfessions);
+watch(selectedBranchId, loadProfessions, { immediate: true });
 watch([startDate, endDate, selectedBranchId, selectedProfessionId], loadEvents);
 
 const errorMessage = computed(() => {
@@ -460,6 +520,7 @@ const errorMessage = computed(() => {
                   <th class="border border-default px-3 py-2 text-center">Theory</th>
                   <th class="border border-default px-3 py-2 text-center">Practical Scores and Checkers</th>
                   <th class="border border-default px-3 py-2 text-center">Status</th>
+                  <th class="border border-default px-3 py-2 text-center">Evidence</th>
                 </tr>
               </thead>
               <tbody>
@@ -512,9 +573,22 @@ const errorMessage = computed(() => {
                   <td class="border border-default px-3 py-2 text-center">
                     <UBadge :color="statusColor(row.status)" variant="soft">{{ row.status || '-' }}</UBadge>
                   </td>
+                  <td class="border border-default px-3 py-2 text-center">
+                    <UButton
+                      v-if="row.hasEvidence"
+                      icon="i-lucide-eye"
+                      color="primary"
+                      variant="soft"
+                      size="xs"
+                      :loading="evidenceLoadingId === row.appRatingId"
+                      aria-label="View evidence"
+                      @click="openEvidence(row)"
+                    />
+                    <span v-else>-</span>
+                  </td>
                 </tr>
                 <tr v-if="filteredRows.length === 0">
-                  <td colspan="13" class="border border-default px-3 py-8 text-center text-muted">
+                  <td colspan="14" class="border border-default px-3 py-8 text-center text-muted">
                     {{ selectedStatus
                       ? `No ${selectedStatus === 'SUCCESS' ? 'passed' : 'failed'} scores were found.`
                       : 'No scores were found for the selected period and branch.' }}
@@ -524,6 +598,29 @@ const errorMessage = computed(() => {
             </table>
           </div>
         </UCard>
+
+        <UModal v-model:open="isEvidenceModalOpen" title="Evidence" :ui="{ content: 'max-w-4xl w-full' }">
+          <template #body>
+            <div v-if="evidenceLoadingId" class="flex items-center justify-center gap-2 py-10 text-muted">
+              <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
+              Loading evidence...
+            </div>
+            <div v-else-if="evidenceItems.length" class="grid grid-cols-1 gap-3 md:grid-cols-2 max-h-[65vh] overflow-auto">
+              <a
+                v-for="item in evidenceItems"
+                :key="item.id"
+                :href="resolveEvidenceUrl(item.file)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="block rounded-lg border border-default bg-muted/20 p-2"
+              >
+                <img :src="resolveEvidenceUrl(item.file)" :alt="`Evidence ${item.id}`" class="h-56 w-full rounded-md object-cover" />
+                <p class="mt-2 text-xs text-muted">Time: {{ formatEvidenceTime(item.createdAt) }}</p>
+              </a>
+            </div>
+            <p v-else class="text-sm text-muted">No evidence data.</p>
+          </template>
+        </UModal>
       </div>
     </template>
   </UDashboardPanel>
