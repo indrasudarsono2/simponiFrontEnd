@@ -51,12 +51,27 @@ const schema = z.object({
   formFillingDate: z.string().min(1, "Filling date is required"),
   remarkDocId: z.coerce.number().min(1, "Remark is required"),
   briefingFile: z.instanceof(File, { message: "Briefing file is required" }),
+  recommendationFile: z.instanceof(File).optional(),
   passingGrade: z.coerce
     .number()
     .min(0)
     .max(100, "Passing grade must be between 0 and 100"),
   isPractical: z.boolean().default(false),
   isSimulator: z.boolean().default(false),
+}).superRefine((data, ctx) => {
+  const selectedRemark = props.remarkDocs.find(
+    (item) => Number(item.id) === Number(data.remarkDocId),
+  )?.remark;
+  if (
+    selectedRemark?.trim().toUpperCase() === "PENERBITAN" &&
+    !(data.recommendationFile instanceof File)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["recommendationFile"],
+      message: "Recommendation letter is required for PENERBITAN",
+    });
+  }
 });
 
 const open = ref(false);
@@ -73,6 +88,7 @@ const state = reactive<Partial<Schema>>({
   formFillingDate: undefined,
   remarkDocId: undefined,
   briefingFile: undefined,
+  recommendationFile: undefined,
   passingGrade: undefined,
   isPractical: false,
   isSimulator: false,
@@ -80,6 +96,15 @@ const state = reactive<Partial<Schema>>({
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFileName = ref("");
+const recommendationFileInput = ref<HTMLInputElement | null>(null);
+const selectedRecommendationFileName = ref("");
+
+const isPenerbitan = computed(() =>
+  props.remarkDocs
+    .find((item) => Number(item.id) === Number(state.remarkDocId))
+    ?.remark?.trim()
+    .toUpperCase() === "PENERBITAN",
+);
 
 const toast = useToast();
 
@@ -176,6 +201,27 @@ function triggerFileInput() {
   fileInput.value?.click();
 }
 
+function handleRecommendationFileChange(evt: globalThis.Event) {
+  const target = evt.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    state.recommendationFile = file;
+    selectedRecommendationFileName.value = file.name;
+  }
+}
+
+function triggerRecommendationFileInput() {
+  recommendationFileInput.value?.click();
+}
+
+watch(isPenerbitan, (required) => {
+  if (!required) {
+    state.recommendationFile = undefined;
+    selectedRecommendationFileName.value = "";
+    if (recommendationFileInput.value) recommendationFileInput.value.value = "";
+  }
+});
+
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
@@ -200,6 +246,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     // Append file ONLY if it exists and is a File
     if (event.data.briefingFile instanceof File) {
       formData.append("briefingFile", event.data.briefingFile);
+    }
+    if (event.data.recommendationFile instanceof File) {
+      formData.append("recommendationFile", event.data.recommendationFile);
     }
 
     /* ✅ DEBUG — THIS IS THE CORRECT WAY */
@@ -229,10 +278,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.formFillingDate = undefined;
     state.remarkDocId = undefined;
     state.briefingFile = undefined;
+    state.recommendationFile = undefined;
     state.passingGrade = undefined;
     startTime.value = "00:00";
     endTime.value = "23:59";
     selectedFileName.value = "";
+    selectedRecommendationFileName.value = "";
     open.value = false;
 
     // Emit event to refresh parent table
@@ -447,6 +498,36 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             <p class="text-xs text-muted">
               Supported formats: PDF, DOC, DOCX, PPT, PPTX
             </p>
+          </div>
+        </UFormField>
+
+        <UFormField
+          v-if="isPenerbitan"
+          label="Recommendation Letter"
+          name="recommendationFile"
+          required
+        >
+          <div class="space-y-2">
+            <input
+              ref="recommendationFileInput"
+              type="file"
+              class="hidden"
+              accept=".pdf,.doc,.docx"
+              @change="handleRecommendationFileChange"
+            />
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-upload"
+              :label="selectedRecommendationFileName || 'Choose Recommendation Letter'"
+              class="w-full justify-start"
+              @click="triggerRecommendationFileInput"
+            />
+            <p v-if="selectedRecommendationFileName" class="text-sm text-muted">
+              Selected: {{ selectedRecommendationFileName }}
+            </p>
+            <p class="text-xs text-muted">Supported formats: PDF, DOC, DOCX</p>
           </div>
         </UFormField>
 

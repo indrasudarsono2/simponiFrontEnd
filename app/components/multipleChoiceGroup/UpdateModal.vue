@@ -101,17 +101,66 @@ const state = reactive<Partial<Schema>>({
 // Transform questionGroups prop to options format
 const groupOptions = computed<SectorRatingGroupOption[]>(() => {
   if (!props.questionGroups) return [];
-  return props.questionGroups.map((qg) => ({
-    id: qg.id,
-    label: `${qg.group} ${qg.subBranchUnitRating.rating.rating} ${qg.subBranchUnitRating.sector.sector}`,
-    sectorId: qg.subBranchUnitRating.sector.id,
-    sector: qg.subBranchUnitRating.sector.sector,
-    ratingId: qg.subBranchUnitRating.rating.id,
-    rating: qg.subBranchUnitRating.rating.rating,
-    questionGroupId: qg.id,
-    questionGroup: qg.group,
-  }));
+  return props.questionGroups
+    .map((qg) => ({
+      id: qg.id,
+      label: `${qg.group} | Rating: ${qg.subBranchUnitRating.rating.rating} | Sector: ${qg.subBranchUnitRating.sector.sector}`,
+      sectorId: qg.subBranchUnitRating.sector.id,
+      sector: qg.subBranchUnitRating.sector.sector,
+      ratingId: qg.subBranchUnitRating.rating.id,
+      rating: qg.subBranchUnitRating.rating.rating,
+      questionGroupId: qg.id,
+      questionGroup: qg.group,
+    }))
+    .sort(
+      (a, b) =>
+        a.sector.localeCompare(b.sector) ||
+        a.rating.localeCompare(b.rating) ||
+        a.questionGroup.localeCompare(b.questionGroup),
+    );
 });
+
+function isGroupSelected(groupId: number) {
+  return state.selectedGroups?.includes(groupId) || false;
+}
+
+const ratingBadgeClasses = [
+  "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
+  "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+  "bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300",
+];
+
+const sectorBadgeClasses = [
+  "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
+  "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+  "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-300",
+  "bg-lime-100 text-lime-700 dark:bg-lime-950 dark:text-lime-300",
+  "bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+  "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
+];
+
+function stableColorIndex(value: string, paletteLength: number) {
+  const hash = [...value].reduce(
+    (total, character) => (total * 31 + character.charCodeAt(0)) >>> 0,
+    0,
+  );
+  return hash % paletteLength;
+}
+
+function getRatingBadgeClass(rating: string) {
+  return ratingBadgeClasses[
+    stableColorIndex(rating, ratingBadgeClasses.length)
+  ];
+}
+
+function getSectorBadgeClass(sector: string) {
+  return sectorBadgeClasses[
+    stableColorIndex(sector, sectorBadgeClasses.length)
+  ];
+}
 
 // Watch for multipleChoice prop changes to populate form
 watch(
@@ -267,13 +316,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           <USelectMenu
             v-model="state.selectedGroups"
             :items="groupOptions"
-            option-attribute="label"
+            label-key="label"
             value-key="id"
-            placeholder="Select groups..."
+            placeholder="Search by group, rating, or sector..."
             multiple
             searchable
             class="w-full"
-            :ui="{ item: 'text-sm', content: 'z-50 max-h-60 overflow-y-auto' }"
+            :ui="{ item: 'p-0', content: 'z-50 max-h-80 overflow-y-auto' }"
             :popper="{ placement: 'bottom-start', strategy: 'fixed' }"
           >
             <template #default>
@@ -282,11 +331,47 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                   !state.selectedGroups || state.selectedGroups.length === 0
                 "
               >
-                Select groups...
+                Search and select question groups...
               </span>
               <span v-else>
                 {{ state.selectedGroups.length }} group(s) selected
               </span>
+            </template>
+
+            <template #item="{ item }">
+              <div
+                class="flex w-full items-start gap-3 rounded-md px-3 py-2.5"
+                :class="isGroupSelected(item.id) ? 'bg-primary/10' : ''"
+              >
+                <UIcon
+                  :name="
+                    isGroupSelected(item.id)
+                      ? 'i-lucide-check-square-2'
+                      : 'i-lucide-square'
+                  "
+                  class="mt-0.5 size-5 shrink-0"
+                  :class="isGroupSelected(item.id) ? 'text-primary' : 'text-muted'"
+                />
+                <div class="min-w-0 flex-1 space-y-1.5">
+                  <div class="whitespace-normal font-medium leading-snug text-highlighted">
+                    {{ item.questionGroup }}
+                  </div>
+                  <div class="flex flex-wrap gap-1.5 text-xs">
+                    <span
+                      class="rounded px-2 py-0.5 font-medium"
+                      :class="getRatingBadgeClass(item.rating)"
+                    >
+                      Rating: {{ item.rating }}
+                    </span>
+                    <span
+                      class="rounded px-2 py-0.5 font-medium"
+                      :class="getSectorBadgeClass(item.sector)"
+                    >
+                      Sector: {{ item.sector }}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </template>
           </USelectMenu>
         </UFormField>
@@ -303,10 +388,26 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             <div
               v-for="detail in selectedGroupDetails"
               :key="detail.id"
-              class="flex items-center gap-2 text-sm p-2 bg-primary/5 rounded"
+              class="flex items-start gap-3 rounded border border-primary/15 bg-primary/5 p-2.5 text-sm"
             >
-              <UIcon name="i-lucide-check-circle" class="text-primary" />
-              <span class="font-medium">{{ detail.label }}</span>
+              <UIcon name="i-lucide-check-circle" class="mt-0.5 shrink-0 text-primary" />
+              <div class="min-w-0 space-y-1">
+                <div class="font-medium text-highlighted">{{ detail.questionGroup }}</div>
+                <div class="flex flex-wrap gap-1.5 text-xs">
+                  <span
+                    class="rounded px-2 py-0.5 font-medium"
+                    :class="getRatingBadgeClass(detail.rating)"
+                  >
+                    Rating: {{ detail.rating }}
+                  </span>
+                  <span
+                    class="rounded px-2 py-0.5 font-medium"
+                    :class="getSectorBadgeClass(detail.sector)"
+                  >
+                    Sector: {{ detail.sector }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

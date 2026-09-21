@@ -12,6 +12,27 @@ const { token: authToken } = useAuth();
 const toast = useToast();
 const dashboardTokenInput = ref("");
 const isSubmittingDashboardToken = ref(false);
+const selectedApplicationDocId = ref<number>();
+
+interface DashboardApplicationDoc {
+  id?: number;
+  number?: string;
+  briefingDate?: string | null;
+  updatedAt?: string;
+  createdAt?: string;
+}
+
+interface DashboardEventUser {
+  id?: number;
+  event?: {
+    id?: number;
+    event?: string;
+    startDate?: string | null;
+    finishDate?: string | null;
+  } | null;
+  applicationDocs?: DashboardApplicationDoc | DashboardApplicationDoc[] | null;
+  applicationDoc?: DashboardApplicationDoc | DashboardApplicationDoc[] | null;
+}
 
 // Reactive current time for countdown updates
 const now = ref(new Date());
@@ -132,17 +153,6 @@ function toArray<T>(value: T | T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : [value];
 }
 
-function pickLatestByDate<T extends { updatedAt?: string; createdAt?: string }>(
-  items: T[],
-): T | undefined {
-  if (!items.length) return undefined;
-  return [...items].sort((a, b) => {
-    const aTs = new Date(a.updatedAt || a.createdAt || 0).getTime();
-    const bTs = new Date(b.updatedAt || b.createdAt || 0).getTime();
-    return bTs - aTs;
-  })[0];
-}
-
 // Computed stats based on dashboard data
 const stats = computed(() => {
   const data = props.dashboardData;
@@ -179,7 +189,70 @@ const stats = computed(() => {
   ];
 });
 
-const currentEventUser = computed(() => props.dashboardData?.eventUsers?.[0]);
+const applicationDocEntries = computed(() => {
+  const entries = new Map<
+    number,
+    { document: DashboardApplicationDoc; eventUser: DashboardEventUser }
+  >();
+
+  toArray(props.dashboardData?.eventUsers as DashboardEventUser[]).forEach(
+    (eventUser) => {
+      const documents = [
+        ...toArray(eventUser.applicationDocs),
+        ...toArray(eventUser.applicationDoc),
+      ];
+
+      documents.forEach((document) => {
+        const id = Number(document?.id);
+        if (!Number.isInteger(id) || id <= 0) return;
+        entries.set(id, { document, eventUser });
+      });
+    },
+  );
+
+  return [...entries.values()].sort((a, b) => {
+    const aTs = new Date(a.document.createdAt || 0).getTime();
+    const bTs = new Date(b.document.createdAt || 0).getTime();
+    if (bTs !== aTs) return bTs - aTs;
+    return Number(b.document.id || 0) - Number(a.document.id || 0);
+  });
+});
+
+const applicationDocOptions = computed(() =>
+  applicationDocEntries.value.map(({ document, eventUser }, index) => ({
+    label: `${document.number || `Document #${document.id}`} — ${eventUser.event?.event || "Event"}${index === 0 ? " (Newest)" : ""}`,
+    value: Number(document.id),
+  })),
+);
+
+watch(
+  applicationDocEntries,
+  (entries) => {
+    if (!entries.length) {
+      selectedApplicationDocId.value = undefined;
+      return;
+    }
+
+    const selectionStillExists = entries.some(
+      ({ document }) => Number(document.id) === selectedApplicationDocId.value,
+    );
+    if (!selectionStillExists) {
+      selectedApplicationDocId.value = Number(entries[0]?.document.id);
+    }
+  },
+  { immediate: true },
+);
+
+const currentApplicationDocEntry = computed(
+  () =>
+    applicationDocEntries.value.find(
+      ({ document }) => Number(document.id) === selectedApplicationDocId.value,
+    ) || applicationDocEntries.value[0],
+);
+
+const currentEventUser = computed(() =>
+  currentApplicationDocEntry.value?.eventUser,
+);
 
 const available1Data = computed(() => {
   const event = currentEventUser.value?.event;
@@ -204,17 +277,7 @@ const available1Data = computed(() => {
 });
 
 const available2Data = computed(() => {
-  const applicationDocs = [
-    ...toArray(currentEventUser.value?.applicationDocs),
-    ...toArray(currentEventUser.value?.applicationDoc),
-  ] as Array<{
-    id?: number;
-    number?: string;
-    briefingDate?: string | null;
-    updatedAt?: string;
-    createdAt?: string;
-  }>;
-  const applicationDoc = pickLatestByDate(applicationDocs);
+  const applicationDoc = currentApplicationDocEntry.value?.document;
 
   return {
     title: "Data",
@@ -381,6 +444,16 @@ async function submitDashboardToken() {
       class="lg:rounded-none first:rounded-l-lg last:rounded-r-lg hover:z-1"
     >
       <div class="flex flex-col gap-3 w-full">
+        <USelect
+          v-if="applicationDocOptions.length > 1"
+          v-model="selectedApplicationDocId"
+          :items="applicationDocOptions"
+          label-key="label"
+          value-key="value"
+          aria-label="Select application document"
+          class="w-full"
+        />
+
         <div class="flex flex-col gap-1">
           <span class="text-2xl font-semibold text-highlighted break-words">
             {{ available2Data.number }}

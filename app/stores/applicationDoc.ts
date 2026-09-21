@@ -65,6 +65,10 @@ interface ApplicationDoc {
   medex?: {
     id: number;
     isConfirmed: boolean;
+    source: "ECHAIN" | "MANUAL" | "LEGACY";
+    verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+    verifiedByNik?: string | null;
+    verifiedAt?: string | null;
     institution: string;
     userNik: string;
     released: string;
@@ -78,6 +82,10 @@ interface ApplicationDoc {
   ielp?: {
     id: number;
     isConfirmed: boolean;
+    source: "ECHAIN" | "MANUAL" | "LEGACY";
+    verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+    verifiedByNik?: string | null;
+    verifiedAt?: string | null;
     userNik: string;
     released: string;
     expired: string | null;

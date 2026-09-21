@@ -35,6 +35,26 @@ const { data, status, error, refresh } = await useFetch<UserCheckerResponse>(
 );
 
 const users = computed(() => data.value?.user || []);
+const loadErrorMessage = computed(() =>
+  getFetchErrorMessage(
+    error.value,
+    "Unable to load users for your branch unit.",
+  ),
+);
+
+watch(
+  error,
+  (currentError, previousError) => {
+    if (!currentError || currentError === previousError) return;
+
+    toast.add({
+      title: "Branch unit required",
+      description: loadErrorMessage.value,
+      color: "warning",
+    });
+  },
+  { immediate: true },
+);
 
 const filteredUsers = computed(() => {
   const keyword = searchQuery.value.trim().toLowerCase();
@@ -118,8 +138,8 @@ function handleRefresh() {
         color="error"
         variant="soft"
         icon="i-lucide-triangle-alert"
-        title="Failed to load user checker data"
-        :description="getFetchErrorMessage(error, 'Please restart the backend server and try again.')"
+        title="Unable to show users"
+        :description="loadErrorMessage"
       />
 
       <div class="overflow-x-auto rounded-lg border border-default">

@@ -19,6 +19,8 @@ const schema = z.object({
   echainFileUrlExpiresAt: z.string().nullable().optional(),
   echainFileMimeType: z.string().nullable().optional(),
   echainFileSizeBytes: z.number().nullable().optional(),
+  requestedCheckerNik: z.string().optional(),
+  syncReceipt: z.string().nullable().optional(),
 });
 
 const open = ref(false);
@@ -38,11 +40,27 @@ const state = reactive<Partial<Schema>>({
   echainFileUrlExpiresAt: null,
   echainFileMimeType: null,
   echainFileSizeBytes: null,
+  requestedCheckerNik: undefined,
+  syncReceipt: null,
 });
 
 const toast = useToast();
 const loading = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
+const checkerOptions = ref<Array<{ label: string; value: string }>>([]);
+
+watch(open, async (isOpen) => {
+  if (!isOpen || checkerOptions.value.length) return;
+  try {
+    const checkers = await apiFetch("/api/credentialVerification/checkers") as Array<{ nik: string; name?: string; ratings?: string[] }>;
+    checkerOptions.value = checkers.map((checker) => ({
+      value: checker.nik,
+      label: `${checker.name || checker.nik}${checker.ratings?.length ? ` [${checker.ratings.join(", ")}]` : ""}`,
+    }));
+  } catch (error: any) {
+    toast.add({ title: "Unable to load checkers", description: error?.data?.message || error?.message, color: "error" });
+  }
+});
 
 interface MedexUserSyncResponse {
   success: boolean;
@@ -58,6 +76,7 @@ interface MedexUserSyncResponse {
     fileMimeType?: string | null;
     fileSizeBytes?: number | null;
   };
+  syncReceipt: string;
 }
 
 function handleFileChange(event: Event) {
@@ -69,6 +88,7 @@ function handleFileChange(event: Event) {
     state.echainFileUrlExpiresAt = null;
     state.echainFileMimeType = null;
     state.echainFileSizeBytes = null;
+    state.syncReceipt = null;
   }
 }
 
@@ -111,6 +131,7 @@ async function syncFromSystem() {
     state.echainFileUrlExpiresAt = response.data.fileUrlExpiresAt ?? null;
     state.echainFileMimeType = response.data.fileMimeType ?? null;
     state.echainFileSizeBytes = response.data.fileSizeBytes ?? null;
+    state.syncReceipt = response.syncReceipt;
 
     toast.add({
       title: "Sync Success",
@@ -136,6 +157,10 @@ async function syncFromSystem() {
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
+  if (!syncMode.value && !event.data.requestedCheckerNik) {
+    toast.add({ title: "Checker required", description: "Please select who will verify this manual MEDEX.", color: "error" });
+    return;
+  }
   loading.value = true;
 
   try {
@@ -145,13 +170,16 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     formData.append("released", event.data.released);
     formData.append("expired", event.data.expired);
     formData.append("examiner", event.data.examiner);
+    formData.append("source", syncMode.value ? "ECHAIN" : "MANUAL");
+    if (syncMode.value && event.data.syncReceipt) formData.append("syncReceipt", event.data.syncReceipt);
+    if (!syncMode.value && event.data.requestedCheckerNik) formData.append("requestedCheckerNik", event.data.requestedCheckerNik);
 
     if (event.data.file instanceof File) {
       formData.append("file", event.data.file);
     }
 
-    if (!event.data.file && event.data.echainFileUrl) {
-      formData.append("echainFileUrl", event.data.echainFileUrl);
+    if (!event.data.file && syncMode.value) {
+      if (event.data.echainFileUrl) formData.append("echainFileUrl", event.data.echainFileUrl);
       if (event.data.echainFileName) {
         formData.append("echainFileName", event.data.echainFileName);
       }
@@ -195,6 +223,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.echainFileUrlExpiresAt = null;
     state.echainFileMimeType = null;
     state.echainFileSizeBytes = null;
+    state.requestedCheckerNik = undefined;
+    state.syncReceipt = null;
     syncMode.value = false;
     open.value = false;
 
@@ -328,6 +358,16 @@ const emit = defineEmits<{
                 </span>
                 <span v-else class="text-sm text-muted">No file selected</span>
               </div>
+            </UFormField>
+            <UFormField label="Verification Checker" name="requestedCheckerNik" required>
+              <USelect
+                v-model="state.requestedCheckerNik"
+                :items="checkerOptions"
+                value-key="value"
+                placeholder="Select checker"
+                class="w-full"
+              />
+              <p class="mt-1 text-xs text-muted">The manual record remains pending until this checker approves it.</p>
             </UFormField>
           </div>
 

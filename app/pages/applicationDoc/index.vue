@@ -517,7 +517,7 @@ const columns = computed((): any[] => [
             ? "text-error text-sm"
             : "text-muted text-sm",
         },
-        formatDate(row.original.ielp?.expired),
+        row.original.ielp?.level === "6" ? "Lifetime" : formatDate(row.original.ielp?.expired),
       ),
   },
   {

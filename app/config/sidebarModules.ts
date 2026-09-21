@@ -46,6 +46,7 @@ export type ModuleKey =
   | "examination"
   | "userHistory"
   | "history"
+  | "credentialVerification"
   | "ratingCheckerAdmin"
   | "applicationDoc"
   | "medicalTest"
@@ -375,9 +376,14 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
   //   children: [{ label: "History", to: "/settings" }],
   // },
   history: {
-    label: "history",
+    label: "History",
     icon: "i-lucide-history",
     to: "/checkerHistory/history",
+  },
+  credentialVerification: {
+    label: "IELP / MEDEX Verification",
+    icon: "i-lucide-badge-check",
+    to: "/checkerHistory/credentialVerification",
   },
   dailyBriefing: {
     label: "Daily Briefing",

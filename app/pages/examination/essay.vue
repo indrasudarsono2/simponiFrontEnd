@@ -174,9 +174,10 @@ const isAllQuestionsAnswered = computed(
 const isTimeUp = computed(() => remainingSeconds.value <= 0);
 const canContinueExam = computed(
   () =>
-    isCameraReady.value &&
-    !isCameraObstructed.value &&
-    (!screenMonitoringEnabled || isScreenReady.value),
+    !screenMonitoringEnabled ||
+    (isCameraReady.value &&
+      !isCameraObstructed.value &&
+      isScreenReady.value),
 );
 const isMonitoringInitializing = computed(
   () => isCameraInitializing.value || isScreenInitializing.value,
@@ -244,7 +245,9 @@ function activateExamination(payload: ExaminationEssayResponse) {
   isExamStarted.value = true;
   startCountdown(getCountdownMinutes(payload));
   startPostTimeInterval(payload);
-  scheduleRandomSnapshots(payload);
+  if (screenMonitoringEnabled) {
+    scheduleRandomSnapshots(payload);
+  }
   if (isTimeUp.value) {
     void submitAnswers(true);
   }
@@ -900,9 +903,6 @@ onMounted(async () => {
     });
   }
   await loadEssayData();
-  if (!screenMonitoringEnabled) {
-    await startCamera();
-  }
 });
 watch(isTimeUp, (value) => {
   if (value) {

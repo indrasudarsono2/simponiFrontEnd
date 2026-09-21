@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const apiBaseUrl = useApiBaseUrl()
+import CredentialHistoryModal from "../../components/credential/CredentialHistoryModal.vue";
 
 interface MedexItem {
   id?: number;
@@ -20,6 +21,7 @@ interface MedexRow {
   expired: string;
   expiredRaw: string | null;
   file: string | null;
+  credentialId: number | null;
 }
 
 const { token } = useAuth();
@@ -28,6 +30,8 @@ const toast = useToast();
 const searchQuery = ref("");
 const isFileModalOpen = ref(false);
 const selectedFilePath = ref<string | null>(null);
+const isHistoryModalOpen = ref(false);
+const selectedCredentialId = ref<number | null>(null);
 
 const { data, status, error, refresh } = await useFetch<MedexApiItem[]>(
   `${apiBaseUrl}/api/dataCheckerMedex`,
@@ -125,6 +129,12 @@ function closeFileModal() {
   selectedFilePath.value = null;
 }
 
+function openHistory(credentialId: number | null) {
+  if (!credentialId) return;
+  selectedCredentialId.value = credentialId;
+  isHistoryModalOpen.value = true;
+}
+
 const rows = computed<MedexRow[]>(() => {
   const payload = data.value || [];
 
@@ -138,6 +148,7 @@ const rows = computed<MedexRow[]>(() => {
       expired: formatDate(latestMedex?.expired || null),
       expiredRaw: latestMedex?.expired || null,
       file: latestMedex?.file || null,
+      credentialId: latestMedex?.id || null,
     };
   });
 });
@@ -332,6 +343,7 @@ function handlePrintPdf() {
                 >
                   File
                 </th>
+                <th class="px-3 py-2 text-center font-medium border border-default">History</th>
               </tr>
             </thead>
             <tbody>
@@ -359,12 +371,24 @@ function handlePrintPdf() {
                     @click="openFileModal(row.file)"
                   />
                 </td>
+                <td class="px-3 py-2 border border-default text-center">
+                  <UButton
+                    v-if="row.credentialId"
+                    icon="i-lucide-history"
+                    label="History"
+                    color="neutral"
+                    variant="soft"
+                    size="xs"
+                    @click="openHistory(row.credentialId)"
+                  />
+                  <span v-else class="text-muted">-</span>
+                </td>
               </tr>
 
               <tr v-if="filteredRows.length === 0">
                 <td
                   class="px-3 py-3 text-muted border border-default text-center"
-                  colspan="5"
+                  colspan="6"
                 >
                   No MEDEX data available.
                 </td>
@@ -430,6 +454,11 @@ function handlePrintPdf() {
             </div>
           </template>
         </UModal>
+        <CredentialHistoryModal
+          v-model:open="isHistoryModalOpen"
+          credential-type="medex"
+          :credential-id="selectedCredentialId"
+        />
       </div>
     </template>
   </UDashboardPanel>

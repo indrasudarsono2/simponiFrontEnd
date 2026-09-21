@@ -67,6 +67,8 @@ interface LogbookItem {
 interface MedexItem {
   id: number;
   isConfirmed: boolean;
+  verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+  isCurrent?: boolean;
   institution: string;
   userNik: string;
   released: string;
@@ -81,6 +83,8 @@ interface MedexItem {
 interface IelpItem {
   id: number;
   isConfirmed: boolean;
+  verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+  isCurrent?: boolean;
   userNik: string;
   released: string;
   expired: string | null;
@@ -436,12 +440,12 @@ const showDrugsPopup = ref(false);
 // ─── Computed ──────────────────────────────────────────────────────────────
 const latestMedex = computed(() => {
   const list = userData.value?.medex || [];
-  return list.length ? list[list.length - 1] : null;
+  return list.find((item) => item.isCurrent !== false && item.isConfirmed && item.verificationStatus === "APPROVED" && item.expired && new Date(item.expired) > new Date()) || null;
 });
 
 const latestIelp = computed(() => {
   const list = userData.value?.ielp || [];
-  return list.length ? list[list.length - 1] : null;
+  return list.find((item) => item.isCurrent !== false && item.isConfirmed && item.verificationStatus === "APPROVED" && (item.level === "6" || (item.expired && new Date(item.expired) > new Date()))) || null;
 });
 
 const isMedexValid = computed(() => {
@@ -450,7 +454,8 @@ const isMedexValid = computed(() => {
 });
 
 const isIelpValid = computed(() => {
-  if (!latestIelp.value || !latestIelp.value.expired) return false;
+  if (latestIelp.value?.level === "6") return true;
+  if (!latestIelp.value?.expired) return false;
   return new Date(latestIelp.value.expired) > new Date();
 });
 
@@ -461,6 +466,7 @@ const medexRemainingDays = computed(() => {
 });
 
 const ielpRemainingDays = computed(() => {
+  if (latestIelp.value?.level === "6") return 0;
   if (!latestIelp.value || !latestIelp.value.expired) return 0;
   const diff = new Date(latestIelp.value.expired).getTime() - Date.now();
   return Math.ceil(diff / 86400000);
@@ -1209,7 +1215,7 @@ async function onSubmit() {
                     class="font-medium"
                     :class="isIelpValid ? 'text-success' : 'text-error'"
                   >
-                    {{ formatDate(latestIelp.expired) }}
+                    {{ latestIelp.level === "6" ? "Lifetime" : formatDate(latestIelp.expired) }}
                   </p>
                 </div>
                 <div>
@@ -1217,7 +1223,9 @@ async function onSubmit() {
                   <p
                     class="font-medium"
                     :class="
-                      ielpRemainingDays > 90
+                      latestIelp.level === '6'
+                        ? 'text-success'
+                        : ielpRemainingDays > 90
                         ? 'text-success'
                         : ielpRemainingDays > 0
                           ? 'text-warning'
@@ -1225,7 +1233,9 @@ async function onSubmit() {
                     "
                   >
                     {{
-                      ielpRemainingDays > 0
+                      latestIelp.level === "6"
+                        ? "Lifetime"
+                        : ielpRemainingDays > 0
                         ? `${ielpRemainingDays} days remaining`
                         : "Sudah expired"
                     }}

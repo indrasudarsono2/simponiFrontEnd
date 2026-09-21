@@ -37,13 +37,32 @@ const pagination = ref({
   pageSize: 10,
 });
 
-const { data, status, refresh } = await useFetch<Cwp[]>(
+const { data, status, error, refresh } = await useFetch<Cwp[]>(
   `${apiBaseUrl}/api/cwps`,
   {
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
     },
   },
+);
+
+const loadErrorMessage = computed(() =>
+  getFetchErrorMessage(error.value, "Unable to load CWP for your branch unit."),
+);
+
+watch(
+  error,
+  (currentError, previousError) => {
+    if (!currentError || currentError === previousError) return;
+
+    data.value = [];
+    toast.add({
+      title: "Unable to load CWP",
+      description: loadErrorMessage.value,
+      color: "warning",
+    });
+  },
+  { immediate: true },
 );
 
 const currentPage = computed({
@@ -199,6 +218,16 @@ const columns: TableColumn<Cwp>[] = [
         />
       </div>
 
+      <UAlert
+        v-if="error"
+        class="mb-4"
+        color="warning"
+        variant="soft"
+        icon="i-lucide-triangle-alert"
+        title="CWP is unavailable"
+        :description="loadErrorMessage"
+      />
+
       <UTable
         ref="table"
         v-model:column-filters="columnFilters"
@@ -226,7 +255,13 @@ const columns: TableColumn<Cwp>[] = [
         class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
       >
         <div class="text-sm text-muted">
-          Showing {{ pagination.pageIndex * pagination.pageSize + 1 }} to
+          Showing
+          {{
+            (table?.tableApi?.getFilteredRowModel().rows.length || 0)
+              ? pagination.pageIndex * pagination.pageSize + 1
+              : 0
+          }}
+          to
           {{
             Math.min(
               (pagination.pageIndex + 1) * pagination.pageSize,

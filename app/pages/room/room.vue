@@ -20,6 +20,10 @@ interface ApplicationDocItem {
 
 interface EventUserItem {
   id: number;
+  userNik?: string;
+  user?: {
+    name?: string;
+  } | null;
   applicationDocs?: ApplicationDocItem | ApplicationDocItem[] | null;
   applicationDoc?: ApplicationDocItem | ApplicationDocItem[] | null;
   attendaces?:
@@ -247,13 +251,16 @@ const eventUserOptions = computed<EventUserOption[]>(() => {
 
       const appDoc = getFirstApplicationDoc(eventUser.applicationDocs);
       const fallbackDoc = getFirstApplicationDoc(eventUser.applicationDoc);
+      const activeDoc = appDoc || fallbackDoc;
+      if (!activeDoc) return;
       const name =
+        eventUser.user?.name ||
         appDoc?.user?.name ||
         fallbackDoc?.user?.name ||
+        eventUser.userNik ||
         appDoc?.userNik ||
-        fallbackDoc?.userNik ||
-        "Unknown";
-      const activeDoc = appDoc || fallbackDoc;
+        fallbackDoc?.userNik;
+      if (!name) return;
       const ratings = toArray(activeDoc?.appRatings)
         .map((item) => item?.rating?.rating || "")
         .filter(Boolean)

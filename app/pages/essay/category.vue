@@ -82,12 +82,14 @@ const selectedSectorId = ref<number | null>(null);
 const selectedRatingId = ref<number | null>(null);
 const selectedGroupName = ref<string | null>(null);
 
-// Target questions per sector-rating combination (ESSAY = 5)
-const targetQuestions = ref(5);
-
 interface ApiResponse {
   sector: SectorItem[];
   questionGroups: QuestionGroup[];
+  targetQuestions?: number;
+  targetEvent?: {
+    id: number;
+    event: string;
+  } | null;
 }
 // Fetch question groups data
 const { data, status, refresh } = await useFetch<ApiResponse>(
@@ -129,6 +131,10 @@ const availableRatings = computed(() => {
 // Context derived from API response
 const currentBranch = computed(
   () => data.value?.sector?.[0]?.branchUnit?.branch?.branch || "-",
+);
+
+const targetQuestions = computed(() =>
+  Math.max(0, Number(data.value?.targetQuestions ?? 0)),
 );
 const currentBranchUnit = computed(
   () => data.value?.sector?.[0]?.branchUnit?.unit || "-",
@@ -428,6 +434,7 @@ function handleModalClose() {
         <template #right>
           <EssayCategoryAddModal
             :sectors="availableSectors"
+            :question-groups="data?.questionGroups || []"
             @question-group-added="handleQuestionGroupAdded"
           />
         </template>
@@ -461,12 +468,16 @@ function handleModalClose() {
             >
           </div>
           <UInput
-            v-model.number="targetQuestions"
+            :model-value="targetQuestions"
             type="number"
             min="1"
             class="w-24"
+            readonly
           />
           <span class="text-sm text-muted">questions</span>
+          <span v-if="data?.targetEvent" class="text-xs text-muted">
+            Latest event: {{ data.targetEvent.event }}
+          </span>
         </div>
       </div>
 
@@ -560,7 +571,7 @@ function handleModalClose() {
                   'bg-error': summary.totalQuestions === 0,
                 }"
                 :style="{
-                  width: `${Math.min(100, (summary.totalQuestions / targetQuestions) * 100)}%`,
+                  width: `${Math.min(100, (summary.totalQuestions / Math.max(1, targetQuestions)) * 100)}%`,
                 }"
               />
             </div>
@@ -618,7 +629,7 @@ function handleModalClose() {
             >
               {{
                 Math.round(
-                  (currentSummary.totalQuestions / targetQuestions) * 100,
+                  (currentSummary.totalQuestions / Math.max(1, targetQuestions)) * 100,
                 )
               }}%
             </div>

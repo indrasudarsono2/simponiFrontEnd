@@ -14,6 +14,8 @@ interface MedexUser {
   examiner: string;
   institution: string;
   file?: string;
+  requestedChecker?: { nik: string; name?: string | null } | null;
+  verifiedBy?: { nik: string; name?: string | null } | null;
 }
 
 const props = defineProps<{
@@ -26,6 +28,7 @@ const schema = z.object({
   expired: z.string().min(1, "Expired date is required"),
   examiner: z.string().min(2, "Examiner must be at least 2 characters"),
   file: z.instanceof(File).optional(),
+  requestedCheckerNik: z.string().min(1, "Verification checker is required"),
 });
 
 const open = ref(false);
@@ -38,7 +41,18 @@ const state = reactive<Partial<Schema>>({
   expired: undefined,
   examiner: undefined,
   file: undefined,
+  requestedCheckerNik: undefined,
 });
+const checkerOptions = ref<Array<{ label: string; value: string }>>([]);
+
+async function loadCheckers() {
+  if (checkerOptions.value.length) return;
+  const checkers = await apiFetch("/api/credentialVerification/checkers") as Array<{ nik: string; name?: string; ratings?: string[] }>;
+  checkerOptions.value = checkers.map((checker) => ({
+    value: checker.nik,
+    label: `${checker.name || checker.nik}${checker.ratings?.length ? ` [${checker.ratings.join(", ")}]` : ""}`,
+  }));
+}
 
 // Helper function to format date to YYYY-MM-DD
 function formatDateForInput(
@@ -60,6 +74,7 @@ watch(
       state.expired = undefined;
       state.examiner = undefined;
       state.file = undefined;
+      state.requestedCheckerNik = undefined;
 
       // Wait for next tick to ensure DOM is ready
       await nextTick();
@@ -69,6 +84,8 @@ watch(
       state.released = formatDateForInput(newMedexUser.released);
       state.expired = formatDateForInput(newMedexUser.expired);
       state.examiner = newMedexUser.examiner;
+      state.requestedCheckerNik = newMedexUser.requestedChecker?.nik || newMedexUser.verifiedBy?.nik || undefined;
+      loadCheckers().catch(() => undefined);
 
       // Open modal after state is populated
       open.value = true;
@@ -85,6 +102,7 @@ watch(open, (isOpen) => {
     state.expired = undefined;
     state.examiner = undefined;
     state.file = undefined;
+    state.requestedCheckerNik = undefined;
     emit("close");
   }
 });
@@ -116,6 +134,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     formData.append("released", event.data.released);
     formData.append("expired", event.data.expired);
     formData.append("examiner", event.data.examiner);
+    formData.append("requestedCheckerNik", event.data.requestedCheckerNik);
 
     if (event.data.file instanceof File) {
       formData.append("file", event.data.file);
@@ -206,6 +225,18 @@ const emit = defineEmits<{
           />
         </UFormField>
 
+        <UFormField label="Verification Checker" name="requestedCheckerNik" required>
+          <USelect
+            v-model="state.requestedCheckerNik"
+            :items="checkerOptions"
+            value-key="value"
+            label-key="label"
+            class="w-full"
+            placeholder="Select checker for this revision"
+          />
+          <p class="mt-1 text-xs text-muted">The approved version remains active until this revision is approved.</p>
+        </UFormField>
+
         <div class="grid grid-cols-2 gap-4">
           <UFormField label="Released Date" name="released" required>
             <UInput
@@ -248,7 +279,7 @@ const emit = defineEmits<{
             @click="open = false"
           />
           <UButton
-            label="Update Medex"
+            label="Submit Revision"
             color="primary"
             variant="solid"
             type="submit"

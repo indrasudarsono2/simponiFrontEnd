@@ -72,6 +72,10 @@ interface ApplicationDoc {
   medex?: {
     id: number;
     isConfirmed: boolean;
+    source: "ECHAIN" | "MANUAL" | "LEGACY";
+    verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+    verifiedByNik?: string | null;
+    verifiedAt?: string | null;
     institution: string;
     userNik: string;
     released: string;
@@ -85,6 +89,10 @@ interface ApplicationDoc {
   ielp?: {
     id: number;
     isConfirmed: boolean;
+    source: "ECHAIN" | "MANUAL" | "LEGACY";
+    verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+    verifiedByNik?: string | null;
+    verifiedAt?: string | null;
     userNik: string;
     released: string;
     expired: string | null;
@@ -469,6 +477,12 @@ const ratingsList = computed(() => {
                 <span class="uppercase">{{
                   currentDoc.medex?.isConfirmed ? "ya" : "tidak"
                 }}</span>
+                <div class="mt-1 text-xs">
+                  Source: {{ currentDoc.medex?.source || "-" }}<br />
+                  <template v-if="currentDoc.medex?.source === 'MANUAL'">
+                    Verified by: {{ currentDoc.medex?.verifiedByNik || "-" }} · {{ formatDate(currentDoc.medex?.verifiedAt) }}
+                  </template>
+                </div>
               </td>
               <td colspan="2" class="border border-black p-2 align-top">
                 <span class="font-bold">10b.</span> Tanggal dikeluarkan<br />
@@ -491,6 +505,12 @@ const ratingsList = computed(() => {
                 <span class="uppercase">{{
                   currentDoc.ielp?.isConfirmed ? "ya" : "tidak"
                 }}</span>
+                <div class="mt-1 text-xs">
+                  Source: {{ currentDoc.ielp?.source || "-" }}<br />
+                  <template v-if="currentDoc.ielp?.source === 'MANUAL'">
+                    Verified by: {{ currentDoc.ielp?.verifiedByNik || "-" }} · {{ formatDate(currentDoc.ielp?.verifiedAt) }}
+                  </template>
+                </div>
               </td>
               <td colspan="2" class="border border-black p-2 align-top">
                 <span class="font-bold">11b.</span> Nama Rater<br />

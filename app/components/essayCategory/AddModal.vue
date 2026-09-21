@@ -18,8 +18,17 @@ interface Sector {
   subBranchUnitRatings: SubBranchUnitRating[];
 }
 
+interface ExistingQuestionGroup {
+  id: number;
+  subBranchUnitRating: {
+    rating: { id: number };
+    sector: { id: number };
+  };
+}
+
 const props = defineProps<{
   sectors: Sector[];
+  questionGroups: ExistingQuestionGroup[];
 }>();
 
 const emit = defineEmits<{
@@ -49,11 +58,21 @@ const availableRatings = computed(() => {
   if (!state.sectorId) return [];
   const sector = props.sectors.find((s) => s.id === state.sectorId);
   if (!sector) return [];
-  return sector.subBranchUnitRatings.map((sub) => ({
-    id: sub.rating.id,
-    name: sub.rating.rating,
-    description: sub.rating.description,
-  }));
+  const declaredRatingIds = new Set(
+    props.questionGroups
+      .filter(
+        (item) => item.subBranchUnitRating?.sector?.id === state.sectorId,
+      )
+      .map((item) => item.subBranchUnitRating.rating.id),
+  );
+
+  return sector.subBranchUnitRatings
+    .filter((sub) => !declaredRatingIds.has(sub.rating.id))
+    .map((sub) => ({
+      id: sub.rating.id,
+      name: sub.rating.rating,
+      description: sub.rating.description,
+    }));
 });
 
 // Reset ratingId when sector changes
@@ -166,6 +185,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           />
           <template v-if="!state.sectorId" #hint>
             <span class="text-xs text-muted">Select a sector first</span>
+          </template>
+          <template v-else-if="availableRatings.length === 0" #hint>
+            <span class="text-xs text-muted">
+              All ratings for this sector have already been declared.
+            </span>
           </template>
         </UFormField>
 

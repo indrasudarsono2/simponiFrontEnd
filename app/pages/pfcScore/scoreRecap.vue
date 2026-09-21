@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const apiBaseUrl = useApiBaseUrl()
+import ApplicationDocModal from "../../components/verification/ApplicationDocModal.vue";
 import {
   CalendarDate,
   DateFormatter,
@@ -26,6 +27,8 @@ interface ScoreRecapRow {
     passingGrade?: number | null;
   } | null;
   applicationDocument?: string | null;
+  relatedDocuments?: RelatedDocuments | null;
+  remarkDoc?: string | null;
   rating?: string | null;
   multipleChoiceScore?: number | null;
   essayScore?: number | null;
@@ -37,6 +40,11 @@ interface ScoreRecapRow {
     checker?: { nik?: string | null; name?: string | null } | null;
   }> | null;
   status?: string | null;
+}
+
+interface RelatedDocuments {
+  applicationDocument: Record<string, any>;
+  userData: Record<string, any>;
 }
 
 interface EvidenceItem {
@@ -89,8 +97,13 @@ const loading = ref(false);
 const evidenceLoadingId = ref<number | null>(null);
 const isEvidenceModalOpen = ref(false);
 const evidenceItems = ref<EvidenceItem[]>([]);
+const isRelatedDocumentsModalOpen = ref(false);
+const selectedRelatedDocuments = ref<RelatedDocuments | null>(null);
 const reportError = ref("");
 const selectedStatus = ref<"SUCCESS" | "FAILED" | null>(null);
+const ALL_FACET_VALUES = "__ALL__";
+const selectedRemarkDoc = ref(ALL_FACET_VALUES);
+const selectedRating = ref(ALL_FACET_VALUES);
 let eventRequestId = 0;
 
 function parseDateString(value: string): CalendarDate | null {
@@ -157,10 +170,25 @@ const passedCount = computed(
 const failedCount = computed(
   () => rows.value.filter((row) => row.status?.toUpperCase() === "FAILED").length,
 );
-const filteredRows = computed(() => {
-  if (!selectedStatus.value) return rows.value;
-  return rows.value.filter((row) => row.status?.toUpperCase() === selectedStatus.value);
+const remarkDocOptions = computed(() => {
+  const availableRows = selectedRating.value === ALL_FACET_VALUES
+    ? rows.value
+    : rows.value.filter((row) => row.rating === selectedRating.value);
+  const values = [...new Set(availableRows.map((row) => row.remarkDoc).filter((value): value is string => Boolean(value)))].sort();
+  return [{ label: "All Remarks", value: ALL_FACET_VALUES }, ...values.map((value) => ({ label: value, value }))];
 });
+const ratingOptions = computed(() => {
+  const availableRows = selectedRemarkDoc.value === ALL_FACET_VALUES
+    ? rows.value
+    : rows.value.filter((row) => row.remarkDoc === selectedRemarkDoc.value);
+  const values = [...new Set(availableRows.map((row) => row.rating).filter((value): value is string => Boolean(value)))].sort();
+  return [{ label: "All Ratings", value: ALL_FACET_VALUES }, ...values.map((value) => ({ label: value, value }))];
+});
+const filteredRows = computed(() => rows.value.filter((row) =>
+  (!selectedStatus.value || row.status?.toUpperCase() === selectedStatus.value) &&
+  (selectedRemarkDoc.value === ALL_FACET_VALUES || row.remarkDoc === selectedRemarkDoc.value) &&
+  (selectedRating.value === ALL_FACET_VALUES || row.rating === selectedRating.value),
+));
 const representedBranches = computed(
   () => new Set(rows.value.map((row) => row.branch?.id).filter(Boolean)).size,
 );
@@ -194,6 +222,11 @@ function resolveEvidenceUrl(filePath?: string | null): string {
   if (!filePath) return "";
   if (/^https?:\/\//i.test(filePath)) return filePath;
   return `${apiBaseUrl}${filePath}`;
+}
+
+function openRelatedDocuments(row: ScoreRecapRow) {
+  selectedRelatedDocuments.value = row.relatedDocuments || null;
+  isRelatedDocumentsModalOpen.value = true;
 }
 
 function formatEvidenceTime(value?: string | null): string {
@@ -259,6 +292,9 @@ async function loadRecap() {
 
   loading.value = true;
   reportError.value = "";
+  selectedRemarkDoc.value = ALL_FACET_VALUES;
+  selectedRating.value = ALL_FACET_VALUES;
+  selectedStatus.value = null;
   try {
     data.value = await $fetch<ScoreRecapResponse>(
       `${apiBaseUrl}/api/pfcScore/scoreRecap`,
@@ -497,6 +533,27 @@ const errorMessage = computed(() => {
           </UCard>
         </div>
 
+        <UCard v-if="rows.length">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <UFormField label="Remark Document">
+              <USelect
+                v-model="selectedRemarkDoc"
+                :items="remarkDocOptions"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="Rating">
+              <USelect
+                v-model="selectedRating"
+                :items="ratingOptions"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+        </UCard>
+
         <div v-if="errorMessage" class="rounded-lg border border-error/30 bg-error/5 p-4 text-error">
           {{ errorMessage }}
         </div>
@@ -574,17 +631,28 @@ const errorMessage = computed(() => {
                     <UBadge :color="statusColor(row.status)" variant="soft">{{ row.status || '-' }}</UBadge>
                   </td>
                   <td class="border border-default px-3 py-2 text-center">
-                    <UButton
-                      v-if="row.hasEvidence"
-                      icon="i-lucide-eye"
-                      color="primary"
-                      variant="soft"
-                      size="xs"
-                      :loading="evidenceLoadingId === row.appRatingId"
-                      aria-label="View evidence"
-                      @click="openEvidence(row)"
-                    />
-                    <span v-else>-</span>
+                    <div class="flex items-center justify-center gap-2">
+                      <UButton
+                        v-if="row.hasEvidence"
+                        icon="i-lucide-eye"
+                        color="primary"
+                        variant="soft"
+                        size="xs"
+                        :loading="evidenceLoadingId === row.appRatingId"
+                        aria-label="View evidence"
+                        @click="openEvidence(row)"
+                      />
+                      <UButton
+                        v-if="row.relatedDocuments"
+                        icon="i-lucide-folder-search"
+                        color="neutral"
+                        variant="soft"
+                        size="xs"
+                        aria-label="View related documents"
+                        @click="openRelatedDocuments(row)"
+                      />
+                      <span v-if="!row.hasEvidence && !row.relatedDocuments">-</span>
+                    </div>
                   </td>
                 </tr>
                 <tr v-if="filteredRows.length === 0">
@@ -621,6 +689,24 @@ const errorMessage = computed(() => {
             <p v-else class="text-sm text-muted">No evidence data.</p>
           </template>
         </UModal>
+
+        <div
+          v-if="isRelatedDocumentsModalOpen && selectedRelatedDocuments"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <div
+            class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            @click="isRelatedDocumentsModalOpen = false"
+          />
+          <div class="relative w-full max-w-[95vw] h-full max-h-[90vh]">
+            <ApplicationDocModal
+              :is-open="true"
+              :application-doc="selectedRelatedDocuments.applicationDocument"
+              :user-data="selectedRelatedDocuments.userData"
+              @close="isRelatedDocumentsModalOpen = false"
+            />
+          </div>
+        </div>
       </div>
     </template>
   </UDashboardPanel>

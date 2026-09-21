@@ -40,6 +40,7 @@ interface EventItem {
   };
 
   briefingFile: string | null;
+  recommendationFile: string | null;
   passingGrade: number;
   branchId?: number;
   branchName?: string;

@@ -179,7 +179,10 @@ async function handleSearch() {
   } catch (error: any) {
     toast.add({
       title: "Error",
-      description: error?.message || "Failed to fetch verification data",
+      description:
+        error?.data?.message ||
+        error?.message ||
+        "Failed to fetch verification data",
       color: "error",
     });
     verificationData.value = [];

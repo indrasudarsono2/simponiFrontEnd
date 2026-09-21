@@ -12,7 +12,7 @@ const schema = z.object({
   institution: z.string().min(2, "Institution must be at least 2 characters"),
   level: z.string().min(1, "Level is required"),
   released: z.string().min(1, "Released date is required"),
-  expired: z.string().min(1, "Expired date is required"),
+  expired: z.string().optional(),
   rater: z.string().min(2, "Rater must be at least 2 characters"),
   file: z.instanceof(File).optional(),
   echainFileName: z.string().nullable().optional(),
@@ -20,6 +20,8 @@ const schema = z.object({
   echainFileUrlExpiresAt: z.string().nullable().optional(),
   echainFileMimeType: z.string().nullable().optional(),
   echainFileSizeBytes: z.number().nullable().optional(),
+  requestedCheckerNik: z.string().optional(),
+  syncReceipt: z.string().nullable().optional(),
 });
 
 const open = ref(false);
@@ -40,12 +42,41 @@ const state = reactive<Partial<Schema>>({
   echainFileUrlExpiresAt: null,
   echainFileMimeType: null,
   echainFileSizeBytes: null,
+  requestedCheckerNik: undefined,
+  syncReceipt: null,
 });
 
 const toast = useToast();
 const loading = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const { apiFetch } = useApiFetch();
+const checkerOptions = ref<Array<{ label: string; value: string }>>([]);
+const levelOptions = ["4", "5", "6"];
+
+function calculateIelpExpiry(level?: string, released?: string) {
+  if (!level || !released || level === "6") return undefined;
+  const date = new Date(`${released}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return undefined;
+  date.setUTCFullYear(date.getUTCFullYear() + (level === "4" ? 3 : 6));
+  return date.toISOString().slice(0, 10);
+}
+
+watch([() => state.level, () => state.released, syncMode], ([level, released, synced]) => {
+  if (!synced) state.expired = calculateIelpExpiry(level, released);
+});
+
+watch(open, async (isOpen) => {
+  if (!isOpen || checkerOptions.value.length) return;
+  try {
+    const checkers = await apiFetch("/api/credentialVerification/checkers") as Array<{ nik: string; name?: string; ratings?: string[] }>;
+    checkerOptions.value = checkers.map((checker) => ({
+      value: checker.nik,
+      label: `${checker.name || checker.nik}${checker.ratings?.length ? ` [${checker.ratings.join(", ")}]` : ""}`,
+    }));
+  } catch (error: any) {
+    toast.add({ title: "Unable to load checkers", description: error?.data?.message || error?.message, color: "error" });
+  }
+});
 
 interface IelpUserSyncResponse {
   success: boolean;
@@ -62,6 +93,7 @@ interface IelpUserSyncResponse {
     fileMimeType?: string | null;
     fileSizeBytes?: number | null;
   };
+  syncReceipt: string;
 }
 
 function handleFileChange(event: Event) {
@@ -73,6 +105,7 @@ function handleFileChange(event: Event) {
     state.echainFileUrlExpiresAt = null;
     state.echainFileMimeType = null;
     state.echainFileSizeBytes = null;
+    state.syncReceipt = null;
   }
 }
 
@@ -117,6 +150,7 @@ async function syncFromSystem() {
     state.echainFileUrlExpiresAt = response.data.fileUrlExpiresAt ?? null;
     state.echainFileMimeType = response.data.fileMimeType ?? null;
     state.echainFileSizeBytes = response.data.fileSizeBytes ?? null;
+    state.syncReceipt = response.syncReceipt;
 
     toast.add({
       title: "Sync Success",
@@ -142,6 +176,10 @@ async function syncFromSystem() {
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
+  if (!syncMode.value && !event.data.requestedCheckerNik) {
+    toast.add({ title: "Checker required", description: "Please select who will verify this manual IELP.", color: "error" });
+    return;
+  }
   loading.value = true;
 
   try {
@@ -150,15 +188,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     formData.append("institution", event.data.institution);
     formData.append("level", event.data.level);
     formData.append("released", event.data.released);
-    formData.append("expired", event.data.expired);
+    if (event.data.expired) formData.append("expired", event.data.expired);
     formData.append("rater", event.data.rater);
+    formData.append("source", syncMode.value ? "ECHAIN" : "MANUAL");
+    if (syncMode.value && event.data.syncReceipt) formData.append("syncReceipt", event.data.syncReceipt);
+    if (!syncMode.value && event.data.requestedCheckerNik) formData.append("requestedCheckerNik", event.data.requestedCheckerNik);
 
     if (event.data.file instanceof File) {
       formData.append("file", event.data.file);
     }
 
-    if (!event.data.file && event.data.echainFileUrl) {
-      formData.append("echainFileUrl", event.data.echainFileUrl);
+    if (!event.data.file && syncMode.value) {
+      if (event.data.echainFileUrl) formData.append("echainFileUrl", event.data.echainFileUrl);
       if (event.data.echainFileName) {
         formData.append("echainFileName", event.data.echainFileName);
       }
@@ -203,6 +244,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.echainFileUrlExpiresAt = null;
     state.echainFileMimeType = null;
     state.echainFileSizeBytes = null;
+    state.requestedCheckerNik = undefined;
+    state.syncReceipt = null;
     syncMode.value = false;
     open.value = false;
 
@@ -337,6 +380,16 @@ const emit = defineEmits<{
                 <span v-else class="text-sm text-muted">No file selected</span>
               </div>
             </UFormField>
+            <UFormField label="Verification Checker" name="requestedCheckerNik" required>
+              <USelect
+                v-model="state.requestedCheckerNik"
+                :items="checkerOptions"
+                value-key="value"
+                placeholder="Select checker"
+                class="w-full"
+              />
+              <p class="mt-1 text-xs text-muted">The manual record remains pending until this checker approves it.</p>
+            </UFormField>
           </div>
 
           <!-- Form Fields -->
@@ -360,10 +413,11 @@ const emit = defineEmits<{
             name="level"
             required
           >
-            <UInput
+            <USelect
               v-model="state.level"
               class="w-full"
-              placeholder="e.g., 4 or 5"
+              :items="levelOptions"
+              placeholder="Select level"
               :disabled="syncMode && !!state.level"
             />
           </UFormField>
@@ -379,14 +433,17 @@ const emit = defineEmits<{
               />
             </UFormField>
 
-            <UFormField label="Expired Date" name="expired" required>
+            <UFormField :label="state.level === '6' ? 'Validity' : 'Expired Date'" name="expired" :required="state.level !== '6'">
               <UInput
+                v-if="state.level !== '6'"
                 v-model="state.expired"
                 type="date"
                 class="w-full"
                 icon="i-lucide-calendar"
-                :disabled="syncMode && !!state.expired"
+                disabled
               />
+              <UInput v-else model-value="Lifetime" class="w-full" disabled icon="i-lucide-infinity" />
+              <p class="mt-1 text-xs text-muted">Level 4: 3 years · Level 5: 6 years · Level 6: lifetime</p>
             </UFormField>
           </div>
 

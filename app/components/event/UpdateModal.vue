@@ -48,6 +48,7 @@ interface Event {
     remark: string;
   };
   briefingFile: string | null;
+  recommendationFile: string | null;
   passingGrade: number;
   branchId?: number;
   branchName?: string;
@@ -82,12 +83,28 @@ const schema = z.object({
   finishDate: z.string().min(1, "Finish date is required"),
   forExpDate: z.string().min(1, "ForExpDate is required"),
   briefingFile: z.instanceof(File).optional(),
+  recommendationFile: z.instanceof(File).optional(),
   passingGrade: z.coerce
     .number()
     .min(0)
     .max(100, "Passing grade must be between 0 and 100"),
   isPractical: z.boolean().default(false),
   isSimulator: z.boolean().default(false),
+}).superRefine((data, ctx) => {
+  const selectedRemark = props.remarkDocs.find(
+    (item) => Number(item.id) === Number(data.remarkDocId),
+  )?.remark;
+  if (
+    selectedRemark?.trim().toUpperCase() === "PENERBITAN" &&
+    !(data.recommendationFile instanceof File) &&
+    !props.event?.recommendationFile
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["recommendationFile"],
+      message: "Recommendation letter is required for PENERBITAN",
+    });
+  }
 });
 
 const open = ref(false);
@@ -104,6 +121,7 @@ const state = reactive<Partial<Schema>>({
   remarkDocId: undefined,
   formFillingDate: undefined,
   briefingFile: undefined,
+  recommendationFile: undefined,
   passingGrade: undefined,
   isPractical: false,
   isSimulator: false,
@@ -113,6 +131,16 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFileName = ref("");
 const currentFileUrl = ref("");
 const keepExistingFile = ref(true);
+const recommendationFileInput = ref<HTMLInputElement | null>(null);
+const selectedRecommendationFileName = ref("");
+const currentRecommendationFileUrl = ref("");
+const keepExistingRecommendationFile = ref(true);
+const isPenerbitan = computed(() =>
+  props.remarkDocs
+    .find((item) => Number(item.id) === Number(state.remarkDocId))
+    ?.remark?.trim()
+    .toUpperCase() === "PENERBITAN",
+);
 const df = new DateFormatter("en-US", { dateStyle: "medium" });
 const startTime = ref("00:00");
 const endTime = ref("23:59");
@@ -220,6 +248,11 @@ watch(
         ? newEvent.briefingFile.split("/").pop() || ""
         : "";
       keepExistingFile.value = true;
+      currentRecommendationFileUrl.value = newEvent.recommendationFile || "";
+      selectedRecommendationFileName.value = newEvent.recommendationFile
+        ? newEvent.recommendationFile.split("/").pop() || ""
+        : "";
+      keepExistingRecommendationFile.value = true;
       open.value = true;
     }
   },
@@ -238,6 +271,7 @@ watch(open, (isOpen) => {
     state.remarkDocId = undefined;
     state.formFillingDate = undefined;
     state.briefingFile = undefined;
+    state.recommendationFile = undefined;
     state.passingGrade = undefined;
     startTime.value = "00:00";
     endTime.value = "23:59";
@@ -245,6 +279,9 @@ watch(open, (isOpen) => {
     selectedFileName.value = "";
     currentFileUrl.value = "";
     keepExistingFile.value = true;
+    selectedRecommendationFileName.value = "";
+    currentRecommendationFileUrl.value = "";
+    keepExistingRecommendationFile.value = true;
     emit("close");
   }
 });
@@ -261,6 +298,20 @@ function handleFileChange(evt: globalThis.Event) {
 
 function triggerFileInput() {
   fileInput.value?.click();
+}
+
+function handleRecommendationFileChange(evt: globalThis.Event) {
+  const target = evt.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    state.recommendationFile = file;
+    selectedRecommendationFileName.value = file.name;
+    keepExistingRecommendationFile.value = false;
+  }
+}
+
+function triggerRecommendationFileInput() {
+  recommendationFileInput.value?.click();
 }
 
 const toast = useToast();
@@ -302,6 +353,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     formData.append("keepExistingFile", String(keepExistingFile.value));
     if (event.data.briefingFile instanceof File) {
       formData.append("briefingFile", event.data.briefingFile);
+    }
+    if (event.data.recommendationFile instanceof File) {
+      formData.append("recommendationFile", event.data.recommendationFile);
     }
 
     // Call API to update event via local Nuxt API
@@ -543,6 +597,52 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             <p class="text-xs text-muted">
               Supported formats: PDF, DOC, DOCX, PPT, PPTX. Leave empty to keep
               existing file.
+            </p>
+          </div>
+        </UFormField>
+
+        <UFormField
+          v-if="isPenerbitan"
+          label="Recommendation Letter"
+          name="recommendationFile"
+          required
+        >
+          <div class="space-y-2">
+            <input
+              ref="recommendationFileInput"
+              type="file"
+              class="hidden"
+              accept=".pdf,.doc,.docx"
+              @change="handleRecommendationFileChange"
+            />
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-upload"
+              :label="selectedRecommendationFileName || 'Choose Recommendation Letter'"
+              class="w-full justify-start"
+              @click="triggerRecommendationFileInput"
+            />
+            <p
+              v-if="currentRecommendationFileUrl && keepExistingRecommendationFile"
+              class="text-sm text-muted"
+            >
+              Current file:
+              <a
+                :href="currentRecommendationFileUrl"
+                target="_blank"
+                class="text-primary hover:underline"
+              >{{ selectedRecommendationFileName }}</a>
+            </p>
+            <p
+              v-else-if="selectedRecommendationFileName"
+              class="text-sm text-muted"
+            >
+              New file: {{ selectedRecommendationFileName }}
+            </p>
+            <p class="text-xs text-muted">
+              Supported formats: PDF, DOC, DOCX. Leave empty to keep the existing letter.
             </p>
           </div>
         </UFormField>

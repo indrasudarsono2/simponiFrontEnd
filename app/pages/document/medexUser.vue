@@ -2,6 +2,7 @@
 const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
+import CredentialHistoryModal from "../../components/credential/CredentialHistoryModal.vue";
 const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
@@ -14,6 +15,10 @@ interface MedexUser {
   examiner: string;
   institution: string;
   file?: string;
+  source: "ECHAIN" | "MANUAL" | "LEGACY";
+  verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+  requestedChecker?: { nik: string; name?: string | null } | null;
+  verifiedBy?: { nik: string; name?: string | null } | null;
 }
 
 const toast = useToast();
@@ -22,6 +27,8 @@ const table = useTemplateRef<any>("table");
 // State for modals
 const medexUserToUpdate = ref<MedexUser | null>(null);
 const medexUserToDelete = ref<MedexUser | null>(null);
+const isHistoryModalOpen = ref(false);
+const selectedHistoryId = ref<number | null>(null);
 
 // Search filter
 const searchQuery = ref("");
@@ -217,6 +224,15 @@ const columns = computed((): TableColumn<MedexUser>[] => [
     },
   },
   {
+    accessorKey: "verificationStatus",
+    header: "Source / Verification",
+    cell: ({ row }) => h("div", {}, [
+      h("div", { class: "font-medium" }, row.original.source),
+      h("div", { class: row.original.verificationStatus === "APPROVED" ? "text-success" : row.original.verificationStatus === "REJECTED" ? "text-error" : "text-warning" }, row.original.verificationStatus),
+      h("div", { class: "text-xs text-muted" }, row.original.verificationStatus === "PENDING" ? `Checker: ${row.original.requestedChecker?.name || row.original.requestedChecker?.nik || "-"}` : row.original.source === "MANUAL" ? `Verified by: ${row.original.verifiedBy?.name || row.original.verifiedBy?.nik || "-"}` : ""),
+    ]),
+  },
+  {
     accessorKey: "file",
     header: "File",
     cell: ({ row }) => {
@@ -238,6 +254,21 @@ const columns = computed((): TableColumn<MedexUser>[] => [
         [h("i", { class: "i-lucide-file-text text-sm" }), "View File"],
       );
     },
+  },
+  {
+    id: "history",
+    header: "History",
+    cell: ({ row }) => h(UButton, {
+      icon: "i-lucide-history",
+      label: "History",
+      color: "neutral",
+      variant: "soft",
+      size: "sm",
+      onClick: () => {
+        selectedHistoryId.value = Number(row.original.id);
+        isHistoryModalOpen.value = true;
+      },
+    }),
   },
   {
     id: "actions",
@@ -388,6 +419,11 @@ const columns = computed((): TableColumn<MedexUser>[] => [
         :medexUser="medexUserToDelete"
         @medex-user-deleted="handleMedexUserDeleted"
         @close="handleModalClose"
+      />
+      <CredentialHistoryModal
+        v-model:open="isHistoryModalOpen"
+        credential-type="medex"
+        :credential-id="selectedHistoryId"
       />
     </template>
   </UDashboardPanel>

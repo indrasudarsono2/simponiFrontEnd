@@ -31,6 +31,12 @@ interface AppRatingItem {
   rating?: {
     rating?: string | null;
   } | null;
+  finalScores?: Array<{
+    statusId?: number | null;
+    status?: {
+      status?: string | null;
+    } | null;
+  }>;
   practicalTests?: PracticalTestItem[];
 }
 
@@ -96,6 +102,7 @@ interface PracticalGroupRow {
   name: string;
   rating: string;
   status: string;
+  canInputPractical: boolean;
   passingGrade: number | null;
   practicalTests: PracticalTestItem[];
 }
@@ -174,6 +181,9 @@ const practicalRows = computed<PracticalGroupRow[]>(() => {
         name: doc.user?.name || "-",
         rating: rating.rating?.rating || "-",
         status: rating.status?.status || "-",
+        canInputPractical:
+          rating.status?.status === "WAITING PRACTICAL" &&
+          rating.finalScores?.[0]?.status?.status === "WAITING PRACTICAL",
         passingGrade:
           doc.eventUser?.event?.passingGrade == null
             ? null
@@ -1018,6 +1028,16 @@ async function submitPracticalUpdate() {
                         color="primary"
                         variant="soft"
                         icon="i-lucide-square-pen"
+                        :disabled="
+                          row.practicalTests[0]?.score == null &&
+                          !row.canInputPractical
+                        "
+                        :title="
+                          row.practicalTests[0]?.score == null &&
+                          !row.canInputPractical
+                            ? 'Theory examination must be passed before entering a practical exam score.'
+                            : undefined
+                        "
                         @click="openUpdateModal(row.practicalTests[0]!, row.passingGrade)"
                       />
                     </td>
@@ -1071,6 +1091,12 @@ async function submitPracticalUpdate() {
                         color="primary"
                         variant="soft"
                         icon="i-lucide-square-pen"
+                        :disabled="test.score == null && !row.canInputPractical"
+                        :title="
+                          test.score == null && !row.canInputPractical
+                            ? 'Theory examination must be passed before entering a practical exam score.'
+                            : undefined
+                        "
                         @click="openUpdateModal(test, row.passingGrade)"
                       />
                     </td>

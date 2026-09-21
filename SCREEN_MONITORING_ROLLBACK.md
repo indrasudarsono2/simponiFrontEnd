@@ -6,6 +6,8 @@ Set the following frontend environment variable and restart the Nuxt application
 NUXT_PUBLIC_SCREEN_MONITORING_ENABLED=false
 ```
 
-This restores the previous camera-only behavior. The `/api/preview` endpoint remains backward compatible with the original single `file` upload, so the backend and database do not need to be rolled back.
+This temporarily disables both screen and camera monitoring, allowing an examination to run from an HTTP LAN address. The backend and database do not need to be rolled back.
+
+Use this setting only for controlled development or testing. Production examinations should use HTTPS and keep monitoring enabled.
 
 To enable screen monitoring again, set the value to `true` and restart Nuxt.

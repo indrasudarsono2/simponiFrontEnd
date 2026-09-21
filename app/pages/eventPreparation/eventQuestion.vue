@@ -6,6 +6,10 @@ const { token } = useAuth();
 const UButton = resolveComponent("UButton");
 
 interface RawEventQuestion {
+  id: number;
+  eventId: number | null;
+  sectorId: number | null;
+  kindOfQuestionId: number | null;
   event: {
     id: number;
     event: string;
@@ -136,13 +140,14 @@ const kindOfQuestions = computed(() => {
 const eventQuestionsData = computed((): EventQuestion[] => {
   const rawData = apiResponse.value?.evenQuestion || [];
 
-  return rawData.map((item, index) => ({
-    id: index + 1, // Generate ID since API doesn't provide one
-    eventId: item.event?.id ?? 0,
+  return rawData.map((item) => ({
+    id: item.id,
+    eventId: item.eventId ?? item.event?.id ?? 0,
     eventName: item.event?.event ?? "-",
-    sectorId: null, // Will be populated from selected event
+    sectorId: item.sectorId,
     sector: "-",
-    kindOfQuestionId: item.kindOfQuestion?.id ?? 0,
+    kindOfQuestionId:
+      item.kindOfQuestionId ?? item.kindOfQuestion?.id ?? 0,
     kindOfQuestion: item.kindOfQuestion?.question ?? "-",
     quantity: item.quantity ?? 0,
     persentage: item.persentage ?? 0,

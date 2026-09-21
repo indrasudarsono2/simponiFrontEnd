@@ -13,6 +13,25 @@ interface AppRatingItem {
     id: number;
     createdAt?: string | null;
   }>;
+  examinationStatus?: RatingExaminationStatus | null;
+}
+
+type ExaminationStatus =
+  | "COMPLETED"
+  | "IN_PROGRESS"
+  | "NOT_STARTED"
+  | "WAITING_ROOM"
+  | "NOT_ASSIGNED"
+  | "EXPIRED";
+
+interface RatingExaminationStatus {
+  appRatingId?: number;
+  rating?: string;
+  status: ExaminationStatus;
+  message: string;
+  completedAt?: string | null;
+  canStart?: boolean;
+  awaitingPractical?: boolean;
 }
 
 interface ApplicationDocsItem {
@@ -58,6 +77,10 @@ interface ExaminationEvent {
 
 interface ExaminationResponse {
   event?: ExaminationEvent | null;
+  status?: ExaminationStatus;
+  message?: string;
+  completedAt?: string | null;
+  ratingStatuses?: RatingExaminationStatus[];
 }
 
 interface EssayQuestionPayload {
@@ -126,6 +149,10 @@ interface TableRow {
   persentage: number;
   minutes: number;
   isReExamination: boolean;
+  examinationStatus: ExaminationStatus;
+  statusMessage: string;
+  completedAt?: string | null;
+  canStart: boolean;
 }
 
 const { token } = useAuth();
@@ -168,6 +195,25 @@ const { data, status, error, refresh } = await useFetch<ExaminationResponse>(
 );
 
 const eventData = computed(() => data.value?.event || null);
+const overallExaminationStatus = computed<ExaminationStatus>(
+  () => data.value?.status || "NOT_ASSIGNED",
+);
+const overallStatusMessage = computed(
+  () => data.value?.message || "No examination status is available.",
+);
+
+function statusColor(statusValue: ExaminationStatus) {
+  if (statusValue === "COMPLETED") return "success" as const;
+  if (statusValue === "IN_PROGRESS") return "info" as const;
+  if (statusValue === "NOT_STARTED") return "primary" as const;
+  if (statusValue === "WAITING_ROOM") return "warning" as const;
+  if (statusValue === "EXPIRED") return "error" as const;
+  return "neutral" as const;
+}
+
+function statusLabel(statusValue: ExaminationStatus): string {
+  return statusValue.replaceAll("_", " ");
+}
 
 function toArray<T>(value: T | T[] | null | undefined): T[] {
   if (!value) return [];
@@ -327,9 +373,14 @@ watch(
     status.value,
     roomTimeWindow.value.hasValidRange,
     roomTimeWindow.value.isInRange,
+    overallExaminationStatus.value,
   ],
-  ([fetchStatus, hasValidRange, isInRange]) => {
+  ([fetchStatus, hasValidRange, isInRange, examinationStatus]) => {
     if (fetchStatus !== "success") return;
+    if (examinationStatus === "COMPLETED" || examinationStatus === "NOT_ASSIGNED") {
+      hasShownOutOfRangeToast.value = false;
+      return;
+    }
     if (hasValidRange && isInRange) {
       hasShownOutOfRangeToast.value = false;
       return;
@@ -360,6 +411,12 @@ function getRowsForQuestion(question: EventQuestionItem): TableRow[] {
     persentage: question.persentage,
     minutes: question.minutes,
     isReExamination: (item.examinationInvalidations?.length || 0) > 0,
+    examinationStatus:
+      item.examinationStatus?.status || "NOT_STARTED",
+    statusMessage:
+      item.examinationStatus?.message || "Examination status is unavailable.",
+    completedAt: item.examinationStatus?.completedAt || null,
+    canStart: Boolean(item.examinationStatus?.canStart),
   }));
 }
 
@@ -478,6 +535,7 @@ function isMultipleChoiceQuestion(question: EventQuestionItem): boolean {
 }
 
 function canShowGoButton(question: EventQuestionItem, row: TableRow): boolean {
+  if (!row.canStart) return false;
   const statusId = Number(row.statusId || 0);
   if (isMultipleChoiceQuestion(question)) {
     return statusId === 4;
@@ -528,13 +586,40 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <div v-else-if="!eventData" class="rounded-lg border p-4 text-muted">
-          No examination event data available.
+        <div v-else-if="!eventData" class="rounded-lg border p-4 space-y-2">
+          <UBadge :color="statusColor(overallExaminationStatus)" variant="soft">
+            {{ statusLabel(overallExaminationStatus) }}
+          </UBadge>
+          <p class="text-sm text-muted">{{ overallStatusMessage }}</p>
         </div>
 
         <template v-else>
           <div
-            v-if="!roomTimeWindow.hasValidRange || !roomTimeWindow.isInRange"
+            class="rounded-lg border p-4 space-y-2"
+            :class="{
+              'border-success/30 bg-success/5': overallExaminationStatus === 'COMPLETED',
+              'border-info/30 bg-info/5': overallExaminationStatus === 'IN_PROGRESS',
+              'border-warning/30 bg-warning/5': overallExaminationStatus === 'WAITING_ROOM',
+              'border-error/30 bg-error/5': overallExaminationStatus === 'EXPIRED',
+            }"
+          >
+            <div class="flex flex-wrap items-center gap-2">
+              <UBadge :color="statusColor(overallExaminationStatus)" variant="soft">
+                {{ statusLabel(overallExaminationStatus) }}
+              </UBadge>
+              <span class="font-medium text-highlighted">Examination Status</span>
+            </div>
+            <p class="text-sm text-muted">{{ overallStatusMessage }}</p>
+            <p v-if="data?.completedAt" class="text-xs text-muted">
+              Completed at: {{ formatDateTime(data.completedAt) }} UTC
+            </p>
+          </div>
+
+          <div
+            v-if="
+              overallExaminationStatus !== 'COMPLETED' &&
+              (!roomTimeWindow.hasValidRange || !roomTimeWindow.isInRange)
+            "
             class="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
           >
             {{ roomRangeMessage }}
@@ -583,6 +668,7 @@ onBeforeUnmount(() => {
                     <th class="px-3 py-2 text-left font-medium">Quantity</th>
                     <th class="px-3 py-2 text-left font-medium">Persentage</th>
                     <th class="px-3 py-2 text-left font-medium">Minutes</th>
+                    <th class="px-3 py-2 text-left font-medium">Status</th>
                     <th class="px-3 py-2 text-left font-medium">Action</th>
                   </tr>
                 </thead>
@@ -599,6 +685,23 @@ onBeforeUnmount(() => {
                       {{ toPercentageText(row.persentage) }}
                     </td>
                     <td class="px-3 py-2">{{ row.minutes }}</td>
+                    <td class="px-3 py-2">
+                      <div class="space-y-1">
+                        <UBadge
+                          :color="statusColor(row.examinationStatus)"
+                          variant="soft"
+                          size="sm"
+                        >
+                          {{ statusLabel(row.examinationStatus) }}
+                        </UBadge>
+                        <p class="max-w-72 text-xs text-muted">
+                          {{ row.statusMessage }}
+                        </p>
+                        <p v-if="row.completedAt" class="text-xs text-muted">
+                          {{ formatDateTime(row.completedAt) }} UTC
+                        </p>
+                      </div>
+                    </td>
                     <td class="px-3 py-2">
                       <UButton
                         v-if="canShowGoButton(question, row)"
@@ -626,8 +729,8 @@ onBeforeUnmount(() => {
                     v-if="getRowsForQuestion(question).length === 0"
                     class="border-t"
                   >
-                    <td class="px-3 py-3 text-muted" colspan="6">
-                      No app ratings found for this question.
+                    <td class="px-3 py-3 text-muted" colspan="7">
+                      No rating has been assigned for this examination.
                     </td>
                   </tr>
                 </tbody>

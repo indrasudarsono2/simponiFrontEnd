@@ -3,7 +3,11 @@ const apiBaseUrl = useApiBaseUrl()
 
 interface RatingSummaryUserRatingItem {
   id?: number;
+  ratingId?: number | null;
+  appRatingId?: number | null;
   expireddate?: string | null;
+  createdAt?: string | null;
+  status?: "ACTIVE" | "RE_EXAMINATION_REQUIRED";
   rating?: {
     rating?: string | null;
   } | null;
@@ -23,6 +27,7 @@ interface RatingSummaryRow {
   licenseNumber: string;
   name: string;
   rating: string;
+  ratingStatus: "ACTIVE" | "RE_EXAMINATION_REQUIRED" | "-";
   expiredDate: string;
   elapsedDays: number | null;
 }
@@ -39,6 +44,7 @@ type SortKey =
   | "licenseNumber"
   | "name"
   | "rating"
+  | "ratingStatus"
   | "expiredDate"
   | "elapsedDays";
 
@@ -89,6 +95,7 @@ const rawRows = computed<RatingSummaryRow[]>(() => {
         licenseNumber: user.licenseUserId || "-",
         name: user.name || "-",
         rating: "-",
+        ratingStatus: "-",
         expiredDate: "-",
         elapsedDays: null,
       });
@@ -103,6 +110,7 @@ const rawRows = computed<RatingSummaryRow[]>(() => {
         licenseNumber: user.licenseUserId || "-",
         name: user.name || "-",
         rating: userRating.rating?.rating || "-",
+        ratingStatus: userRating.status || "ACTIVE",
         expiredDate: formatDate(userRating.expireddate),
         elapsedDays: calculateElapsedDays(userRating.expireddate),
       });
@@ -131,6 +139,8 @@ const rows = computed(() => {
         return a.name.localeCompare(b.name) * dir;
       case "rating":
         return a.rating.localeCompare(b.rating) * dir;
+      case "ratingStatus":
+        return a.ratingStatus.localeCompare(b.ratingStatus) * dir;
       case "expiredDate":
         return a.expiredDate.localeCompare(b.expiredDate) * dir;
       case "elapsedDays":
@@ -272,6 +282,18 @@ function elapsedStyle(value: number | null): Record<string, string> {
                   <button
                     type="button"
                     class="inline-flex items-center gap-1"
+                    @click="toggleSort('ratingStatus')"
+                  >
+                    Status
+                    <UIcon :name="sortIcon('ratingStatus')" class="size-4" />
+                  </button>
+                </th>
+                <th
+                  class="px-3 py-2 text-center font-medium border border-default"
+                >
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1"
                     @click="toggleSort('no')"
                   >
                     No
@@ -387,6 +409,14 @@ function elapsedStyle(value: number | null): Record<string, string> {
                   {{ row.rating }}
                 </td>
                 <td class="px-3 py-2 border border-default text-center">
+                  <UBadge
+                    :color="row.ratingStatus === 'ACTIVE' ? 'success' : row.ratingStatus === 'RE_EXAMINATION_REQUIRED' ? 'warning' : 'neutral'"
+                    variant="soft"
+                  >
+                    {{ row.ratingStatus === 'RE_EXAMINATION_REQUIRED' ? 'Re-examination Required' : row.ratingStatus === 'ACTIVE' ? 'Active' : '-' }}
+                  </UBadge>
+                </td>
+                <td class="px-3 py-2 border border-default text-center">
                   {{ row.expiredDate }}
                 </td>
                 <td
@@ -402,7 +432,7 @@ function elapsedStyle(value: number | null): Record<string, string> {
               <tr v-if="displayRows.length === 0">
                 <td
                   class="px-3 py-3 text-muted border border-default text-center"
-                  colspan="7"
+                  colspan="8"
                 >
                   No rating summary data available.
                 </td>

@@ -15,6 +15,7 @@ interface RatingItem {
 
 interface EventUserItem {
   id: number;
+  userNik?: string;
   name?: string;
   user?: {
     name?: string;
@@ -125,12 +126,13 @@ const eventUserOptions = computed(() => {
       : eventUser.applicationDoc || {};
     const activeDoc = Object.keys(appDoc).length ? appDoc : fallbackDoc;
     const name =
+      eventUser.user?.name ||
       activeDoc.name ||
       activeDoc.user?.name ||
+      eventUser.userNik ||
       activeDoc.userNik ||
       eventUser.name ||
-      eventUser.user?.name ||
-      "Unknown";
+      "User";
     const ratings = (activeDoc.appRatings || [])
       .map((item: any) => item?.rating?.rating || item?.rating || "")
       .filter(Boolean)
@@ -162,12 +164,13 @@ const eventUserOptions = computed(() => {
       const activeDoc = Object.keys(appDoc).length ? appDoc : fallbackDoc;
       const rawRatings = activeDoc.appRatings || [];
       const name =
+        eventUser.user?.name ||
         activeDoc.name ||
         activeDoc.user?.name ||
+        eventUser.userNik ||
         activeDoc.userNik ||
         eventUser.name ||
-        eventUser.user?.name ||
-        "Unknown";
+        "User";
       const ratings = rawRatings
         .map((item: any) => {
           if (typeof item === "string") return item;

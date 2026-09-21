@@ -3,6 +3,7 @@ const apiBaseUrl = useApiBaseUrl()
 import { sub } from "date-fns";
 import type { DropdownMenuItem } from "@nuxt/ui";
 import type { Period, Range } from "~/types";
+import RatingAuthorityCard from "~/components/dashboard/RatingAuthorityCard.vue";
 
 const { isNotificationsSlideoverOpen } = useDashboard();
 const { token } = useAuth();
@@ -60,6 +61,35 @@ interface DashboardBriefing {
   }[];
 }
 
+interface DashboardRatingAuthority {
+  id: number;
+  rating?: { id?: number; rating?: string | null } | null;
+  expiredAt?: string | null;
+  finalScore?: number | null;
+  applicationDoc?: { id?: number; number?: string | null } | null;
+  practicalScores?: Array<{
+    id: number;
+    kind?: string | null;
+    score?: number | null;
+  }>;
+  cwps?: Array<{
+    id: number;
+    name?: string | null;
+    sector?: string | null;
+    frequencies?: Array<{
+      id: number;
+      frequency?: string | null;
+      isPrimary?: boolean | null;
+    }>;
+  }>;
+}
+
+interface DashboardOperationalData {
+  name?: string | null;
+  currentRatingAuthorities?: DashboardRatingAuthority[];
+  [key: string]: any;
+}
+
 // Current UTC time that updates every minute
 const currentUTCTime = ref(new Date().toISOString());
 
@@ -93,7 +123,7 @@ const formattedUTCTime = computed(() => {
 });
 
 // Fetch dashboard operational data
-const { data: dashboardData, refresh: refreshDashboardData } = await useFetch(
+const { data: dashboardData, refresh: refreshDashboardData } = await useFetch<DashboardOperationalData>(
   `${apiBaseUrl}/api/dashboardOperational`,
   {
     headers: {
@@ -213,6 +243,11 @@ function openFilePreview(contents?: ContentOfBriefing[]) {
           :range="range"
           :dashboard-data="dashboardData"
           :refresh-dashboard-data="refreshDashboardData"
+        />
+
+        <RatingAuthorityCard
+          :user-name="dashboardData?.name || '-'"
+          :authorities="dashboardData?.currentRatingAuthorities || []"
         />
         <!-- <HomeChart :period="period" :range="range" />
         <HomeSales :period="period" :range="range" /> -->
