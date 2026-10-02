@@ -50,6 +50,7 @@ interface Event {
   id: number;
   name: string;
   event: string;
+  createdAt: string;
   sectorId: number;
   sectorName: string;
   session?: string;
@@ -192,6 +193,7 @@ const availableEvents = computed(() => {
         id: event.id,
         name: event.event,
         event: event.event,
+        createdAt: event.createdAt,
         sectorId: event.sector?.id ?? 0,
         sectorName: event.sector?.sector ?? "-",
         session: session.session,
@@ -202,7 +204,14 @@ const availableEvents = computed(() => {
       });
     });
   });
-  return events;
+  return events.sort((a, b) => {
+    const createdAtDifference =
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
+    return Number.isNaN(createdAtDifference) || createdAtDifference === 0
+      ? b.id - a.id
+      : createdAtDifference;
+  });
 });
 
 // Helper to get users with specific role from an event
