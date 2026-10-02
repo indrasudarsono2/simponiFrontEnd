@@ -426,6 +426,17 @@ const ratingOptions = computed(() => {
   return options;
 });
 
+const newestFirst = <T extends { id: number; createdAt: string }>(items: T[]) =>
+  [...items].sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() || b.id - a.id,
+  );
+const licenseOptions = computed(() => newestFirst(userData.value.license).map((item) => ({
+  id: String(item.id), label: item.note,
+})));
+const logbookOptions = computed(() => newestFirst(userData.value.logbook).map((item) => ({
+  id: String(item.id), label: item.note,
+})));
+
 // ─── Form State (initialized from props) ─────────────────────────────────
 const selectedEventUserId = ref("");
 const selectedLicenseId = ref("");
@@ -1091,12 +1102,7 @@ async function onSubmit() {
                 >
                 <USelect
                   v-model="selectedLicenseId"
-                  :items="
-                    userData.license.map((l) => ({
-                      id: String(l.id),
-                      label: l.note,
-                    }))
-                  "
+                  :items="licenseOptions"
                   value-key="id"
                   label-key="label"
                   placeholder="Pilih Lisensi"
@@ -1109,12 +1115,7 @@ async function onSubmit() {
                 >
                 <USelect
                   v-model="selectedLogbookId"
-                  :items="
-                    userData.logbook.map((l) => ({
-                      id: String(l.id),
-                      label: l.note,
-                    }))
-                  "
+                  :items="logbookOptions"
                   value-key="id"
                   label-key="label"
                   placeholder="Pilih Logbook"

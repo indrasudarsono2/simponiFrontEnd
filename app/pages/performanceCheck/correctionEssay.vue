@@ -27,6 +27,7 @@ interface GroupMemberItem {
   finalScores?: FinalScoreItem[] | null;
   essayCorrections?: Array<{
     id?: number;
+    appRating?: { id?: number; rating?: { rating?: string | null } | null } | null;
     answer?: string | null;
     score?: number | null;
     essay?: {
@@ -109,6 +110,7 @@ const selectedPersentage = ref<number | null>(null);
 const selectedHistoryEssayCorrections = ref<
   Array<{
     id?: number;
+    appRating?: { id?: number; rating?: { rating?: string | null } | null } | null;
     answer?: string | null;
     score?: number | null;
     essay?: {

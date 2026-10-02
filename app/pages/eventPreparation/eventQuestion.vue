@@ -49,6 +49,7 @@ interface EventQuestionAssignment {
 interface Event {
   id: number;
   event: string;
+  createdAt: string;
   sectorId: number;
   theoryMode?: 'MODE_1' | 'MODE_2';
 }
@@ -122,21 +123,30 @@ const currentBranchUnit = computed(() => ({
 // Extract events from sessions for the filter dropdown
 const events = computed(() => {
   const sessions = apiResponse.value?.allAtribute?.sessions || [];
-  const allEvents: { id: number; name: string; sectorId?: number; theoryMode?: 'MODE_1' | 'MODE_2' }[] = [];
+  const allEvents: { id: number; name: string; createdAt: string; sectorId?: number; theoryMode?: 'MODE_1' | 'MODE_2' }[] = [];
 
   sessions.forEach((session) => {
     session.events?.forEach((event) => {
       allEvents.push({
         id: event.id,
         name: event.event,
+        createdAt: event.createdAt,
         sectorId: event.sectorId,
         theoryMode: event.theoryMode,
       });
     });
   });
 
-  return allEvents;
+  return allEvents.sort((a, b) => {
+    const newestFirst = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return (Number.isFinite(newestFirst) ? newestFirst : 0) || b.id - a.id;
+  });
 });
+
+const eventFilterItems = computed(() => events.value.map((event) => ({
+  label: event.name,
+  value: event.id,
+})));
 
 // Use kindOfQuestion from the API response
 const kindOfQuestions = computed(() => {
@@ -460,14 +470,21 @@ const columns = computed((): TableColumn<EventQuestion>[] => [
           class="max-w-sm"
           icon="i-lucide-search"
         />
-        <USelect
+        <USelectMenu
           v-model="selectedEventFilter"
-          :items="[
-            { label: 'All Events', value: null },
-            ...(events?.map((e) => ({ label: e.name, value: e.id })) || []),
-          ]"
-          placeholder="Filter by Event"
-          class="w-48"
+          :items="eventFilterItems"
+          label-key="label"
+          value-key="value"
+          searchable
+          clear
+          placeholder="All Events"
+          class="w-full sm:w-[36rem] max-w-full"
+          :ui="{
+            base: 'h-auto min-h-9 items-start py-2',
+            value: 'whitespace-normal break-words text-left',
+            content: 'w-[48rem] max-w-[calc(100vw-2rem)]',
+            itemLabel: 'whitespace-normal break-words text-left',
+          }"
         />
         <USelect
           v-model="selectedKindFilter"

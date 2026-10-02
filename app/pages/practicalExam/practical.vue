@@ -67,6 +67,9 @@ interface PracticalExamResponse {
   applicationDoc?: ApplicationDocItem[];
   rechecks?: PracticalRecheckItem[];
 }
+interface PracticalEventResponse {
+  events: Array<{ id: number; event: string | null; createdAt: string }>;
+}
 
 interface PracticalRecheckItem {
   id: number;
@@ -190,6 +193,19 @@ async function openTheoryReview(appRatingId: number) {
   }
 }
 
+const selectedEventId = ref<number | undefined>(undefined);
+const { data: availableEvents, status: eventsStatus, error: eventsError, refresh: refreshEvents } = await useFetch<PracticalEventResponse>(
+  `${apiBaseUrl}/api/practicalExam`,
+  {
+    query: { view: 'events' },
+    headers: { Authorization: token.value ? `Bearer ${token.value}` : '' },
+  },
+);
+const eventOptions = computed(() => (availableEvents.value?.events || []).map((event) => ({
+  label: event.event || `Event ${event.id}`,
+  value: event.id,
+})));
+
 const {
   data: practicalExamData,
   status,
@@ -198,11 +214,18 @@ const {
 } = await useFetch<PracticalExamResponse>(
   `${apiBaseUrl}/api/practicalExam`,
   {
+    query: computed(() => ({ eventId: selectedEventId.value })),
     headers: {
       Authorization: token.value ? `Bearer ${token.value}` : "",
     },
+    immediate: false,
+    watch: false,
   },
 );
+watch(selectedEventId, (eventId) => {
+  practicalExamData.value = undefined;
+  if (eventId) refresh();
+});
 
 const practicalRows = computed<PracticalGroupRow[]>(() => {
   const docs = practicalExamData.value?.applicationDoc || [];
@@ -837,7 +860,26 @@ async function submitPracticalUpdate() {
 
     <template #body>
       <div class="p-4">
-        <UCard v-if="recheckTasks.length" class="mb-4">
+        <UCard class="mb-4">
+          <template #header><h2 class="text-lg font-semibold">Select Event</h2></template>
+          <div class="space-y-2">
+            <USelectMenu
+              v-model="selectedEventId"
+              :items="eventOptions"
+              label-key="label"
+              value-key="value"
+              searchable
+              placeholder="Select an event to load practical exams"
+              class="w-full max-w-2xl"
+            />
+            <p v-if="eventsStatus === 'pending'" class="text-sm text-muted">Loading available events...</p>
+            <div v-else-if="eventsError" class="flex items-center gap-2 text-sm text-error">
+              Unable to load events. <UButton label="Retry" size="xs" variant="outline" @click="refreshEvents()" />
+            </div>
+            <p v-else-if="!eventOptions.length" class="text-sm text-muted">No assigned practical exam events available.</p>
+          </div>
+        </UCard>
+        <UCard v-if="selectedEventId && recheckTasks.length" class="mb-4">
           <template #header>
             <div>
               <h2 class="text-lg font-semibold">One-Time Practical Recheck</h2>
@@ -946,13 +988,17 @@ async function submitPracticalUpdate() {
                 color="primary"
                 variant="soft"
                 :loading="status === 'pending'"
+                :disabled="!selectedEventId"
                 @click="refresh()"
               />
             </div>
           </template>
 
+          <div v-if="!selectedEventId" class="text-muted py-4">
+            Select an event to view practical exam data.
+          </div>
           <div
-            v-if="status === 'pending'"
+            v-else-if="status === 'pending'"
             class="flex items-center justify-center py-8 text-muted gap-2"
           >
             <UIcon name="i-lucide-loader-2" class="animate-spin" />

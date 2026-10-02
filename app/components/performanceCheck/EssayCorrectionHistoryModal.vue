@@ -3,6 +3,7 @@ const apiBaseUrl = useApiBaseUrl()
 
 interface EssayCorrectionItem {
   id?: number;
+  appRating?: { id?: number; rating?: { rating?: string | null } | null } | null;
   answer?: string | null;
   score?: number | null;
   essay?: {
@@ -25,8 +26,32 @@ const emit = defineEmits<{
   (e: "close"): void;
 }>();
 const isBlurred = ref(false);
+const selectedRatingKey = ref<string | null>(null);
 const watermarkText = ref("");
 let watermarkTimer: number | null = null;
+
+const ratingGroups = computed(() => {
+  const groups = new Map<string, { key: string; label: string; items: EssayCorrectionItem[] }>();
+  for (const item of props.essayCorrections) {
+    const key = item.appRating?.id != null ? String(item.appRating.id) : "unknown";
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        label: item.appRating?.rating?.rating || "Unknown rating",
+        items: [],
+      });
+    }
+    groups.get(key)!.items.push(item);
+  }
+  return [...groups.values()];
+});
+watch(() => [props.isOpen, props.essayCorrections] as const, () => {
+  if (props.isOpen) selectedRatingKey.value = ratingGroups.value[0]?.key ?? null;
+}, { immediate: true });
+const activeRating = computed(() =>
+  ratingGroups.value.find((group) => group.key === selectedRatingKey.value) || ratingGroups.value[0],
+);
+const visibleCorrections = computed(() => activeRating.value?.items || []);
 
 function blockEvent(event: Event) {
   if (!props.isOpen) return;
@@ -92,14 +117,14 @@ onBeforeUnmount(() => {
 });
 
 const totalScore = computed(() => {
-  return props.essayCorrections.reduce(
+  return visibleCorrections.value.reduce(
     (sum, item) => sum + Number(item.score || 0),
     0,
   );
 });
 
 const totalValue = computed(() => {
-  return props.essayCorrections.reduce(
+  return visibleCorrections.value.reduce(
     (sum, item) => sum + Number(item.essay?.value || 0),
     0,
   );
@@ -141,6 +166,18 @@ function hasImage(imagePath?: string | null): boolean {
       </div>
 
       <div v-else class="space-y-4 max-h-[70vh] overflow-y-auto pr-1 protection-surface">
+        <div class="flex flex-wrap gap-2 border-b pb-3" role="tablist" aria-label="Rating history">
+          <UButton
+            v-for="group in ratingGroups"
+            :key="group.key"
+            role="tab"
+            :aria-selected="activeRating?.key === group.key"
+            :label="group.label"
+            :color="activeRating?.key === group.key ? 'primary' : 'neutral'"
+            :variant="activeRating?.key === group.key ? 'solid' : 'soft'"
+            @click="selectedRatingKey = group.key"
+          />
+        </div>
         <UCard>
           <div class="flex items-center justify-between gap-2 text-sm">
             <span class="text-muted">Total Score</span>
@@ -151,7 +188,7 @@ function hasImage(imagePath?: string | null): boolean {
         </UCard>
 
         <UCard
-          v-for="(item, index) in essayCorrections"
+          v-for="(item, index) in visibleCorrections"
           :key="item.id || `history-${index}`"
           class="watermark-container"
         >

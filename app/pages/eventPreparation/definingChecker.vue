@@ -92,6 +92,7 @@ interface DefiningCheckerRow {
   memberNames: string[]; // Array of member names for display
   remarkDoc: string;
   createdAt?: string;
+  groupCreatedAt?: string;
 }
 
 interface GroupUserPic {
@@ -117,6 +118,7 @@ interface GroupMemberItem {
 interface GroupEvent {
   id: number;
   event: string;
+  createdAt: string;
   remarkDoc: {
     id: number;
     remark: string;
@@ -130,6 +132,7 @@ interface GroupEvent {
 interface DefiningCheckerGroup {
   id: number;
   group: string;
+  createdAt: string;
   userPic: GroupUserPic;
   checkerGroups: CheckerGroupItem[];
   groupMembers: GroupMemberItem[];
@@ -269,7 +272,8 @@ const normalizedGroups = computed<DefiningCheckerRow[]>(() => {
       members: memberNiks,
       memberNames: memberNamesList,
       remarkDoc: item.event?.remarkDoc?.remark ?? "-",
-      createdAt: undefined,
+      createdAt: item.event?.createdAt,
+      groupCreatedAt: item.createdAt,
     };
   });
 });
@@ -284,6 +288,10 @@ const filteredData = computed(() => {
     const remarkDocMatch =
       !selectedRemarkDoc.value || item.remarkDoc === selectedRemarkDoc.value;
     return eventMatch && sectorMatch && remarkDocMatch;
+  }).sort((a, b) => {
+    const newestFirst = new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    const newestGroupFirst = new Date(b.groupCreatedAt || 0).getTime() - new Date(a.groupCreatedAt || 0).getTime();
+    return newestFirst || b.eventId - a.eventId || newestGroupFirst || b.id - a.id;
   });
 });
 
