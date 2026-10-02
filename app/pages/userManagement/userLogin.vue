@@ -76,8 +76,8 @@ const formatDateTime = (value: string | null) => value
   ? new Intl.DateTimeFormat('en-GB', {
       dateStyle: 'medium',
       timeStyle: 'short',
-      timeZone: 'Asia/Jakarta'
-    }).format(new Date(value))
+      timeZone: 'UTC'
+    }).format(new Date(value)) + ' UTC'
   : '-'
 
 const formatRemaining = (seconds: number) => {

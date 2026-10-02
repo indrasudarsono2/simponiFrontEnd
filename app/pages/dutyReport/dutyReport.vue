@@ -720,7 +720,8 @@ function formatIssueDate(value?: string | null) {
     dateStyle: "medium",
     timeStyle: "short",
     hour12: false,
-  }).format(date);
+    timeZone: "UTC",
+  }).format(date) + " UTC";
 }
 
 function formatIssueMessageDateUtc(value?: string | null) {
@@ -733,7 +734,7 @@ function formatIssueMessageDateUtc(value?: string | null) {
     timeStyle: "short",
     hour12: false,
     timeZone: "UTC",
-  }).format(date);
+  }).format(date) + " UTC";
 }
 
 function getEscalationStatusColor(status: string) {

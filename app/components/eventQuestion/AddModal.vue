@@ -7,6 +7,7 @@ interface Event {
   id: number;
   name: string;
   sectorId?: number;
+  theoryMode?: 'MODE_1' | 'MODE_2';
 }
 
 interface KindOfQuestion {
@@ -17,6 +18,7 @@ interface KindOfQuestion {
 interface EventQuestionAssignment {
   eventId: number;
   kindOfQuestionId: number;
+  persentage: number;
 }
 const schema = z.object({
   eventId: z.number().min(1, "Event is required"),
@@ -26,7 +28,12 @@ const schema = z.object({
     .number()
     .min(0, "Percentage must be at least 0")
     .max(1, "Percentage must be at most 1"),
-  minutes: z.number().min(1, "Minutes must be at least 1"),
+  minutes: z.number().optional(),
+}).superRefine((data, ctx) => {
+  const mode = props.events.find(e => e.id === data.eventId)?.theoryMode;
+  if (mode !== 'MODE_2' && (!data.minutes || data.minutes < 1)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['minutes'], message: 'Minutes must be at least 1 for Mode 1' });
+  }
 });
 
 const props = defineProps<{
@@ -58,11 +65,15 @@ const availableKindOfQuestions = computed(() => {
 
   return props.kindOfQuestions.filter((kind) => !assignedKindIds.has(kind.id));
 });
+const isMode2 = computed(() => props.events.find(e => e.id === state.eventId)?.theoryMode === 'MODE_2');
+const existingWeight = computed(() => props.eventQuestions.find(item => item.eventId === state.eventId)?.persentage);
+const requiredRemaining = computed(() => existingWeight.value == null ? null : Number((1 - existingWeight.value).toFixed(6)));
 
 watch(
   () => state.eventId,
   () => {
     state.kindOfQuestionId = undefined;
+    state.persentage = requiredRemaining.value ?? undefined;
   },
 );
 
@@ -73,6 +84,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
+    if (requiredRemaining.value != null && Math.abs(Number(event.data.persentage) - requiredRemaining.value) > 0.000001) {
+      toast.add({ title: 'Percentage must total 100%', description: `The remaining percentage is ${(requiredRemaining.value * 100).toFixed(0)}%.`, color: 'error' });
+      return;
+    }
     const selectedEvent = props.events?.find(
       (e) => e.id === event.data.eventId,
     );
@@ -86,7 +101,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         kindOfQuestionId: event.data.kindOfQuestionId,
         quantity: event.data.quantity,
         persentage: event.data.persentage,
-        minutes: event.data.minutes,
+        minutes: isMode2.value ? null : event.data.minutes,
       },
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -111,6 +126,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     emit("eventQuestionAdded");
   } catch (error: any) {
     const errorMessage =
+      error?.data?.message ||
       error?.data?.statusMessage ||
       error?.message ||
       "Failed to create event question. Please try again.";
@@ -200,7 +216,10 @@ const emit = defineEmits<{
           />
         </UFormField>
 
-        <UFormField label="Minutes" name="minutes" required>
+        <p v-if="requiredRemaining != null" class="text-xs text-muted">The other question type uses {{ ((existingWeight || 0) * 100).toFixed(0) }}%. Enter {{ (requiredRemaining * 100).toFixed(0) }}% so the combined total is exactly 100%.</p>
+        <p v-else class="text-xs text-muted">If this event has only one theory question type, set it to 1 (100%). If you will add the second type, complete both before starting the examination.</p>
+
+        <UFormField v-if="!isMode2" label="Minutes" name="minutes" required>
           <UInput
             v-model="state.minutes"
             type="number"
@@ -208,6 +227,7 @@ const emit = defineEmits<{
             placeholder="Enter minutes"
           />
         </UFormField>
+        <p v-else class="text-xs text-muted">Time is controlled by the Mode 2 examination session.</p>
 
         <div class="flex justify-end gap-2 pt-4">
           <UButton

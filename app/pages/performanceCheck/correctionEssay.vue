@@ -5,6 +5,7 @@ import EssayCorrectionHistoryModal from "../../components/performanceCheck/Essay
 
 interface FinalScoreItem {
   id?: number;
+  appRating?: { id?: number; rating?: { rating?: string | null } | null } | null;
   essayCorrections?: Array<{
     id?: number;
     answer?: string | null;
@@ -72,6 +73,9 @@ interface EventItem {
 interface PerformanceCheckResponse {
   event?: EventItem[] | null;
 }
+interface EventOptionsResponse {
+  event?: Array<{ id: number; event?: string | null; createdAt: string }> | null;
+}
 
 interface TableRowItem {
   id: string;
@@ -96,6 +100,7 @@ interface TableRowItem {
 }
 
 const { token } = useAuth();
+const { apiFetch } = useApiFetch();
 const isEssayCorrectionModalOpen = ref(false);
 const isEssayCorrectionHistoryModalOpen = ref(false);
 const selectedMemberName = ref("");
@@ -115,17 +120,87 @@ const selectedHistoryEssayCorrections = ref<
     } | null;
   }>
 >([]);
-const selectedEventFilter = ref<number | null>(null);
+const selectedEventFilter = ref<number | undefined>(undefined);
+interface ResetRating { id: number; rating: string | null; status: string | null; canReset: boolean; reason: string | null; attemptNumber: number; priorFailures: number }
+interface ResetOptions { member: { id: number; name: string; event: string | null }; ratings: ResetRating[]; resets: Array<{ id: number; appRatingId: number; checkerNik: string; reason: string; attemptNumber: number; createdAt: string }> }
+const resetOpen = ref(false);
+const resetLoading = ref(false);
+const resetSaving = ref(false);
+const resetData = ref<ResetOptions | null>(null);
+const resetError = ref("");
+const resetRatingId = ref<number | null>(null);
+const resetReason = ref("");
+const resetConfirmed = ref(false);
+const resetToast = useToast();
 
-const { data, status, error, refresh } =
-  await useFetch<PerformanceCheckResponse>(
-    `${apiBaseUrl}/api/performanceCheck`,
-    {
-      headers: {
-        Authorization: token.value ? `Bearer ${token.value}` : "",
-      },
-    },
-  );
+async function openReset(member: GroupMemberItem) {
+  resetOpen.value = true;
+  resetLoading.value = true;
+  resetData.value = null;
+  resetError.value = "";
+  resetRatingId.value = null;
+  resetReason.value = "";
+  resetConfirmed.value = false;
+  try {
+    const result = await apiFetch(`/api/performanceCheck/reset-options/${member.id}`) as ResetOptions;
+    resetData.value = result;
+    resetRatingId.value = result.ratings.find((rating) => rating.canReset)?.id ?? null;
+  } catch (error: any) {
+    resetError.value = error?.data?.message || "Unable to load reset options.";
+  } finally {
+    resetLoading.value = false;
+  }
+}
+
+async function submitReset() {
+  if (!resetData.value || !resetRatingId.value || !resetConfirmed.value || resetReason.value.trim().length < 10) return;
+  resetSaving.value = true;
+  resetError.value = "";
+  try {
+    await apiFetch(`/api/performanceCheck/reset-attempt`, {
+      method: "POST",
+      body: { groupMemberId: resetData.value.member.id, appRatingId: resetRatingId.value,
+        reason: resetReason.value.trim(), confirmation: "RESET CURRENT ATTEMPT" },
+    });
+    resetOpen.value = false;
+    resetToast.add({ title: "Examination reset", description: "The user can restart this attempt from Essay.", color: "success" });
+    await refresh();
+  } catch (error: any) {
+    resetError.value = error?.data?.message || "Unable to reset examination.";
+  } finally {
+    resetSaving.value = false;
+  }
+}
+
+const { data: availableEvents, status: optionsStatus, error: optionsError, refresh: refreshOptions } =
+  await useFetch<EventOptionsResponse>(`${apiBaseUrl}/api/performanceCheck`, {
+    query: { mode: "options" },
+    headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+  });
+const data = ref<PerformanceCheckResponse | null>(null);
+const detailsLoading = ref(false);
+const detailsError = ref("");
+let requestSequence = 0;
+async function refresh() {
+  const eventId = selectedEventFilter.value;
+  if (!eventId) return;
+  const requestId = ++requestSequence;
+  detailsLoading.value = true;
+  detailsError.value = "";
+  try {
+    const response = await apiFetch(`/api/performanceCheck?eventId=${eventId}`) as PerformanceCheckResponse;
+    if (requestId === requestSequence) data.value = response;
+  } catch (error: any) {
+    if (requestId === requestSequence) detailsError.value = error?.data?.message || "Failed to load performance check data.";
+  } finally {
+    if (requestId === requestSequence) detailsLoading.value = false;
+  }
+}
+watch(selectedEventFilter, () => {
+  requestSequence++;
+  data.value = null;
+  if (selectedEventFilter.value) void refresh();
+});
 
 const tableRows = computed<TableRowItem[]>(() => {
   const events = data.value?.event || [];
@@ -170,7 +245,9 @@ const tableRows = computed<TableRowItem[]>(() => {
 });
 
 const eventFilterOptions = computed(() => {
-  const events = data.value?.event || [];
+  const events = [...(availableEvents.value?.event || [])].sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() || b.id - a.id,
+  );
   return events.map((eventItem) => ({
     label: eventItem.event || "-",
     value: Number(eventItem.id || 0),
@@ -178,14 +255,11 @@ const eventFilterOptions = computed(() => {
 });
 
 const filteredTableRows = computed(() => {
-  if (!selectedEventFilter.value) return tableRows.value;
-  return tableRows.value.filter(
-    (row) => row.eventId === selectedEventFilter.value,
-  );
+  return tableRows.value;
 });
 
 function hasFinalScore(member: GroupMemberItem): boolean {
-  return (member.finalScores?.length || 0) !== 0;
+  return (member.finalScores || []).some((score) => (score.essayCorrections?.length || 0) > 0);
 }
 
 function getEssayCorrectionsForMember(
@@ -237,8 +311,8 @@ function closeEssayCorrectionHistoryModal() {
 }
 
 const errorMessage = computed(() => {
-  if (!error.value) return "";
-  const err = error.value as {
+  if (!optionsError.value) return "";
+  const err = optionsError.value as {
     data?: { message?: string };
     message?: string;
   };
@@ -266,7 +340,7 @@ const errorMessage = computed(() => {
 
     <template #body>
       <div class="space-y-6">
-        <div v-if="status === 'pending'" class="py-10">
+        <div v-if="optionsStatus === 'pending'" class="py-10">
           <div
             class="flex flex-col items-center justify-center gap-3 text-muted"
           >
@@ -276,7 +350,7 @@ const errorMessage = computed(() => {
         </div>
 
         <div
-          v-else-if="error"
+          v-else-if="optionsError"
           class="rounded-lg border border-error/30 bg-error/5 p-4 space-y-2"
         >
           <p class="font-medium text-error">{{ errorMessage }}</p>
@@ -285,7 +359,7 @@ const errorMessage = computed(() => {
             color="error"
             variant="outline"
             icon="i-lucide-refresh-cw"
-            @click="refresh()"
+            @click="refreshOptions()"
           />
         </div>
 
@@ -297,17 +371,20 @@ const errorMessage = computed(() => {
               <h2 class="text-lg font-semibold">Performance Check</h2>
               <USelect
                 v-model="selectedEventFilter"
-                :items="[
-                  { label: 'All Events', value: null },
-                  ...eventFilterOptions,
-                ]"
+                :items="eventFilterOptions"
                 class="w-full md:w-72"
-                placeholder="Filter by event"
+                placeholder="Choose an event (newest first)"
               />
             </div>
           </template>
 
-          <div class="overflow-x-auto rounded-lg border">
+          <p v-if="!selectedEventFilter" class="text-sm text-muted">Choose an event to load its essay corrections.</p>
+          <p v-else-if="detailsLoading" class="text-sm text-muted">Loading selected event...</p>
+          <div v-else-if="detailsError" class="flex items-center gap-3 text-sm text-error">
+            <span>{{ detailsError }}</span>
+            <UButton label="Retry" size="xs" variant="outline" @click="refresh()" />
+          </div>
+          <div v-else class="overflow-x-auto rounded-lg border">
             <table class="min-w-full text-sm">
               <thead class="bg-muted/40">
                 <tr>
@@ -356,6 +433,8 @@ const errorMessage = computed(() => {
                           :disabled="!hasEssayCorrectionHistory(row, member)"
                           @click="openEssayCorrectionHistoryModal(row, member)"
                         />
+                        <UButton label="Reset attempt" size="xs" color="warning" variant="soft"
+                          icon="i-lucide-rotate-ccw" @click="openReset(member)" />
                       </li>
                     </ul>
                     <span v-else class="text-muted">-</span>
@@ -389,4 +468,45 @@ const errorMessage = computed(() => {
     :essay-corrections="selectedHistoryEssayCorrections"
     @close="closeEssayCorrectionHistoryModal"
   />
+
+  <UModal v-model:open="resetOpen" title="Reset interrupted Mode 1 examination"
+    description="Only the assigned checker may restart the current attempt. Earlier failed results remain recorded."
+    :ui="{ content: 'max-w-2xl w-full' }">
+    <template #body>
+      <div class="space-y-4">
+        <p v-if="resetLoading" class="text-sm text-muted">Loading assigned ratings...</p>
+        <p v-if="resetError" class="rounded border border-error/30 bg-error/5 p-3 text-sm text-error">{{ resetError }}</p>
+        <template v-if="resetData">
+          <p class="text-sm font-medium">{{ resetData.member.name }} · {{ resetData.member.event }}</p>
+          <p class="text-sm text-muted">Choose the rating whose current attempt should restart from Essay:</p>
+          <div v-for="rating in resetData.ratings" :key="rating.id"
+            class="rounded-lg border p-3 text-sm" :class="resetRatingId === rating.id ? 'border-primary' : ''">
+            <label class="flex items-start gap-3" :class="rating.canReset ? 'cursor-pointer' : 'opacity-60'">
+              <input v-model="resetRatingId" type="radio" :value="rating.id" :disabled="!rating.canReset" class="mt-1" />
+              <span><strong>{{ rating.rating || 'Rating' }}</strong> · Attempt {{ rating.attemptNumber }} · {{ rating.status || 'Unknown' }}
+                <span v-if="rating.priorFailures" class="block text-muted">{{ rating.priorFailures }} earlier failed result(s) will remain recorded.</span>
+                <span v-if="rating.reason" class="block text-muted">{{ rating.reason }}</span>
+              </span>
+            </label>
+          </div>
+          <p v-if="resetData.ratings.length === 0" class="text-sm text-muted">No assigned ratings were found.</p>
+          <label class="block text-sm font-medium" for="reset-reason">Reason for reset (required)</label>
+          <UTextarea id="reset-reason" v-model="resetReason" class="w-full" :rows="3" placeholder="Describe the interruption or issue..." />
+          <label class="flex items-start gap-2 text-sm"><input v-model="resetConfirmed" type="checkbox" class="mt-1" />
+            <span>I understand that current draft answers and time will be cleared, and this same attempt will restart from Essay.</span></label>
+          <div class="flex justify-end gap-2">
+            <UButton label="Cancel" color="neutral" variant="outline" @click="resetOpen = false" />
+            <UButton label="Reset current attempt" color="warning" :loading="resetSaving"
+              :disabled="!resetRatingId || resetReason.trim().length < 10 || !resetConfirmed" @click="submitReset" />
+          </div>
+          <div v-if="resetData.resets.length" class="border-t pt-3 text-sm">
+            <h3 class="font-medium">Recent reset history</h3>
+            <p v-for="item in resetData.resets" :key="item.id" class="mt-2 text-muted">
+              Attempt {{ item.attemptNumber }} · {{ item.checkerNik }} · {{ new Date(item.createdAt).toISOString().replace('T', ' ').slice(0, 19) }} UTC — {{ item.reason }}
+            </p>
+          </div>
+        </template>
+      </div>
+    </template>
+  </UModal>
 </template>

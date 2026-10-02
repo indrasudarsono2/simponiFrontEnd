@@ -1,163 +1,163 @@
 <script setup lang="ts">
+import * as z from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
+
 const apiBaseUrl = useApiBaseUrl()
-import * as z from "zod";
-import type { FormSubmitEvent } from "@nuxt/ui";
-const { token } = useAuth();
+const { token } = useAuth()
+const { apiFetch } = useApiFetch()
 
 interface RatingInfo {
-  id: number;
-  professionId: number;
-  rating: string;
-  description: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+  id: number
+  professionId: number
+  rating: string
+  description: string
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
 }
 
 interface SectorInfo {
-  id: number;
-  branchUnitId: number;
-  sector: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+  id: number
+  branchUnitId: number
+  sector: string
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
 }
 
 interface SubBranchUnitRating {
-  id: number;
-  sectorId: number;
-  ratingId: number; // Note: API uses "ratingId" with double 't'
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  rating: RatingInfo;
-  sector: SectorInfo;
+  id: number
+  sectorId: number
+  ratingId: number // Note: API uses "ratingId" with double 't'
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
+  rating: RatingInfo
+  sector: SectorInfo
 }
 
 interface Rating {
-  id: number;
-  professionId: number;
-  rating: string;
-  description: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+  id: number
+  professionId: number
+  rating: string
+  description: string
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
 }
 
 const props = defineProps<{
-  ratingChecker: SubBranchUnitRating | null;
-  sectors: { id: number; name: string }[];
-}>();
+  ratingChecker: SubBranchUnitRating | null
+  sectors: { id: number, name: string }[]
+}>()
 
 const emit = defineEmits<{
-  ratingCheckerUpdated: [];
-  close: [];
-}>();
+  ratingCheckerUpdated: []
+  close: []
+}>()
 
 const schema = z.object({
-  sectorId: z.coerce.number().min(1, "Sector is required"),
-  ratingId: z.coerce.number().min(1, "Rating is required"),
-});
+  sectorId: z.coerce.number().min(1, 'Sector is required'),
+  ratingId: z.coerce.number().min(1, 'Rating is required')
+})
 
-const open = ref(false);
+const open = ref(false)
 
-type Schema = z.output<typeof schema>;
+type Schema = z.output<typeof schema>
 
 const state = reactive<Partial<Schema>>({
   sectorId: undefined,
-  ratingId: undefined,
-});
+  ratingId: undefined
+})
 
 // Fetch ratings from API
 const { data: ratings } = await useFetch<Rating[]>(
   `${apiBaseUrl}/api/allRatings`,
   {
     headers: {
-      Authorization: token.value ? `Bearer ${token.value}` : "",
-    },
-  },
-);
+      Authorization: token.value ? `Bearer ${token.value}` : ''
+    }
+  }
+)
 
 // Get selected sector info
 const selectedSector = computed(() => {
-  if (!state.sectorId) return null;
-  return props.sectors.find((s) => s.id === state.sectorId);
-});
+  if (!state.sectorId) return null
+  return props.sectors.find(s => s.id === state.sectorId)
+})
 
 // Get selected rating info
 const selectedRating = computed(() => {
-  if (!state.ratingId || !ratings.value) return null;
-  return ratings.value.find((r) => r.id === state.ratingId);
-});
+  if (!state.ratingId || !ratings.value) return null
+  return ratings.value.find(r => r.id === state.ratingId)
+})
 
 // Watch for ratingChecker prop changes to populate form
 watch(
   () => props.ratingChecker,
   (newRatingChecker) => {
     if (newRatingChecker) {
-      state.sectorId = newRatingChecker.sectorId;
-      state.ratingId = newRatingChecker.ratingId; // Use ratingId from API
-      open.value = true;
+      state.sectorId = newRatingChecker.sectorId
+      state.ratingId = newRatingChecker.ratingId // Use ratingId from API
+      open.value = true
     }
   },
-  { immediate: true },
-);
+  { immediate: true }
+)
 
 // Reset form when modal closes
 watch(open, (isOpen) => {
   if (!isOpen) {
-    state.sectorId = undefined;
-    state.ratingId = undefined;
-    emit("close");
+    state.sectorId = undefined
+    state.ratingId = undefined
+    emit('close')
   }
-});
+})
 
-const toast = useToast();
-const loading = ref(false);
+const toast = useToast()
+const loading = ref(false)
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  if (!props.ratingChecker) return;
+  if (!props.ratingChecker) return
 
-  loading.value = true;
+  loading.value = true
 
   try {
     // Call API to update rating checker
-    await $fetch(
-      `${apiBaseUrl}/api/ratingCheckerAdmins/${props.ratingChecker.id}`,
+    await apiFetch(
+      `/api/ratingCheckerAdmins/${props.ratingChecker.id}`,
       {
-        method: "PUT",
+        method: 'PUT',
         body: {
           sectorId: event.data.sectorId,
-          ratingId: event.data.ratingId,
-        },
-        headers: {
-          Authorization: token.value ? `Bearer ${token.value}` : "",
-        },
-      },
-    );
+          ratingId: event.data.ratingId
+        }
+      }
+    )
 
     toast.add({
-      title: "Success",
+      title: 'Success',
       description: `Rating has been updated successfully`,
-      color: "success",
-    });
+      color: 'success'
+    })
 
-    open.value = false;
+    open.value = false
 
     // Emit event to refresh parent table
-    emit("ratingCheckerUpdated");
-  } catch (error: any) {
-    const errorMessage =
-      error?.data?.statusMessage ||
-      error?.message ||
-      "Failed to update rating. Please try again.";
+    emit('ratingCheckerUpdated')
+  } catch (error: unknown) {
+    const fetchError = error as { data?: { statusMessage?: string }, message?: string }
+    const errorMessage
+      = fetchError.data?.statusMessage
+        || fetchError.message
+        || 'Failed to update rating. Please try again.'
     toast.add({
-      title: "Error",
+      title: 'Error',
       description: errorMessage,
-      color: "error",
-    });
+      color: 'error'
+    })
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 </script>
@@ -202,7 +202,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           v-if="selectedSector && selectedRating"
           class="p-3 bg-elevated/50 rounded border border-default space-y-2"
         >
-          <div class="text-sm font-medium">Summary:</div>
+          <div class="text-sm font-medium">
+            Summary:
+          </div>
           <div class="text-sm flex items-center gap-2">
             <span class="text-muted">Sector:</span>
             <span class="font-medium">{{ selectedSector.name }}</span>

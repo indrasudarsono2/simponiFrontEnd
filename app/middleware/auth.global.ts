@@ -6,6 +6,7 @@ export default defineNuxtRouteMiddleware((to) => {
   // This page restores frontend state from the backend-verified SSO cookie.
   // It must be reachable before the UI has an auth_user cookie.
   if (to.path === "/auth/complete") return;
+  if (/^\/certificate\/verify\/[0-9a-f-]{36}$/i.test(to.path)) return;
 
   const { isAuthenticated, getRoleNames, getAllModules } = useAuth();
 

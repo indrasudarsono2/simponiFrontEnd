@@ -13,6 +13,7 @@ interface RawEventQuestion {
   event: {
     id: number;
     event: string;
+    theoryMode?: 'MODE_1' | 'MODE_2';
   };
   kindOfQuestion: {
     id: number;
@@ -21,6 +22,7 @@ interface RawEventQuestion {
   quantity: number;
   persentage: number;
   minutes: number;
+  theoryMode?: 'MODE_1' | 'MODE_2';
 }
 
 // Define EventQuestion interface based on new API response
@@ -35,17 +37,20 @@ interface EventQuestion {
   quantity: number;
   persentage: number;
   minutes: number;
+  theoryMode?: 'MODE_1' | 'MODE_2';
 }
 
 interface EventQuestionAssignment {
   eventId: number;
   kindOfQuestionId: number;
+  persentage: number;
 }
 
 interface Event {
   id: number;
   event: string;
   sectorId: number;
+  theoryMode?: 'MODE_1' | 'MODE_2';
 }
 
 interface Session {
@@ -117,7 +122,7 @@ const currentBranchUnit = computed(() => ({
 // Extract events from sessions for the filter dropdown
 const events = computed(() => {
   const sessions = apiResponse.value?.allAtribute?.sessions || [];
-  const allEvents: { id: number; name: string; sectorId?: number }[] = [];
+  const allEvents: { id: number; name: string; sectorId?: number; theoryMode?: 'MODE_1' | 'MODE_2' }[] = [];
 
   sessions.forEach((session) => {
     session.events?.forEach((event) => {
@@ -125,6 +130,7 @@ const events = computed(() => {
         id: event.id,
         name: event.event,
         sectorId: event.sectorId,
+        theoryMode: event.theoryMode,
       });
     });
   });
@@ -152,6 +158,7 @@ const eventQuestionsData = computed((): EventQuestion[] => {
     quantity: item.quantity ?? 0,
     persentage: item.persentage ?? 0,
     minutes: item.minutes ?? 0,
+    theoryMode: item.event?.theoryMode,
   }));
 });
 
@@ -159,6 +166,7 @@ const eventQuestionAssignments = computed<EventQuestionAssignment[]>(() => {
   return eventQuestionsData.value.map((item) => ({
     eventId: item.eventId,
     kindOfQuestionId: item.kindOfQuestionId,
+    persentage: item.persentage,
   }));
 });
 
@@ -391,7 +399,7 @@ const columns = computed((): TableColumn<EventQuestion>[] => [
       });
     },
     cell: ({ row }) => {
-      return h("div", { class: "text-center" }, `${row.original.minutes} min`);
+      return h("div", { class: "text-center" }, row.original.theoryMode === 'MODE_2' ? 'Session timer' : `${row.original.minutes} min`);
     },
   },
   {
@@ -556,6 +564,7 @@ const columns = computed((): TableColumn<EventQuestion>[] => [
         :event-question="eventQuestionToUpdate"
         :events="events"
         :kind-of-questions="kindOfQuestions"
+        :event-questions="eventQuestionAssignments"
         @event-question-updated="handleEventQuestionUpdated"
         @close="handleModalClose"
       />

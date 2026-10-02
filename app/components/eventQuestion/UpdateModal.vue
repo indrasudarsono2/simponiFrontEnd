@@ -14,12 +14,14 @@ interface EventQuestion {
   quantity: number;
   persentage: number;
   minutes: number;
+  theoryMode?: 'MODE_1' | 'MODE_2';
 }
 
 interface Event {
   id: number;
   name: string;
   sectorId?: number;
+  theoryMode?: 'MODE_1' | 'MODE_2';
 }
 
 interface KindOfQuestion {
@@ -27,10 +29,13 @@ interface KindOfQuestion {
   question: string;
 }
 
+interface EventQuestionAssignment { eventId: number; kindOfQuestionId: number; persentage: number }
+
 const props = defineProps<{
   eventQuestion: EventQuestion | null;
   events: Event[];
   kindOfQuestions: KindOfQuestion[];
+  eventQuestions: EventQuestionAssignment[];
 }>();
 
 const schema = z.object({
@@ -41,7 +46,12 @@ const schema = z.object({
     .number()
     .min(0, "Percentage must be at least 0")
     .max(1, "Percentage must be at most 1"),
-  minutes: z.number().min(1, "Minutes must be at least 1"),
+  minutes: z.number().optional(),
+}).superRefine((data, ctx) => {
+  const mode = props.events.find(e => e.id === data.eventId)?.theoryMode;
+  if (mode !== 'MODE_2' && (!data.minutes || data.minutes < 1)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['minutes'], message: 'Minutes must be at least 1 for Mode 1' });
+  }
 });
 
 const open = ref(false);
@@ -55,6 +65,8 @@ const state = reactive<Partial<Schema>>({
   persentage: undefined,
   minutes: undefined,
 });
+const isMode2 = computed(() => props.events.find(e => e.id === state.eventId)?.theoryMode === 'MODE_2');
+const hasOtherPart = computed(() => props.eventQuestions.some(item => item.eventId === state.eventId && item.kindOfQuestionId !== state.kindOfQuestionId));
 
 // Watch for eventQuestion prop changes to populate form
 watch(
@@ -111,7 +123,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           kindOfQuestionId: event.data.kindOfQuestionId,
           quantity: event.data.quantity,
           persentage: event.data.persentage,
-          minutes: event.data.minutes,
+          minutes: isMode2.value ? null : event.data.minutes,
         },
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -131,6 +143,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     emit("eventQuestionUpdated");
   } catch (error: any) {
     const errorMessage =
+      error?.data?.message ||
       error?.data?.statusMessage ||
       error?.message ||
       "Failed to update event question. Please try again.";
@@ -171,6 +184,7 @@ const emit = defineEmits<{
             "
             placeholder="Select an event"
             class="w-full"
+            disabled
           />
         </UFormField>
 
@@ -185,6 +199,7 @@ const emit = defineEmits<{
             "
             placeholder="Select kind of question"
             class="w-full"
+            disabled
           />
         </UFormField>
 
@@ -209,7 +224,9 @@ const emit = defineEmits<{
           />
         </UFormField>
 
-        <UFormField label="Minutes" name="minutes" required>
+        <p v-if="hasOtherPart" class="text-xs text-muted">The other theory percentage will automatically become {{ ((1 - Number(state.persentage || 0)) * 100).toFixed(0) }}%, keeping the combined total at 100%.</p>
+
+        <UFormField v-if="!isMode2" label="Minutes" name="minutes" required>
           <UInput
             v-model="state.minutes"
             type="number"
@@ -217,6 +234,7 @@ const emit = defineEmits<{
             placeholder="Enter minutes"
           />
         </UFormField>
+        <p v-else class="text-xs text-muted">Time is controlled by the Mode 2 examination session.</p>
 
         <div class="flex justify-end gap-2 pt-4">
           <UButton

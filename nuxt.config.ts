@@ -28,6 +28,7 @@ export default defineNuxtConfig({
     ipBackEnd: "localhost:44441",
     public: {
       apiBaseUrl: "/backend",
+      siteUrl: "",
       screenMonitoringEnabled: true,
       // Available modes: "airnav", "local", or "hybrid" (both choices).
       authProvider: "airnav",

@@ -5,6 +5,7 @@ import type { FormSubmitEvent } from "@nuxt/ui";
 const { token } = useAuth();
 interface UserRole {
   id: number;
+  checkerRatings?: { ratingId: number | null }[];
   roles: {
     role: string;
   };
@@ -143,10 +144,15 @@ const availableCheckerUsers = computed(() => {
   if (!selectedEvent.value?.sector?.users) return [];
   return selectedEvent.value.sector.users.filter(
     (user) =>
-      user.userRoles.some((ur) => ur.roles.role === "CHECKER") &&
+      user.userRoles.some((ur) => ur.roles?.role === "CHECKER" && ur.checkerRatings?.length) &&
       !assignedCheckerNikSet.value.has(user.nik),
   );
 });
+
+const checkersWithoutRatings = computed(() => selectedEvent.value?.sector?.users.filter(
+  (user) => user.userRoles.some((role) => role.roles?.role === "CHECKER") &&
+    !user.userRoles.some((role) => role.roles?.role === "CHECKER" && role.checkerRatings?.length),
+) || []);
 
 // Get eventUsers (users already assigned to the event) for member selection, excluding already assigned members
 const availableEventUsers = computed(() => {
@@ -245,6 +251,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   } catch (error: any) {
     const errorMessage =
       error?.data?.statusMessage ||
+      error?.data?.message ||
       error?.message ||
       "Failed to update group. Please try again.";
     toast.add({
@@ -263,6 +270,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     v-model:open="open"
     title="Update Group"
     description="Edit the checker group information"
+    :ui="{ content: 'w-[min(96vw,72rem)] max-w-5xl max-h-[94vh]', body: 'overflow-y-auto' }"
   >
     <template #body>
       <UForm
@@ -313,6 +321,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               availableEventUsers.length
             }}</span>
           </div>
+          <p v-if="checkersWithoutRatings.length" class="text-xs text-warning">
+            {{ checkersWithoutRatings.map((user) => user.name).join(", ") }} cannot be assigned as PIC or checker yet: CHECKER role has no rating assigned. Assign APP or APS in Checker Rating first.
+          </p>
         </div>
 
         <UFormField
@@ -329,47 +340,49 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
         <UFormField label="PIC (Person in Charge)" name="pic" required>
-          <USelect
-            v-model="state.pic"
-            :items="checkerOptions"
-            placeholder="Select PIC"
-            class="w-full"
+          <DefiningCheckerUserPicker
+            :options="checkerOptions"
+            :selected="state.pic ? [state.pic] : []"
+            :disabled="!selectedEvent"
+            search-placeholder="Search PIC by name or NIK"
+            @change="state.pic = $event[0]"
           />
           <p
             v-if="checkerOptions.length === 0"
             class="text-xs text-warning mt-1"
           >
-            No checkers available
+            No checker with an assigned rating is available.
           </p>
         </UFormField>
 
         <UFormField label="Checkers" name="checkers" required>
-          <USelect
-            v-model="state.checkers"
-            :items="checkerOptions"
-            placeholder="Select checkers"
-            class="w-full"
+          <DefiningCheckerUserPicker
+            :options="checkerOptions"
+            :selected="state.checkers || []"
+            :disabled="!selectedEvent"
             multiple
+            search-placeholder="Search checkers by name or NIK"
+            @change="state.checkers = $event"
           />
           <p
             v-if="checkerOptions.length === 0"
             class="text-xs text-warning mt-1"
           >
-            No checkers available
+            No checker with an assigned rating is available.
           </p>
           <p v-else class="text-xs text-muted mt-1">
-            Select multiple checkers (all checkers from any sector)
+            Select checkers available in this event's sector.
           </p>
         </UFormField>
 
         <UFormField label="Members" name="members" required>
-          <USelect
-            v-model="state.members"
-            :items="memberOptions"
-            placeholder="Select members"
-            class="w-full"
-            multiple
+          <DefiningCheckerUserPicker
+            :options="memberOptions"
+            :selected="state.members || []"
             :disabled="!selectedEvent"
+            multiple
+            search-placeholder="Search members by name or NIK"
+            @change="state.members = $event"
           />
           <p v-if="!selectedEvent" class="text-xs text-muted mt-1">
             Please select an event first

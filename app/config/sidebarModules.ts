@@ -31,6 +31,8 @@ export type ModuleKey =
   | "room"
   | "multipleChoiceQuestion"
   | "essayChoiceQuestion"
+  | "questionReview"
+  | "theorySession"
   | "checkerStatistic"
   | "score"
   | "data"
@@ -49,6 +51,8 @@ export type ModuleKey =
   | "credentialVerification"
   | "ratingCheckerAdmin"
   | "applicationDoc"
+  | "ojtiRequests"
+  | "proposalLetters"
   | "medicalTest"
   | "mandatoryQuestion"
   ///////////////////////////////////////////////
@@ -209,6 +213,7 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
       { label: "Mandatory Rating", to: "/mandatoryQuestion/mandatoryRating" },
       { label: "MATS Questions", to: "/mandatoryQuestion/mats" },
       { label: "MATS Analysis", to: "/mandatoryQuestion/matsAnalysis" },
+      { label: "Passing Grade Standard", to: "/mandatoryQuestion/passingGradeStandard" },
     ],
   },
   ///////////////////////////////////////////////GENERAL ADMIN////////////////////////////////////////////////////
@@ -380,6 +385,17 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     icon: "i-lucide-history",
     to: "/checkerHistory/history",
   },
+
+  questionReview: {
+    label: "Question Review",
+    icon: "i-lucide-book-open-check",
+    to: "/questionReview",
+  },
+  theorySession: {
+    label: 'Theory Sessions',
+    icon: 'i-lucide-timer',
+    to: '/theorySession',
+  },
   credentialVerification: {
     label: "IELP / MEDEX Verification",
     icon: "i-lucide-badge-check",
@@ -444,6 +460,16 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     icon: "i-lucide-file-user",
     to: "/applicationDoc",
   },
+  ojtiRequests: {
+    label: "OJTI Requests",
+    icon: "i-lucide-inbox",
+    to: "/ojtiRequests",
+  },
+  proposalLetters: {
+    label: "Proposal Letters",
+    icon: "i-lucide-mail-check",
+    to: "/proposalLetters",
+  },
   examination: {
     label: "Examination",
     icon: "i-lucide-book-open-check",
@@ -458,6 +484,7 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     children: [
       { label: "Score Recap", to: "/userHistory/scorRecap" },
       { label: "Practical Exam", to: "/userHistory/practicalExam" },
+      { label: "Examination Progress", to: "/userHistory/progress" },
     ],
   },
 
@@ -555,6 +582,7 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     children: [
       { label: "Score Recap", to: "/pfcScore/scoreRecap" },
       { label: "Individual Score", to: "/pfcScore/individual" },
+      { label: "Branch Performance", to: "/pfcScore/branchUnit" },
       { label: "Checker", to: "/pfcScore/checker" },
     ],
   },
@@ -563,7 +591,7 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
 const AUTHENTICATED_UTILITY_ROUTES = ["/", "/profile", "/file/view"];
 
 const ROLE_ADDITIONAL_ROUTES: Record<string, string[]> = {
-  OPERATIONAL: ["/examination/essay", "/examination/multipleChoice"],
+  OPERATIONAL: ["/examination/essay", "/examination/multipleChoice", "/examination/theorySession"],
 };
 
 function normalizePath(path: string): string {
@@ -600,9 +628,21 @@ export function isPathAllowedForModules(
     return true;
   }
 
+  if (requestedPath === "/operationalGuide" && assignedRoles.some((role) => role.trim().toUpperCase() === "OPERATIONAL")) {
+    return true;
+  }
+
+  if (requestedPath === "/pfcScore/branchUnit" && !assignedRoles.some((role) => role.trim().toUpperCase() === "GENERAL ADMIN")) {
+    return false;
+  }
+
   const normalizedModules = new Set(
     assignedModules.map((module) => module.trim().toLowerCase()),
   );
+
+  if (/^\/proposalLetters\/\d+$/.test(requestedPath) && (normalizedModules.has("applicationdoc") || normalizedModules.has("ojtirequests"))) {
+    return true;
+  }
 
   for (const role of assignedRoles) {
     const roleRoutes = ROLE_ADDITIONAL_ROUTES[role.trim().toUpperCase()] || [];

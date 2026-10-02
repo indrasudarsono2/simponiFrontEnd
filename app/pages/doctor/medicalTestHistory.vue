@@ -109,7 +109,8 @@ function formatDate(value: string) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+    timeZone: "UTC",
+  }) + " UTC";
 }
 
 function openEdit(record: MedicalCheck) {

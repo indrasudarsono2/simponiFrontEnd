@@ -79,7 +79,7 @@ watch(
     if (newUser) {
       // Pre-select current user roles
       selectedRoles.value =
-        newUser.userRoles?.map((ur) => ({
+        newUser.userRoles?.filter((ur) => props.roles.some((role) => role.id === ur.roles.id)).map((ur) => ({
           value: ur.roles.id,
           label: ur.roles.role,
         })) || [];

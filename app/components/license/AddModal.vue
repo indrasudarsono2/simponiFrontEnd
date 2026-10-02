@@ -3,6 +3,7 @@ import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 const { apiFetch } = useApiFetch();
 const { authUser } = useAuth();
+const training = useTrainingMode();
 const canSyncEchain = computed(() => authUser.value?.authenticationType !== "LOCAL");
 const schema = z.object({
   note: z.string().min(2, "Note must be at least 2 characters"),
@@ -238,12 +239,14 @@ const emit = defineEmits<{
               @change="handleFileChange"
             />
             <UButton
+              v-if="!training.active.value"
               label="Choose File"
               color="neutral"
               variant="outline"
               icon="i-lucide-upload"
               @click="triggerFileInput"
             />
+            <TrainingSampleButton v-else sample="LICENSE.pdf" @selected="state.file = $event" />
             <span v-if="state.file" class="text-sm text-muted">
               {{ state.file.name }}
             </span>

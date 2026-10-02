@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { format } from 'date-fns'
 import type { Mail } from '~/types'
+
+const formatUtcMailDate = (value: string) => `${new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  hour12: false, timeZone: 'UTC'
+}).format(new Date(value))} UTC`
 
 defineProps<{
   mail: Mail
@@ -100,7 +104,7 @@ function onSubmit() {
       </div>
 
       <p class="max-sm:pl-16 text-muted text-sm sm:mt-2">
-        {{ format(new Date(mail.date), 'dd MMM HH:mm') }}
+        {{ formatUtcMailDate(mail.date) }}
       </p>
     </div>
 

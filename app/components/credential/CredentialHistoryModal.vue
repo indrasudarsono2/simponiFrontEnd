@@ -17,7 +17,7 @@ function formatDate(value?: string | null) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+  return `${date.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC`;
 }
 
 function eventLabel(value?: string) {

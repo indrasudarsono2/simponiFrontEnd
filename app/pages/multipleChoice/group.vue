@@ -484,28 +484,20 @@ function normalizeRating(value: unknown): string {
     .toUpperCase();
 }
 
-// Helper: get group names with ratings for a given multipleChoiceId and sector (as HTML list)
-function getGroupsForMCSector(mcId: number, sectorName: string): string {
+// Keep the complete group name for the hover title while constraining its table label.
+function getGroupsForMCSector(mcId: number, sectorName: string) {
   const matches = resolvedMultipleChoiceQuestionGroups.value.filter(
     (mcqg) =>
       mcqg.multipleChoiceId === mcId && mcqg.sector?.sector === sectorName,
   );
-  if (!matches || matches.length === 0) return "-";
-
-  const listItems = matches
+  return matches
     .map((m) => {
       const groupName = m.questionGroup?.group;
       const ratingName = m.questionGroup?.subBranchUnitRating?.rating?.rating;
       if (!groupName) return null;
-
-      const ratingText = ratingName ? ` (${ratingName})` : "";
-      return `<li>${groupName}${ratingText}</li>`;
+      return { name: groupName, rating: ratingName || null };
     })
-    .filter((item): item is string => item !== null)
-    .join("");
-
-  if (!listItems) return "-";
-  return `<ul class="list-disc list-inside space-y-0.5">${listItems}</ul>`;
+    .filter((item): item is { name: string; rating: string | null } => item !== null);
 }
 
 // Create dynamic sector columns
@@ -514,14 +506,14 @@ const sectorColumns = computed<TableColumn<MultipleChoice>[]>(() => {
     id: `sector-${sector}`,
     header: sector,
     cell: ({ row }) => {
-      const groupHtml = getGroupsForMCSector(row.original.id, sector);
-      const hasGroup = groupHtml !== "-";
-      return h("div", {
-        class: hasGroup
-          ? "text-sm text-primary font-medium"
-          : "text-sm text-muted",
-        innerHTML: groupHtml,
-      });
+      const groups = getGroupsForMCSector(row.original.id, sector);
+      if (!groups.length) return h("span", { class: "text-sm text-muted" }, "-");
+      return h("ul", { class: "space-y-0.5 text-sm text-primary font-medium" },
+        groups.map(({ name, rating }) => h("li", { class: "flex max-w-56 min-w-0 items-center gap-1.5" }, [
+          h("span", { class: "shrink-0", "aria-hidden": "true" }, "•"),
+          h("span", { class: "min-w-0 flex-1 truncate", title: `${name}${rating ? ` (${rating})` : ""}` }, `${name}${rating ? ` (${rating})` : ""}`),
+        ])),
+      );
     },
   }));
 });
@@ -802,7 +794,7 @@ function getMonitorProgress(selected: number, quantity: number): number {
                   class="rounded-lg border border-default p-3"
                 >
                   <div class="flex items-start justify-between gap-3">
-                    <p class="text-sm font-medium leading-5">
+                    <p class="min-w-0 flex-1 truncate text-sm font-medium leading-5" :title="groupItem.group">
                       {{ groupItem.group }}
                     </p>
                     <UBadge

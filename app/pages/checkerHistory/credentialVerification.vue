@@ -37,7 +37,7 @@ const filteredTasks = computed(() =>
 
 function formatDate(value?: string | null) {
   if (!value) return "-";
-  return new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+  return `${new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC`;
 }
 
 function fileViewerUrl(file?: string | null) {

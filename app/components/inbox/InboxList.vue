@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { format, isToday } from 'date-fns'
 import type { Mail } from '~/types'
+
+const formatUtcMailDate = (value: string) => `${new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  hour12: false, timeZone: 'UTC'
+}).format(new Date(value))} UTC`
 
 const props = defineProps<{
   mails: Mail[]
@@ -66,7 +70,7 @@ defineShortcuts({
             <UChip v-if="mail.unread" />
           </div>
 
-          <span>{{ isToday(new Date(mail.date)) ? format(new Date(mail.date), 'HH:mm') : format(new Date(mail.date), 'dd MMM') }}</span>
+          <span>{{ formatUtcMailDate(mail.date) }}</span>
         </div>
         <p class="truncate" :class="[mail.unread && 'font-semibold']">
           {{ mail.subject }}

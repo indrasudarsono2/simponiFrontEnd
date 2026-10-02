@@ -123,7 +123,7 @@ const formatDate = (value?: string | null) => {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(date);
+  }).format(date) + " UTC";
 };
 
 const extractBriefingHtml = (contents?: ContentOfBriefing[]) => {

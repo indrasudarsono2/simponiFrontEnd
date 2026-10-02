@@ -66,11 +66,13 @@ interface DashboardRatingAuthority {
   rating?: { id?: number; rating?: string | null } | null;
   expiredAt?: string | null;
   finalScore?: number | null;
+  theoryScoreStarred?: boolean;
   applicationDoc?: { id?: number; number?: string | null } | null;
   practicalScores?: Array<{
     id: number;
     kind?: string | null;
     score?: number | null;
+    starred?: boolean;
   }>;
   cwps?: Array<{
     id: number;
@@ -87,7 +89,28 @@ interface DashboardRatingAuthority {
 interface DashboardOperationalData {
   name?: string | null;
   currentRatingAuthorities?: DashboardRatingAuthority[];
+  latestFailedResults?: Array<{
+    id: number;
+    rating: string;
+    event: string;
+    applicationNumber: string;
+    theoryScore: number | null;
+    theoryFailed: boolean;
+    practicalScores: Array<{ kind: string; score: number | null; failed: boolean }>;
+  }>;
   [key: string]: any;
+}
+
+const scoreFormatter = new Intl.NumberFormat("id-ID", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+function formatDashboardScore(value?: number | null, failed = false): string {
+  if (value == null || !Number.isFinite(value)) return "-";
+  return `${scoreFormatter.format(value)}${failed ? "*" : ""}`;
+}
+function practicalKindLabel(kind: string): string {
+  return kind.toUpperCase() === "PRACTICAL" ? "Live" : kind.toUpperCase() === "SIMULATOR" ? "Simulator" : kind;
 }
 
 // Current UTC time that updates every minute
@@ -249,6 +272,42 @@ function openFilePreview(contents?: ContentOfBriefing[]) {
           :user-name="dashboardData?.name || '-'"
           :authorities="dashboardData?.currentRatingAuthorities || []"
         />
+        <UCard v-if="dashboardData?.latestFailedResults?.length">
+          <template #header>
+            <div>
+              <h2 class="font-semibold text-highlighted">Latest Failed Examination Results</h2>
+              <p class="text-sm text-muted">These results do not grant a current rating authority.</p>
+            </div>
+          </template>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[680px] text-sm">
+              <thead class="bg-elevated/60 text-left text-xs uppercase text-muted">
+                <tr>
+                  <th class="px-4 py-3">Rating</th>
+                  <th class="px-4 py-3">Event</th>
+                  <th class="px-4 py-3">Application Document</th>
+                  <th class="px-4 py-3 text-center">Theory Score</th>
+                  <th class="px-4 py-3">Practical Score</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-default">
+                <tr v-for="result in dashboardData.latestFailedResults" :key="result.id">
+                  <td class="px-4 py-3 font-semibold">{{ result.rating }}</td>
+                  <td class="px-4 py-3">{{ result.event }}</td>
+                  <td class="px-4 py-3">{{ result.applicationNumber }}</td>
+                  <td class="px-4 py-3 text-center">{{ formatDashboardScore(result.theoryScore, result.theoryFailed) }}</td>
+                  <td class="px-4 py-3">
+                    <span v-if="!result.practicalScores.length">-</span>
+                    <span v-for="(test, index) in result.practicalScores" :key="`${result.id}-${index}`">
+                      {{ index ? ', ' : '' }}{{ practicalKindLabel(test.kind) }}: {{ formatDashboardScore(test.score, test.failed) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-3 text-xs text-muted">* Failed result; the actual recorded score is shown.</p>
+        </UCard>
         <!-- <HomeChart :period="period" :range="range" />
         <HomeSales :period="period" :range="range" /> -->
         <UCard :ui="{ body: 'space-y-4' }">

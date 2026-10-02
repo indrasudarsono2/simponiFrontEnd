@@ -1,148 +1,151 @@
 <script setup lang="ts">
-const apiBaseUrl = useApiBaseUrl()
-import * as z from "zod";
-import type { FormSubmitEvent } from "@nuxt/ui";
-const { token } = useAuth();
+import * as z from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
+
+const { apiFetch } = useApiFetch()
+const MAX_GROUPS_PER_SECTOR_RATING = 2
 interface SubBranchUnitRating {
-  id: number;
+  id: number
   rating: {
-    id: number;
-    rating: string;
-    description: string;
-  };
+    id: number
+    rating: string
+    description: string
+  }
 }
 
 interface Sector {
-  id: number;
-  name: string;
-  subBranchUnitRatings: SubBranchUnitRating[];
+  id: number
+  name: string
+  subBranchUnitRatings: SubBranchUnitRating[]
 }
 
 interface ExistingQuestionGroup {
-  id: number;
+  id: number
   subBranchUnitRating: {
-    rating: { id: number };
-    sector: { id: number };
-  };
+    rating: { id: number }
+    sector: { id: number }
+  }
 }
 
 const props = defineProps<{
-  sectors: Sector[];
-  questionGroups: ExistingQuestionGroup[];
-}>();
+  sectors: Sector[]
+  questionGroups: ExistingQuestionGroup[]
+}>()
 
 const emit = defineEmits<{
-  questionGroupAdded: [];
-}>();
+  questionGroupAdded: []
+}>()
 
 const schema = z.object({
-  sectorId: z.coerce.number().min(1, "Sector is required"),
-  ratingId: z.coerce.number().min(1, "Rating is required"),
-  group: z.string().min(1, "Group name is required"),
-  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
-});
+  sectorId: z.coerce.number().min(1, 'Sector is required'),
+  ratingId: z.coerce.number().min(1, 'Rating is required'),
+  group: z.string().min(1, 'Group name is required'),
+  quantity: z.coerce.number().min(1, 'Quantity must be at least 1')
+})
 
-const open = ref(false);
+const open = ref(false)
 
-type Schema = z.output<typeof schema>;
+type Schema = z.output<typeof schema>
 
 const state = reactive<Partial<Schema>>({
   sectorId: undefined,
   ratingId: undefined,
   group: undefined,
-  quantity: undefined,
-});
+  quantity: undefined
+})
 
 // Available ratings derived from the selected sector's subBranchUnitRatings
 const availableRatings = computed(() => {
-  if (!state.sectorId) return [];
-  const sector = props.sectors.find((s) => s.id === state.sectorId);
-  if (!sector) return [];
-  const declaredRatingIds = new Set(
-    props.questionGroups
-      .filter(
-        (item) => item.subBranchUnitRating?.sector?.id === state.sectorId,
-      )
-      .map((item) => item.subBranchUnitRating.rating.id),
-  );
+  if (!state.sectorId) return []
+  const sector = props.sectors.find(s => s.id === state.sectorId)
+  if (!sector) return []
+  const declaredGroupCounts = new Map<number, number>()
+  props.questionGroups
+    .filter(
+      item => item.subBranchUnitRating?.sector?.id === state.sectorId
+    )
+    .forEach((item) => {
+      const ratingId = item.subBranchUnitRating.rating.id
+      declaredGroupCounts.set(ratingId, (declaredGroupCounts.get(ratingId) || 0) + 1)
+    })
 
   return sector.subBranchUnitRatings
-    .filter((sub) => !declaredRatingIds.has(sub.rating.id))
-    .map((sub) => ({
+    .filter(
+      sub => (declaredGroupCounts.get(sub.rating.id) || 0) < MAX_GROUPS_PER_SECTOR_RATING
+    )
+    .map(sub => ({
       id: sub.rating.id,
       name: sub.rating.rating,
-      description: sub.rating.description,
-    }));
-});
+      description: sub.rating.description
+    }))
+})
 
 // Reset ratingId when sector changes
 watch(
   () => state.sectorId,
   () => {
-    state.ratingId = undefined;
-  },
-);
+    state.ratingId = undefined
+  }
+)
 
 // Get selected sector info
 const selectedSector = computed(() => {
-  if (!state.sectorId) return null;
-  return props.sectors.find((s) => s.id === state.sectorId);
-});
+  if (!state.sectorId) return null
+  return props.sectors.find(s => s.id === state.sectorId)
+})
 
 // Get selected rating info
 const selectedRating = computed(() => {
-  if (!state.ratingId) return null;
-  return availableRatings.value.find((r) => r.id === state.ratingId);
-});
+  if (!state.ratingId) return null
+  return availableRatings.value.find(r => r.id === state.ratingId)
+})
 
-const toast = useToast();
-const loading = ref(false);
+const toast = useToast()
+const loading = ref(false)
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  loading.value = true;
+  loading.value = true
 
   try {
     // Call API to create question group
-    await $fetch(`${apiBaseUrl}/api/questionGroupsEssay`, {
-      method: "POST",
+    await apiFetch('/api/questionGroupsEssay', {
+      method: 'POST',
       body: {
         sectorId: event.data.sectorId,
         ratingId: event.data.ratingId,
         group: event.data.group,
-        quantity: event.data.quantity,
-      },
-      headers: {
-        Authorization: token.value ? `Bearer ${token.value}` : "",
-      },
-    });
+        quantity: event.data.quantity
+      }
+    })
 
     toast.add({
-      title: "Success",
+      title: 'Success',
       description: `Question group "${event.data.group}" has been created successfully`,
-      color: "success",
-    });
+      color: 'success'
+    })
 
     // Reset form and close modal
-    state.sectorId = undefined;
-    state.ratingId = undefined;
-    state.group = undefined;
-    state.quantity = undefined;
-    open.value = false;
+    state.sectorId = undefined
+    state.ratingId = undefined
+    state.group = undefined
+    state.quantity = undefined
+    open.value = false
 
     // Emit event to refresh parent table
-    emit("questionGroupAdded");
-  } catch (error: any) {
-    const errorMessage =
-      error?.data?.statusMessage ||
-      error?.message ||
-      "Failed to create question group. Please try again.";
+    emit('questionGroupAdded')
+  } catch (error: unknown) {
+    const fetchError = error as { data?: { statusMessage?: string }, message?: string }
+    const errorMessage
+      = fetchError.data?.statusMessage
+        || fetchError.message
+        || 'Failed to create question group. Please try again.'
     toast.add({
-      title: "Error",
+      title: 'Error',
       description: errorMessage,
-      color: "error",
-    });
+      color: 'error'
+    })
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 </script>
@@ -188,7 +191,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </template>
           <template v-else-if="availableRatings.length === 0" #hint>
             <span class="text-xs text-muted">
-              All ratings for this sector have already been declared.
+              All ratings for this sector already have the maximum of two groups.
             </span>
           </template>
         </UFormField>
@@ -218,7 +221,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           "
           class="p-3 bg-elevated/50 rounded border border-default space-y-2"
         >
-          <div class="text-sm font-medium">Summary:</div>
+          <div class="text-sm font-medium">
+            Summary:
+          </div>
           <div class="text-sm flex items-center gap-2">
             <span class="text-muted">Sector:</span>
             <span class="font-medium">{{ selectedSector.name }}</span>

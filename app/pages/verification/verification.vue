@@ -387,6 +387,13 @@ function closeVerificationItemModal() {
 
 // Fetch verification item data and open verification modal simultaneously
 async function fetchVerificationItemAndOpenModal(doc: any) {
+  const isPenerbitan = doc.eventUser?.event?.remarkDoc?.remark?.trim().toUpperCase() === 'PENERBITAN';
+  if (!doc.appRatings?.length || doc.appRatings.some((rating: any) => rating.proposalLetter?.status !== 'VALIDATED' || (isPenerbitan && rating.proposalLetter?.supervisorNik !== doc.ojtUser?.nik)) || (isPenerbitan && doc.ojtRecommendationStatus !== 'ACCEPTED')) {
+    isVerificationModalOpen.value = false;
+    const reviewer = isPenerbitan ? 'OJTI approval' : 'Supervisor validation';
+    toast.add({ title: `${reviewer} required`, description: 'Every proposed rating letter must be approved before checker verification. You can review each letter in the application document.', color: 'warning' });
+    return;
+  }
   const remark = doc.eventUser?.event?.remarkDoc?.remark;
 
   if (!remark) {

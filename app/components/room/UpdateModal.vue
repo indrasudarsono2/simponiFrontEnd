@@ -15,6 +15,7 @@ interface RatingItem {
 
 interface EventUserItem {
   id: number;
+  event?: { theoryMode?: string } | null;
   userNik?: string;
   name?: string;
   user?: {
@@ -115,6 +116,7 @@ const eventUserOptions = computed(() => {
 
   for (const attendance of props.room?.attendances || []) {
     const eventUser = attendance.eventUser;
+    if (eventUser?.event?.theoryMode !== "MODE_1") continue;
     const eventUserId = Number(eventUser?.id);
     if (!eventUserId || seen.has(eventUserId) || !eventUser) continue;
 
@@ -199,6 +201,12 @@ const eventUserOptions = computed(() => {
 
   return options;
 });
+
+const hasIneligibleAssignments = computed(() =>
+  (props.room?.attendances || []).some(
+    (attendance) => attendance.eventUser?.event?.theoryMode !== "MODE_1",
+  ),
+);
 
 const selectedUserLabels = computed(() => {
   const selected = new Set(formState.eventUsersId);
@@ -310,6 +318,7 @@ watch(
     formState.finishDate = room.finishDate || "";
     formState.file = undefined;
     formState.eventUsersId = (room.attendances || [])
+      .filter((item) => item.eventUser?.event?.theoryMode === "MODE_1")
       .map((item) => item.eventUser?.id)
       .filter((id): id is number => Boolean(id));
   },
@@ -317,6 +326,10 @@ watch(
 );
 
 async function onSubmit() {
+  if (hasIneligibleAssignments.value) {
+    toast.add({ title: "Cannot update this room", description: "This room has an existing assignment from a non-Mode 1 event. Contact an administrator before changing it.", color: "error" });
+    return;
+  }
   if (!props.room?.id) {
     toast.add({
       title: "Error",
@@ -412,6 +425,12 @@ async function onSubmit() {
   <UModal v-model:open="open" title="Update Room">
     <template #body>
       <div class="space-y-4">
+        <UAlert
+          v-if="hasIneligibleAssignments"
+          title="Room contains non-Mode 1 assignments"
+          description="This room cannot be updated until those existing assignments are reviewed. No users will be removed automatically."
+          color="warning"
+        />
         <UFormField label="Name" required>
           <UInput
             v-model="formState.name"
@@ -546,7 +565,7 @@ async function onSubmit() {
           label="Update"
           color="primary"
           :loading="loading"
-          :disabled="loading"
+          :disabled="loading || hasIneligibleAssignments"
           @click="onSubmit"
         />
       </div>

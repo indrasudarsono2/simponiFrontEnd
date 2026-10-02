@@ -35,6 +35,9 @@ interface ExaminationEssayResponse {
     time?: number;
   } | null;
   randomNumbers?: number[] | null;
+  draftAnswers?: Record<string, string>;
+  deadlineAt?: string | null;
+  requiresStart?: boolean;
 }
 
 const { token } = useAuth();
@@ -61,6 +64,7 @@ const remainingSeconds = ref(0);
 const isTimeUpToastShown = ref(false);
 const isSubmittingAnswers = ref(false);
 const hasSubmittedAnswers = ref(false);
+const lastDraftSavedAt = ref<string | null>(null);
 const cameraVideoRef = ref<HTMLVideoElement | null>(null);
 const cameraStream = ref<MediaStream | null>(null);
 const isCameraInitializing = ref(false);
@@ -80,7 +84,11 @@ const {
   captureScreenSnapshotBlob,
 } = useScreenMonitoring();
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
-let postTimeInterval: ReturnType<typeof setInterval> | null = null;
+let draftSaveInterval: ReturnType<typeof setInterval> | null = null;
+let draftSaveTimeout: ReturnType<typeof setTimeout> | null = null;
+let draftSaveRunning = false;
+let answerRevision = 0;
+let savedAnswerRevision = 0;
 let randomSnapshotTimeouts: Array<ReturnType<typeof setTimeout>> = [];
 let cameraObstructionInterval: ReturnType<typeof setInterval> | null = null;
 let lastCameraWarningAt = 0;
@@ -208,13 +216,6 @@ function clearCountdown() {
   }
 }
 
-function clearPostTimeInterval() {
-  if (postTimeInterval) {
-    clearInterval(postTimeInterval);
-    postTimeInterval = null;
-  }
-}
-
 function clearRandomSnapshotTimeouts() {
   randomSnapshotTimeouts.forEach((timer) => clearTimeout(timer));
   randomSnapshotTimeouts = [];
@@ -240,11 +241,29 @@ function stopCameraStream() {
   isCameraObstructed.value = false;
 }
 
-function activateExamination(payload: ExaminationEssayResponse) {
+async function activateExamination(payload: ExaminationEssayResponse) {
   if (isExamStarted.value) return;
   isExamStarted.value = true;
-  startCountdown(getCountdownMinutes(payload));
-  startPostTimeInterval(payload);
+  const started = await postMonitorTime(payload, true);
+  if (!started) {
+    isExamStarted.value = false;
+    toast.add({
+      title: "Unable to start exam",
+      description: "The examination start time could not be saved. Please try again.",
+      color: "error",
+    });
+    return;
+  }
+  if (payload.requiresStart) {
+    await loadEssayData();
+    if (!essayData.value || essayData.value.requiresStart || fetchError.value) {
+      isExamStarted.value = false;
+      return;
+    }
+    payload = essayData.value;
+  }
+  startCountdown(getCountdownMinutes(payload), payload.deadlineAt);
+  startDraftAutosave();
   if (screenMonitoringEnabled) {
     scheduleRandomSnapshots(payload);
   }
@@ -329,7 +348,7 @@ async function startExamMonitoring() {
   }
 
   if (!canContinueExam.value || !essayData.value) return;
-  activateExamination(essayData.value);
+  await activateExamination(essayData.value);
 }
 
 function detectCameraObstruction(): boolean {
@@ -537,10 +556,12 @@ function scheduleRandomSnapshots(payload: ExaminationEssayResponse) {
   });
 }
 
-function startCountdown(minutes: number) {
+function startCountdown(minutes: number, deadlineAt?: string | null) {
   clearCountdown();
   isTimeUpToastShown.value = false;
-  remainingSeconds.value = Math.max(0, Math.floor(minutes * 60));
+  const serverDeadline = deadlineAt ? Date.parse(deadlineAt) : NaN;
+  const endAt = Number.isFinite(serverDeadline) ? serverDeadline : Date.now() + minutes * 60_000;
+  remainingSeconds.value = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
 
   if (remainingSeconds.value <= 0) return;
 
@@ -550,7 +571,7 @@ function startCountdown(minutes: number) {
       return;
     }
 
-    remainingSeconds.value -= 1;
+    remainingSeconds.value = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
 
     if (remainingSeconds.value <= 0 && !isTimeUpToastShown.value) {
       isTimeUpToastShown.value = true;
@@ -566,6 +587,7 @@ function startCountdown(minutes: number) {
 }
 
 function getCountdownMinutes(payload: ExaminationEssayResponse): number {
+  if (payload.deadlineAt) return Math.max(0, (Date.parse(payload.deadlineAt) - Date.now()) / 60_000);
   const totalMinutesRaw =
     payload.eventQuestion?.minutes ?? payload.eventShort?.minutes ?? 0;
   const totalMinutes = Number(totalMinutesRaw);
@@ -590,15 +612,15 @@ function getEventQuestionId(payload: ExaminationEssayResponse): number | null {
   return parsed;
 }
 
-async function postMonitorTime(payload: ExaminationEssayResponse) {
+async function postMonitorTime(payload: ExaminationEssayResponse, isInitial = false): Promise<boolean> {
   const eventQuestionId = getEventQuestionId(payload);
   const currentAppRatingId = Number(
     payload.appRatingId ?? requestMeta.value?.appRatingId,
   );
-  if (!eventQuestionId || !Number.isFinite(currentAppRatingId)) return;
+  if (!eventQuestionId || !Number.isFinite(currentAppRatingId)) return false;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/postTime`, {
+    const clock = await $fetch<{ deadlineAt?: string | null }>(`${apiBaseUrl}/api/postTime`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -606,38 +628,15 @@ async function postMonitorTime(payload: ExaminationEssayResponse) {
       body: {
         appRatingId: currentAppRatingId,
         eventQuestionId,
+        isInitial,
       },
     });
+    if (clock?.deadlineAt) payload.deadlineAt = clock.deadlineAt;
+    return true;
   } catch (_error) {
     // Keep silent to avoid interrupting exam UX on background ping failure.
+    return false;
   }
-}
-
-function startPostTimeInterval(payload: ExaminationEssayResponse) {
-  clearPostTimeInterval();
-
-  const eventQuestionId = getEventQuestionId(payload);
-  const currentAppRatingId = Number(
-    payload.appRatingId ?? requestMeta.value?.appRatingId,
-  );
-  if (
-    !eventQuestionId ||
-    !Number.isFinite(currentAppRatingId) ||
-    isTimeUp.value
-  ) {
-    return;
-  }
-
-  postTimeInterval = setInterval(
-    async () => {
-      if (isTimeUp.value) {
-        clearPostTimeInterval();
-        return;
-      }
-      await postMonitorTime(payload);
-    },
-    5 * 60 * 1000,
-  );
 }
 
 function buildEssayAnswersPayload(payload: ExaminationEssayResponse) {
@@ -653,6 +652,39 @@ function buildEssayAnswersPayload(payload: ExaminationEssayResponse) {
     })
     .filter(Boolean) as Array<{ essayId: number; answer: string }>;
 }
+
+async function saveDraft() {
+  const payload = essayData.value;
+  if (!payload || !isExamStarted.value || isSubmittingAnswers.value || hasSubmittedAnswers.value || draftSaveRunning || answerRevision === savedAnswerRevision) return;
+  draftSaveRunning = true;
+  const revision = answerRevision;
+  try {
+    const saved = await $fetch<{ savedAt?: string }>(`${apiBaseUrl}/api/examinationDraft`, {
+      method: "POST",
+      headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+      body: { kind: "ESSAY", eventId: payload.eventId, appRatingId: payload.appRatingId,
+        answers: Object.fromEntries(buildEssayAnswersPayload(payload).map(({ essayId, answer }) => [essayId, answer])) },
+    });
+    lastDraftSavedAt.value = saved?.savedAt || new Date().toISOString();
+    savedAnswerRevision = revision;
+  } catch (error: any) {
+    if (!isTimeUp.value) toast.add({ title: "Autosave failed", description: error?.data?.message || "Please check your connection. Your latest answer is still on this page.", color: "warning" });
+  } finally { draftSaveRunning = false; }
+}
+
+function startDraftAutosave() {
+  if (draftSaveInterval) clearInterval(draftSaveInterval);
+  if (draftSaveTimeout) clearTimeout(draftSaveTimeout);
+  draftSaveTimeout = setTimeout(() => {
+    void saveDraft();
+    draftSaveInterval = setInterval(() => void saveDraft(), 5 * 60 * 1000);
+  }, 5 * 60 * 1000 - Math.floor(Math.random() * 60_000));
+}
+
+watch(answers, () => {
+  if (!isExamStarted.value) return;
+  answerRevision += 1;
+}, { deep: true });
 
 async function submitAnswers(isAutoSubmit = false) {
   if (isSubmittingAnswers.value || hasSubmittedAnswers.value) return;
@@ -739,7 +771,6 @@ async function submitAnswers(isAutoSubmit = false) {
 
     hasSubmittedAnswers.value = true;
     clearCountdown();
-    clearPostTimeInterval();
     clearRandomSnapshotTimeouts();
     examinationEssayResponse.value = null;
     examinationEssayMeta.value = null;
@@ -830,17 +861,7 @@ async function loadEssayData() {
       return;
     }
 
-    const hasCachedPayload =
-      examinationEssayMeta.value?.eventId === currentEventId &&
-      examinationEssayMeta.value?.appRatingId === currentAppRatingId &&
-      !!examinationEssayResponse.value;
-
-    let payload: ExaminationEssayResponse;
-
-    if (hasCachedPayload) {
-      payload = examinationEssayResponse.value as ExaminationEssayResponse;
-    } else {
-      payload = await $fetch<ExaminationEssayResponse>(
+    const payload = await $fetch<ExaminationEssayResponse>(
         `${apiBaseUrl}/api/examinationEssay`,
         {
           method: "POST",
@@ -854,12 +875,8 @@ async function loadEssayData() {
         },
       );
 
-      examinationEssayResponse.value = payload;
-      persistRequestMeta({
-        eventId: currentEventId,
-        appRatingId: currentAppRatingId,
-      });
-    }
+    examinationEssayResponse.value = payload;
+    persistRequestMeta({ eventId: currentEventId, appRatingId: currentAppRatingId });
 
     essayData.value = payload;
 
@@ -868,13 +885,13 @@ async function loadEssayData() {
     for (const item of allQuestions) {
       const id = item.essay?.id;
       if (!id) continue;
-      if (typeof answers[id] !== "string") {
-        answers[id] = "";
-      }
+      answers[id] = payload.draftAnswers?.[String(id)] ?? "";
     }
+    await nextTick();
+    savedAnswerRevision = answerRevision;
 
     if (!screenMonitoringEnabled) {
-      activateExamination(payload);
+      await activateExamination(payload);
     }
   } catch (error: any) {
     fetchError.value =
@@ -910,8 +927,9 @@ watch(isTimeUp, (value) => {
   }
 });
 onBeforeUnmount(() => {
+  if (draftSaveInterval) clearInterval(draftSaveInterval);
+  if (draftSaveTimeout) clearTimeout(draftSaveTimeout);
   clearCountdown();
-  clearPostTimeInterval();
   clearRandomSnapshotTimeouts();
   stopCameraStream();
   stopScreenCapture();
@@ -932,6 +950,7 @@ onBeforeUnmount(() => {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
+          <span v-if="lastDraftSavedAt" class="text-xs text-muted">Autosaved {{ lastDraftSavedAt.slice(11, 16) }} UTC</span>
           <UButton
             label="Back"
             variant="ghost"
@@ -967,7 +986,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          v-else-if="essayGroups.length === 0"
+          v-else-if="essayGroups.length === 0 && !essayData?.requiresStart"
           class="rounded-lg border p-4 text-muted"
         >
           No essay data available.

@@ -286,13 +286,9 @@ function buildLinePath(
   padding: number,
 ): string {
   if (points.length === 0) return "";
-  const chartW = width - padding * 2;
-  const chartH = height - padding * 2;
-  const safeMaxX = maxX === minX ? minX + 1 : maxX;
-
   const mapped = points.map((p) => {
-    const x = padding + ((p.x - minX) / (safeMaxX - minX)) * chartW;
-    const y = padding + (1 - Math.max(0, Math.min(100, p.y)) / 100) * chartH;
+    const x = linePointX(p.x, minX, maxX, width, padding);
+    const y = linePointY(p.y, height, padding);
     return `${x},${y}`;
   });
 
@@ -306,9 +302,9 @@ function linePointX(
   width: number,
   padding: number,
 ): number {
-  const chartW = width - padding * 2;
-  const safeMaxX = maxX === minX ? minX + 1 : maxX;
-  return padding + ((x - minX) / (safeMaxX - minX)) * chartW;
+  if (maxX === minX) return width / 2;
+  // Stretch the first and last attempts to the full plotting width.
+  return padding + ((x - minX) / (maxX - minX)) * (width - padding * 2);
 }
 
 function linePointY(y: number, height: number, padding: number): number {
@@ -744,10 +740,11 @@ const initialErrorMessage = computed(() => {
             No detail data available.
           </div>
 
-          <div v-else class="grid grid-cols-1 gap-4">
+          <div v-else class="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <UCard
               v-for="(ratingBlock, blockIndex) in detailLineData"
               :key="`${ratingBlock.rating}-${blockIndex}`"
+              class="min-w-0"
             >
               <template #header>
                 <h3 class="font-semibold">
@@ -887,7 +884,7 @@ const initialErrorMessage = computed(() => {
                 </svg>
 
                 <div
-                  class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 text-xs"
+                  class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs"
                 >
                   <div
                     v-for="(group, groupIndex) in ratingBlock.groups"

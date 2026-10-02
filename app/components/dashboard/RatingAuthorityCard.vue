@@ -4,11 +4,13 @@ interface RatingAuthority {
   rating?: { id?: number; rating?: string | null } | null;
   expiredAt?: string | null;
   finalScore?: number | null;
+  theoryScoreStarred?: boolean;
   applicationDoc?: { id?: number; number?: string | null } | null;
   practicalScores?: Array<{
     id: number;
     kind?: string | null;
     score?: number | null;
+    starred?: boolean;
   }>;
   cwps?: Array<{
     id: number;
@@ -52,11 +54,25 @@ function formatDate(value?: string | null) {
   }).format(date);
 }
 
+const scoreFormatter = new Intl.NumberFormat("id-ID", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function formatScore(value?: number | null): string {
+  return value == null || !Number.isFinite(value) ? "-" : scoreFormatter.format(value);
+}
+
+function formatMarkedScore(value?: number | null, starred = false): string {
+  const formatted = formatScore(value);
+  return formatted === "-" ? formatted : `${formatted}${starred ? "*" : ""}`;
+}
+
 function formatPracticalScores(authority: RatingAuthority) {
   const scores = authority.practicalScores || [];
   if (!scores.length) return "-";
   return scores
-    .map((item) => `${item.kind || "PRACTICAL"}: ${item.score ?? "-"}`)
+    .map((item) => `${item.kind || "PRACTICAL"}: ${formatMarkedScore(item.score, item.starred)}`)
     .join(", ");
 }
 </script>
@@ -90,7 +106,7 @@ function formatPracticalScores(authority: RatingAuthority) {
           <tr v-for="authority in authorities" :key="authority.id">
             <td class="px-4 py-3 font-semibold">{{ authority.rating?.rating || "-" }}</td>
             <td class="px-4 py-3">{{ authority.applicationDoc?.number || "-" }}</td>
-            <td class="px-4 py-3 text-center">{{ authority.finalScore ?? "-" }}</td>
+            <td class="px-4 py-3 text-center">{{ formatMarkedScore(authority.finalScore, authority.theoryScoreStarred) }}</td>
             <td class="px-4 py-3">{{ formatPracticalScores(authority) }}</td>
             <td class="px-4 py-3 font-medium text-primary">
               {{ formatDate(authority.expiredAt) }}
@@ -109,6 +125,10 @@ function formatPracticalScores(authority: RatingAuthority) {
         </tbody>
       </table>
     </div>
+
+    <p v-if="authorities.some((authority) => authority.theoryScoreStarred || authority.practicalScores?.some((test) => test.starred))" class="mt-3 text-xs text-muted">
+      * Actual latest passing score after an earlier failed attempt.
+    </p>
 
     <div v-else class="rounded-lg border border-dashed border-default p-4 text-sm text-muted">
       No valid rating based on a successful final score is currently available.
@@ -132,7 +152,7 @@ function formatPracticalScores(authority: RatingAuthority) {
           <dt class="text-muted">Rating</dt>
           <dd class="font-medium">{{ selectedAuthority.rating?.rating || "-" }}</dd>
           <dt class="text-muted">Theory score</dt>
-          <dd class="font-medium">{{ selectedAuthority.finalScore ?? "-" }}</dd>
+          <dd class="font-medium">{{ formatMarkedScore(selectedAuthority.finalScore, selectedAuthority.theoryScoreStarred) }}</dd>
           <dt class="text-muted">Practical score</dt>
           <dd class="font-medium">{{ formatPracticalScores(selectedAuthority) }}</dd>
           <dt class="text-muted">Expired date</dt>

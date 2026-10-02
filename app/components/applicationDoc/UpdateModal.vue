@@ -95,6 +95,7 @@ interface RatingItem {
 
 interface AppRating {
   id?: number;
+  proposalLetter?: { status: string } | null;
   rating: { id: number; rating: string };
   controlHour: string;
   checkerGroupId?: string[] | string | number[] | number | null;
@@ -170,7 +171,7 @@ interface CompetenceItem {
   id: number;
   userId: string;
   ratingId: number;
-  competence?: string;
+  rating?: { id: number; rating: string | null } | null;
   institution: string;
   released: string;
   file: string;
@@ -222,6 +223,9 @@ interface ApplicationDoc {
   dateForExpired?: string;
   confirmOjt?: boolean;
   ojtNik?: string | null;
+  ojtLicenseId?: string | null;
+  ojtRecommendationStatus?: string | null;
+  ojtUser?: { nik: string; name: string; licenseUserId: string } | null;
   letterNumber?: string | null;
   letterDate?: string | null;
   controlHour?: string | null;
@@ -426,6 +430,8 @@ const ratingOptions = computed(() => {
 const selectedEventUserId = ref("");
 const selectedLicenseId = ref("");
 const selectedLogbookId = ref("");
+const selectedMedexId = ref("");
+const selectedIelpId = ref("");
 
 const atsName = ref("");
 const address = ref("");
@@ -627,6 +633,23 @@ const letterDate = ref("");
 const ojtControlHour = ref<number | null>(null);
 const ojtId = ref("");
 const ojtName = ref("");
+const eligibleOjti = ref<{ nik: string; name: string; licenseUserId: string }[]>([]);
+const isPenerbitan = computed(() => eventOptions.value.find((item) => item.id === selectedEventUserId.value)?.remark === "PENERBITAN");
+const ojtiLocked = computed(() => props.applicationDoc?.ojtRecommendationStatus === 'ACCEPTED' || props.applicationDoc?.appRatings?.some((rating) => rating.proposalLetter?.status === 'VALIDATED'));
+const selectedOjti = computed(() => eligibleOjti.value.find((item) => item.licenseUserId === ojtId.value));
+watch(selectedOjti, (user) => { if (isPenerbitan.value) ojtName.value = user?.name || ""; });
+watch(selectedEventUserId, async (eventId) => {
+  eligibleOjti.value = [];
+  if (eventId && eventId !== String(props.applicationDoc?.eventUser?.eventId || "")) ojtId.value = "";
+  if (!eventId || !isPenerbitan.value) return;
+  try {
+    const users = await $fetch<{ nik: string; name: string; licenseUserId: string }[]>(`${apiBaseUrl}/api/ojtiRecommendations/eligible`, {
+      query: { eventId },
+      headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+    });
+    if (selectedEventUserId.value === eventId) eligibleOjti.value = users;
+  } catch { if (selectedEventUserId.value === eventId) eligibleOjti.value = []; }
+}, { immediate: true });
 const isDrugs = ref<boolean | null>(null);
 const isFailed = ref<boolean | null>(null);
 
@@ -648,6 +671,8 @@ watch(
       selectedLogbookId.value = doc.logbookUserId
         ? String(doc.logbookUserId)
         : "";
+      selectedMedexId.value = doc.medexId ? String(doc.medexId) : "";
+      selectedIelpId.value = doc.ielpId ? String(doc.ielpId) : "";
 
       atsName.value = doc.atsName || "";
       address.value = doc.address || "";
@@ -710,7 +735,7 @@ watch(
       letterNumber.value = doc.letterNumber || "";
       letterDate.value = doc.letterDate || "";
       ojtControlHour.value = doc.controlHour ? Number(doc.controlHour) : null;
-      ojtId.value = doc.ojtNik || "";
+      ojtId.value = doc.ojtLicenseId || doc.ojtNik || "";
       ojtName.value = "";
       isDrugs.value = doc.isDrugs ?? null;
       isFailed.value = doc.isFailed ?? null;
@@ -763,12 +788,10 @@ watch(
 );
 
 // ─── Computed ──────────────────────────────────────────────────────────────
-const latestMedex = computed(
-  () => userData.value.medex.find((item) => item.isCurrent !== false && item.isConfirmed && item.verificationStatus === "APPROVED" && item.expired && new Date(item.expired) > new Date()),
-);
-const latestIelp = computed(
-  () => userData.value.ielp.find((item) => item.isCurrent !== false && item.isConfirmed && item.verificationStatus === "APPROVED" && (item.level === "6" || (item.expired && new Date(item.expired) > new Date()))),
-);
+const approvedMedex = computed(() => userData.value.medex.filter((item) => item.isCurrent !== false && item.isConfirmed && item.verificationStatus === "APPROVED" && item.expired && new Date(item.expired) > new Date()));
+const approvedIelp = computed(() => userData.value.ielp.filter((item) => item.isCurrent !== false && item.isConfirmed && item.verificationStatus === "APPROVED" && (item.level === "6" || (item.expired && new Date(item.expired) > new Date()))));
+const latestMedex = computed(() => approvedMedex.value.find((item) => String(item.id) === selectedMedexId.value));
+const latestIelp = computed(() => approvedIelp.value.find((item) => String(item.id) === selectedIelpId.value));
 
 const isMedexValid = computed(() => {
   if (!latestMedex.value || !latestMedex.value.expired) return false;
@@ -813,6 +836,8 @@ const canSubmit = computed(() => {
   )
     return false;
   if (!atsName.value.trim() || !address.value.trim()) return false;
+  if (isPenerbitan.value && !ojtId.value) return false;
+  if (isPenerbitan.value && (!userData.value.competence.length || userData.value.competence.some((item) => !item.file))) return false;
 
   // Check if at least one rating is selected
   const hasSelectedRating = Object.values(selectedRatings.value).some((v) => v);
@@ -851,6 +876,8 @@ function resetForm() {
   selectedEventUserId.value = "";
   selectedLicenseId.value = "";
   selectedLogbookId.value = "";
+  selectedMedexId.value = "";
+  selectedIelpId.value = "";
   atsName.value = "";
   address.value = "";
   // Reset dynamic ratings
@@ -953,16 +980,16 @@ async function onSubmit() {
       ratings: previousRatings.value.length ? [...previousRatings.value] : [],
       location: location.value,
       dateForExpired: dateForExp.value,
-      confirmOjt: confirmOjt.value,
-      letterNumber: letterNumber.value,
-      letterDate: letterDate.value,
+      confirmOjt: isPenerbitan.value ? props.applicationDoc.ojtRecommendationStatus === "ACCEPTED" : confirmOjt.value,
+      letterNumber: isPenerbitan.value ? null : letterNumber.value,
+      letterDate: isPenerbitan.value ? null : letterDate.value,
       controlHour:
         ojtControlHour.value !== null ? String(ojtControlHour.value) : null,
       ojtNik: ojtId.value || null,
       isDrugs: isDrugs.value,
       isFailed: isFailed.value,
-      medexId: props.applicationDoc.medexId ?? null,
-      ielpId: props.applicationDoc.ielpId ?? null,
+      medexId: selectedMedexId.value ? Number(selectedMedexId.value) : null,
+      ielpId: selectedIelpId.value ? Number(selectedIelpId.value) : null,
     };
 
     await $fetch(
@@ -1436,6 +1463,9 @@ async function onSubmit() {
               <p v-if="!isMedexValid" class="text-sm text-error font-medium">
                 ⚠ Medex expired atau tidak ada
               </p>
+              <UFormField label="Select approved Medex for this application">
+                <USelect v-model="selectedMedexId" :items="approvedMedex.map(item => ({ id: String(item.id), label: `${item.institution || 'Medex'} · ${formatDate(item.released)}` }))" value-key="id" label-key="label" placeholder="Choose Medex" class="w-full" />
+              </UFormField>
               <div v-if="latestMedex" class="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p class="text-muted text-xs">10b. Tanggal Dikeluarkan</p>
@@ -1517,6 +1547,9 @@ async function onSubmit() {
               <p v-if="!isIelpValid" class="text-sm text-error font-medium">
                 ⚠ IELP expired atau tidak ada
               </p>
+              <UFormField label="Select approved IELP for this application">
+                <USelect v-model="selectedIelpId" :items="approvedIelp.map(item => ({ id: String(item.id), label: `Level ${item.level} · ${item.institution || 'IELP'} · ${formatDate(item.released)}` }))" value-key="id" label-key="label" placeholder="Choose IELP" class="w-full" />
+              </UFormField>
               <div v-if="latestIelp" class="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p class="text-muted text-xs">11b. Nama Rater</p>
@@ -1586,7 +1619,24 @@ async function onSubmit() {
               </p>
             </div>
 
+            <div v-if="isPenerbitan" class="border border-default rounded-lg p-4 space-y-3">
+              <p class="text-sm font-semibold">12. OJTI recommendation for PENERBITAN</p>
+              <p class="text-xs text-muted">The letter number and date are assigned when the OJTI accepts.</p>
+              <select v-model="ojtId" :disabled="ojtiLocked" class="w-full rounded-md border border-default bg-default p-2 text-sm">
+                <option value="">Select OJTI</option>
+                <option v-if="ojtId && !selectedOjti" :value="ojtId">Current OJTI — {{ ojtId }}</option>
+                <option v-for="item in eligibleOjti" :key="item.nik" :value="item.licenseUserId">{{ item.name }} — {{ item.licenseUserId }}</option>
+              </select>
+              <div>
+                <label class="block text-sm font-medium mb-1">12d. Jumlah Jam Pemanduan</label>
+                <UInput v-model.number="ojtControlHour" type="number" placeholder="Total jam" class="max-w-xs" />
+              </div>
+              <p class="text-sm">12e. OJTI License Number: {{ ojtId || '—' }}</p>
+              <p class="text-sm">12f. OJTI Name: {{ selectedOjti?.name || applicationDoc?.ojtUser?.name || '—' }}</p>
+              <p class="text-xs text-muted">Status: {{ applicationDoc?.ojtRecommendationStatus || 'Pending' }} · Number: {{ applicationDoc?.letterNumber || 'Pending acceptance' }}</p>
+            </div>
             <!-- OJT -->
+            <div v-else>
             <div class="border border-default rounded-lg p-4 space-y-3">
               <label class="block text-sm font-semibold"
                 >12a. Apakah ada surat Rekomendasi OJTI?</label
@@ -1657,6 +1707,7 @@ async function onSubmit() {
                 </div>
               </div>
             </div>
+            </div>
 
             <!-- Drugs -->
             <div class="border border-default rounded-lg p-4 space-y-3">
@@ -1705,7 +1756,7 @@ async function onSubmit() {
                   <UBadge
                     color="primary"
                     variant="subtle"
-                    :label="comp.competence"
+                    :label="comp.rating?.rating || 'Unknown competency'"
                   />
                   <span class="text-sm font-medium">{{
                     comp.institution
@@ -1714,8 +1765,11 @@ async function onSubmit() {
                 <span class="text-xs text-muted">{{
                   formatDate(comp.released)
                 }}</span>
+                </div>
               </div>
-            </div>
+              <p v-if="isPenerbitan && (!userData.competence.length || userData.competence.some((item) => !item.file))" class="text-sm text-error">
+                PENERBITAN memerlukan berkas untuk setiap sertifikasi kompetensi yang tercantum.
+              </p>
           </div>
 
           <!-- ── PART 4: PERNAH GAGAL UJIAN ─────────────────────────── -->

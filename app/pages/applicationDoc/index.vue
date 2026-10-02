@@ -256,6 +256,7 @@ const table = useTemplateRef<any>("table");
 
 const applicationDocToUpdate = ref<ApplicationDoc | null>(null);
 const applicationDocToDelete = ref<ApplicationDoc | null>(null);
+const proposalLettersDocumentId = ref<number | null>(null);
 
 const searchQuery = ref("");
 const columnFilters = ref([{ id: "number", value: "" }]);
@@ -378,7 +379,7 @@ function formatDateTime(dateStr?: string | null): string {
     hour12: false,
     timeZone: "UTC",
   });
-  return `${datePart} ${timePart}`;
+  return `${datePart} ${timePart} UTC`;
 }
 
 function isExpiredDate(dateStr?: string | null): boolean {
@@ -561,6 +562,14 @@ const columns = computed((): any[] => [
           to: `/applicationDoc/${row.original.id}`,
         }),
       ];
+      buttons.push(h(UButton, {
+        icon: "i-lucide-mail-check",
+        label: "Letters",
+        color: "primary",
+        variant: "soft",
+        size: "sm",
+        onClick: () => { proposalLettersDocumentId.value = row.original.id; },
+      }));
 
       // Only show update button if verification is null
       if (!row.original.verifications) {
@@ -665,6 +674,10 @@ const columns = computed((): any[] => [
         :applicationDoc="applicationDocToDelete"
         @applicationDoc-deleted="handleApplicationDocDeleted"
         @close="handleModalClose"
+      />
+      <ApplicationDocProposalLettersModal
+        :application-doc-id="proposalLettersDocumentId"
+        @close="proposalLettersDocumentId = null"
       />
     </template>
   </UDashboardPanel>

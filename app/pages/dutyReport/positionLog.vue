@@ -178,7 +178,7 @@ const utcClock = computed(() =>
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
-  }).format(currentUtcDate.value),
+  }).format(currentUtcDate.value) + " UTC",
 );
 
 const shiftWindow = computed(() => {

@@ -1,4 +1,9 @@
 export const useApiBaseUrl = (): string => {
+  // Fail closed: every existing page that uses this helper sends its requests
+  // to a local training-only URL while the tab is in Training Mode.
+  if (import.meta.client && useTrainingMode().active.value) {
+    return '/__training_api__'
+  }
   const config = useRuntimeConfig()
   const apiBaseUrl = String(config.public.apiBaseUrl || '').trim().replace(/\/+$/, '')
 

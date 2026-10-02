@@ -584,6 +584,38 @@ const genderDisplay = computed(() => {
           </tbody>
         </table>
 
+        <section class="mt-6 rounded-lg border border-gray-200 p-4">
+          <h4 class="mb-2 text-base font-semibold">Proposal Letters</h4>
+          <p v-if="!applicationDoc.appRatings?.length" class="text-sm text-gray-600">No proposed ratings found.</p>
+          <div v-for="rating in applicationDoc.appRatings || []" :key="rating.id" class="mb-3 rounded border border-gray-200 p-3 text-sm last:mb-0">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <strong>{{ rating.rating?.rating || '-' }}</strong>
+              <span :class="rating.proposalLetter?.status === 'VALIDATED' ? 'text-green-700' : 'text-amber-700'">
+                {{ rating.proposalLetter?.status === 'VALIDATED' ? 'Validated' : rating.proposalLetter?.status === 'RETURNED' ? 'Returned to applicant' : rating.proposalLetter ? (applicationDoc.eventUser?.event?.remarkDoc?.remark === 'PENERBITAN' ? 'Awaiting OJTI approval' : 'Awaiting supervisor validation') : 'Letter not assigned' }}
+              </span>
+            </div>
+            <details v-if="rating.proposalLetter?.content" class="mt-2">
+              <summary class="cursor-pointer font-medium text-primary">View letter (read only)</summary>
+              <div class="mt-2 grid gap-1 rounded bg-gray-50 p-3">
+                <p><strong>Nomor:</strong> {{ rating.proposalLetter.content.number || '-' }}</p>
+                <p><strong>Klasifikasi:</strong> {{ rating.proposalLetter.content.classification || '-' }}</p>
+                <p><strong>Lampiran:</strong> {{ rating.proposalLetter.content.attachment || '-' }}</p>
+                <p><strong>Tanggal surat:</strong> {{ rating.proposalLetter.content.issuedAt ? new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(rating.proposalLetter.content.issuedAt)) : '-' }}</p>
+                <p><strong>Cabang / unit:</strong> {{ rating.proposalLetter.content.branch || '-' }} / {{ rating.proposalLetter.content.branchUnit || '-' }}</p>
+                <p><strong>Jenis permohonan:</strong> {{ rating.proposalLetter.content.purpose || '-' }}</p>
+                <p><strong>Pemohon:</strong> {{ rating.proposalLetter.content.applicantName || '-' }}</p>
+                <p><strong>Nomor lisensi:</strong> {{ rating.proposalLetter.content.licenseNumber || '-' }}</p>
+                <p><strong>Tempat dan tanggal lahir:</strong> {{ rating.proposalLetter.content.placeOfBirth || '-' }}, {{ rating.proposalLetter.content.dateOfBirth ? new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(rating.proposalLetter.content.dateOfBirth)) : '-' }}</p>
+                <p><strong>Alamat unit kerja:</strong> {{ rating.proposalLetter.content.workAddress || '-' }}</p>
+                <p><strong>Rating:</strong> {{ rating.proposalLetter.content.rating || '-' }}</p>
+                <p><strong>Jumlah jam pemanduan:</strong> {{ rating.proposalLetter.content.controlHour || '-' }}</p>
+                <p><strong>{{ applicationDoc.eventUser?.event?.remarkDoc?.remark === 'PENERBITAN' ? 'OJTI' : 'Pimpinan unit kerja' }}:</strong> {{ rating.proposalLetter.supervisor?.name || '-' }}</p>
+                <p v-if="rating.proposalLetter.validatedAt"><strong>Validated:</strong> {{ new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(rating.proposalLetter.validatedAt)) }} UTC</p>
+              </div>
+            </details>
+          </div>
+        </section>
+
         <div class="mt-6">
           <h4 class="text-base font-semibold mb-3">Lampiran Dokumen</h4>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

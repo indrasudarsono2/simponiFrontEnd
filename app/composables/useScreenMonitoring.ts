@@ -1,6 +1,7 @@
 export function useScreenMonitoring() {
   const runtimeConfig = useRuntimeConfig();
   const screenMonitoringEnabled =
+    !useTrainingMode().active.value &&
     String(runtimeConfig.public.screenMonitoringEnabled).toLowerCase() !==
     "false";
   const screenStream = shallowRef<MediaStream | null>(null);

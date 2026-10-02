@@ -28,6 +28,17 @@ const toast = useToast();
 
 const assignedUsers = ref<AssignedUser[]>([]);
 const selectedUserIds = ref<number[]>([]);
+const userSearch = ref("");
+const filteredUsers = computed(() => {
+  const term = userSearch.value.trim().toLowerCase();
+  if (!term) return assignedUsers.value;
+  return assignedUsers.value.filter(({ user }) =>
+    `${user.name} ${user.nik}`.toLowerCase().includes(term),
+  );
+});
+const allVisibleSelected = computed(() =>
+  filteredUsers.value.length > 0 && filteredUsers.value.every(({ id }) => selectedUserIds.value.includes(id)),
+);
 
 // Watch for eventId changes to fetch data
 watch(
@@ -46,6 +57,7 @@ watch(open, (isOpen) => {
   if (!isOpen) {
     assignedUsers.value = [];
     selectedUserIds.value = [];
+    userSearch.value = "";
     emit("close");
   }
 });
@@ -88,6 +100,7 @@ function isUserSelected(userId: number): boolean {
 
 async function deleteSelectedUsers() {
   if (!props.eventId || selectedUserIds.value.length === 0) return;
+  if (!window.confirm(`Remove ${selectedUserIds.value.length} selected user(s) from this event?`)) return;
 
   loading.value = true;
 
@@ -126,11 +139,12 @@ async function deleteSelectedUsers() {
   }
 }
 
-function selectAllUsers() {
-  if (selectedUserIds.value.length === assignedUsers.value.length) {
-    selectedUserIds.value = [];
+function selectVisibleUsers() {
+  const visibleIds = new Set(filteredUsers.value.map(({ id }) => id));
+  if (allVisibleSelected.value) {
+    selectedUserIds.value = selectedUserIds.value.filter((id) => !visibleIds.has(id));
   } else {
-    selectedUserIds.value = assignedUsers.value.map((u) => u.id);
+    selectedUserIds.value = [...new Set([...selectedUserIds.value, ...visibleIds])];
   }
 }
 </script>
@@ -140,6 +154,7 @@ function selectAllUsers() {
     v-model:open="open"
     title="View Assigned Users"
     description="View and manage users assigned to this event"
+    :ui="{ content: 'w-[min(96vw,80rem)] max-w-7xl max-h-[94vh]', body: 'overflow-y-auto' }"
   >
     <template #body>
       <div class="space-y-4">
@@ -157,19 +172,23 @@ function selectAllUsers() {
 
         <!-- Users List -->
         <div v-else class="space-y-3">
+          <UInput
+            v-model="userSearch"
+            icon="i-lucide-search"
+            placeholder="Search assigned users by name or NIK"
+            class="w-full"
+          />
           <!-- Select All / Actions -->
-          <div class="flex items-center justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <UButton
-              :label="
-                selectedUserIds.length === assignedUsers.length
-                  ? 'Deselect All'
-                  : 'Select All'
-              "
+              :label="allVisibleSelected ? 'Deselect filtered' : 'Select filtered'"
               color="neutral"
               variant="ghost"
               size="sm"
-              @click="selectAllUsers"
+              :disabled="!filteredUsers.length || loading"
+              @click="selectVisibleUsers"
             />
+            <span class="text-sm text-muted">Showing {{ filteredUsers.length }} of {{ assignedUsers.length }} assigned users</span>
             <UButton
               v-if="selectedUserIds.length > 0"
               label="Delete Selected"
@@ -183,14 +202,16 @@ function selectAllUsers() {
           </div>
 
           <!-- User List with Checkboxes -->
-          <div class="border border-default rounded-lg divide-y divide-default">
-            <div
-              v-for="assignedUser in assignedUsers"
+          <div class="grid min-h-80 max-h-[60vh] grid-cols-1 overflow-y-auto rounded-lg border border-default md:grid-cols-2">
+            <p v-if="!filteredUsers.length" class="p-4 text-sm text-muted">No assigned users match your search.</p>
+            <label
+              v-for="assignedUser in filteredUsers"
               :key="assignedUser.id"
-              class="flex items-center gap-3 p-3 hover:bg-elevated/50 transition-colors"
+              class="flex cursor-pointer items-center gap-3 border-b border-default p-3 transition-colors hover:bg-elevated/50"
             >
               <UCheckbox
                 :model-value="isUserSelected(assignedUser.id)"
+                :disabled="loading"
                 @update:model-value="toggleUserSelection(assignedUser.id)"
               />
               <div class="flex-1">
@@ -207,7 +228,7 @@ function selectAllUsers() {
               >
                 Selected
               </UBadge>
-            </div>
+            </label>
           </div>
 
           <!-- Selection Summary -->

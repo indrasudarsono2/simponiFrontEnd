@@ -211,7 +211,8 @@ function formatDateTime(dateStr?: string | null): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+    timeZone: "UTC",
+  }) + " UTC";
 }
 
 // Format boolean to text

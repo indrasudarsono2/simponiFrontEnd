@@ -71,6 +71,10 @@ interface ExaminationEvent {
   id: number;
   event: string;
   passingGrade: number;
+  startDate?: string | null;
+  finishDate?: string | null;
+  theoryMode?: 'MODE_1' | 'MODE_2';
+  difficulty?: 'EASY' | 'HARD';
   eventQuestions?: EventQuestionItem[];
   eventUsers?: EventUserItem[];
 }
@@ -81,7 +85,18 @@ interface ExaminationResponse {
   message?: string;
   completedAt?: string | null;
   ratingStatuses?: RatingExaminationStatus[];
+  events?: ExaminationEventResult[];
 }
+
+interface ExaminationEventResult {
+  event: ExaminationEvent;
+  status: ExaminationStatus;
+  message: string;
+  completedAt?: string | null;
+  ratingStatuses: RatingExaminationStatus[];
+}
+
+type TheoryMode = 'MODE_1' | 'MODE_2';
 
 interface EssayQuestionPayload {
   essay?: {
@@ -156,7 +171,19 @@ interface TableRow {
 }
 
 const { token } = useAuth();
+const { apiFetch } = useApiFetch();
 const toast = useToast();
+interface Mode2SessionItem {
+  id: number;
+  session: { id: number; name: string; status: string; remainingMs: number };
+  rating: string | null;
+  event: { id: number; event: string };
+}
+const mode2Sessions = ref<Mode2SessionItem[]>([]);
+async function loadMode2Sessions() {
+  try { mode2Sessions.value = await apiFetch('/api/theorySessions/mine') as Mode2SessionItem[]; }
+  catch { toast.add({ title: 'Unable to load theory sessions', color: 'error' }); }
+}
 const isActionSubmitting = ref(false);
 const examinationEssayResponse = useState<ExaminationEssayResponse | null>(
   "examinationEssayResponse",
@@ -194,12 +221,40 @@ const { data, status, error, refresh } = await useFetch<ExaminationResponse>(
   },
 );
 
-const eventData = computed(() => data.value?.event || null);
+const activeMode = ref<TheoryMode>('MODE_1');
+const selectedEventIds = ref<Partial<Record<TheoryMode, number>>>({});
+const eventsForMode = computed(() => (data.value?.events || []).filter((item) =>
+  (item.event.theoryMode || 'MODE_1') === activeMode.value,
+));
+function preferredEvent(items: ExaminationEventResult[]): ExaminationEventResult | null {
+  const now = Date.now();
+  return items.find(({ event }) => {
+    const start = event.startDate ? new Date(event.startDate).getTime() : Number.NEGATIVE_INFINITY;
+    const finish = event.finishDate ? new Date(event.finishDate).getTime() : Number.POSITIVE_INFINITY;
+    return start <= now && finish >= now;
+  }) || [...items].filter(({ event }) => event.startDate && new Date(event.startDate).getTime() > now)
+    .sort((a, b) => new Date(a.event.startDate!).getTime() - new Date(b.event.startDate!).getTime())[0]
+    || items[0] || null;
+}
+const selectedExamination = computed(() => eventsForMode.value.find((item) =>
+  item.event.id === selectedEventIds.value[activeMode.value],
+) || preferredEvent(eventsForMode.value));
+const eventData = computed(() => selectedExamination.value?.event || null);
+let initializedMode = false;
+watch(() => data.value?.events, (events) => {
+  if (!initializedMode && events?.length) {
+    activeMode.value = data.value?.event?.theoryMode || 'MODE_1';
+    initializedMode = true;
+  }
+}, { immediate: true });
+const missingEventQuestions = computed(() =>
+  Boolean(eventData.value && eventData.value.theoryMode !== 'MODE_2' && !eventData.value.eventQuestions?.length && selectedExamination.value?.status !== 'COMPLETED'),
+);
 const overallExaminationStatus = computed<ExaminationStatus>(
-  () => data.value?.status || "NOT_ASSIGNED",
+  () => selectedExamination.value?.status || "NOT_ASSIGNED",
 );
 const overallStatusMessage = computed(
-  () => data.value?.message || "No examination status is available.",
+  () => selectedExamination.value?.message || `No ${activeMode.value === 'MODE_1' ? 'Mode 1' : 'Mode 2'} examination is assigned to you.`,
 );
 
 function statusColor(statusValue: ExaminationStatus) {
@@ -377,6 +432,8 @@ watch(
   ],
   ([fetchStatus, hasValidRange, isInRange, examinationStatus]) => {
     if (fetchStatus !== "success") return;
+    if (eventData.value?.theoryMode === 'MODE_2') return;
+    if (missingEventQuestions.value) return;
     if (examinationStatus === "COMPLETED" || examinationStatus === "NOT_ASSIGNED") {
       hasShownOutOfRangeToast.value = false;
       return;
@@ -410,7 +467,7 @@ function getRowsForQuestion(question: EventQuestionItem): TableRow[] {
     quantity: question.quantity,
     persentage: question.persentage,
     minutes: question.minutes,
-    isReExamination: (item.examinationInvalidations?.length || 0) > 0,
+    isReExamination: Number(item.statusId) === 5 || (item.examinationInvalidations?.length || 0) > 0,
     examinationStatus:
       item.examinationStatus?.status || "NOT_STARTED",
     statusMessage:
@@ -545,6 +602,7 @@ function canShowGoButton(question: EventQuestionItem, row: TableRow): boolean {
 
 onMounted(() => {
   loadSubmitResultFromStorage();
+  if (data.value?.events?.some((item) => item.event.theoryMode === 'MODE_2')) void loadMode2Sessions();
 });
 
 onBeforeUnmount(() => {
@@ -564,6 +622,35 @@ onBeforeUnmount(() => {
 
     <template #body>
       <div class="space-y-6">
+        <div v-if="status === 'success'" class="space-y-3">
+          <div class="flex flex-wrap gap-2" role="tablist" aria-label="Theory examination mode">
+            <UButton
+              label="Mode 1 — Online"
+              :variant="activeMode === 'MODE_1' ? 'solid' : 'outline'"
+              role="tab"
+              :aria-selected="activeMode === 'MODE_1'"
+              @click="activeMode = 'MODE_1'"
+            />
+            <UButton
+              label="Mode 2 — Shared Session"
+              :variant="activeMode === 'MODE_2' ? 'solid' : 'outline'"
+              role="tab"
+              :aria-selected="activeMode === 'MODE_2'"
+              @click="activeMode = 'MODE_2'; loadMode2Sessions()"
+            />
+          </div>
+          <div v-if="eventsForMode.length > 1" class="flex flex-wrap gap-2" aria-label="Choose examination event">
+            <UButton
+              v-for="item in eventsForMode"
+              :key="item.event.id"
+              :label="item.event.event"
+              size="sm"
+              :variant="selectedExamination?.event.id === item.event.id ? 'soft' : 'outline'"
+              :color="selectedExamination?.event.id === item.event.id ? 'primary' : 'neutral'"
+              @click="selectedEventIds[activeMode] = item.event.id"
+            />
+          </div>
+        </div>
         <div
           v-if="status === 'pending'"
           class="flex items-center justify-center py-10 text-muted"
@@ -595,6 +682,7 @@ onBeforeUnmount(() => {
 
         <template v-else>
           <div
+            v-if="eventData.theoryMode !== 'MODE_2'"
             class="rounded-lg border p-4 space-y-2"
             :class="{
               'border-success/30 bg-success/5': overallExaminationStatus === 'COMPLETED',
@@ -610,14 +698,42 @@ onBeforeUnmount(() => {
               <span class="font-medium text-highlighted">Examination Status</span>
             </div>
             <p class="text-sm text-muted">{{ overallStatusMessage }}</p>
-            <p v-if="data?.completedAt" class="text-xs text-muted">
-              Completed at: {{ formatDateTime(data.completedAt) }} UTC
+            <p v-if="selectedExamination?.completedAt" class="text-xs text-muted">
+              Completed at: {{ formatDateTime(selectedExamination.completedAt) }} UTC
             </p>
           </div>
+
+          <UAlert
+            v-if="missingEventQuestions"
+            title="Examination questions not configured"
+            description="This event has no Essay or Multiple Choice setup. Please ask Checker Admin to configure Event Questions before starting the examination."
+            color="warning"
+            variant="soft"
+          />
+
+          <div v-if="eventData.theoryMode === 'MODE_2'" class="space-y-4">
+            <div class="rounded-lg border border-primary/30 bg-primary/5 p-4">
+              <h2 class="font-semibold">Shared Theory Session · {{ eventData.event }}</h2>
+              <p class="text-sm text-muted">Choose one assigned rating per session. The lead controls the shared timer; Essay and Multiple Choice can be completed in either order.</p>
+              <UBadge :label="eventData.difficulty || 'HARD'" variant="soft" class="mt-2" />
+            </div>
+            <div v-if="!mode2Sessions.filter(item => item.event.id === eventData?.id).length" class="rounded-lg border border-default p-4 text-sm text-muted">
+              No Mode 2 session has been assigned yet. Contact your examination lead.
+            </div>
+            <div v-for="item in mode2Sessions.filter(item => item.event.id === eventData?.id)" :key="item.id" class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-default p-4">
+              <div><p class="font-medium">{{ item.session.name }}</p><p class="text-sm text-muted">{{ item.rating || 'Choose your rating' }} · {{ item.session.status }}</p></div>
+              <UBadge v-if="item.session.status === 'ENDED'" label="History · expired" color="neutral" variant="soft" />
+              <UButton v-else label="Open Session" :to="`/examination/theorySession/${item.session.id}`" color="primary" variant="soft" />
+            </div>
+            <UButton label="Refresh Sessions" variant="outline" icon="i-lucide-refresh-cw" @click="loadMode2Sessions" />
+          </div>
+
+          <template v-else>
 
           <div
             v-if="
               overallExaminationStatus !== 'COMPLETED' &&
+              !missingEventQuestions &&
               (!roomTimeWindow.hasValidRange || !roomTimeWindow.isInRange)
             "
             class="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
@@ -737,6 +853,7 @@ onBeforeUnmount(() => {
               </table>
             </div>
           </div>
+          </template>
         </template>
       </div>
     </template>

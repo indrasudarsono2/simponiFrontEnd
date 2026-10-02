@@ -94,7 +94,7 @@ const normalizedGrouped = computed(() => {
               class="rounded-lg border border-default p-3"
             >
               <div class="flex items-start justify-between gap-3">
-                <p class="text-sm font-medium leading-5">{{ item.group }}</p>
+                <p class="min-w-0 flex-1 truncate text-sm font-medium leading-5" :title="item.group">{{ item.group }}</p>
                 <UBadge
                   :color="getItemStatus(item.selected, item.quantity)"
                   variant="subtle"

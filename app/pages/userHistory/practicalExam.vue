@@ -107,8 +107,8 @@ function formatDate(value?: string | null): string {
   return new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "Asia/Jakarta",
-  }).format(date);
+    timeZone: "UTC",
+  }).format(date) + " UTC";
 }
 
 function resolveFileUrl(filePath?: string | null): string | null {

@@ -42,6 +42,7 @@ interface EventItem {
   briefingFile: string | null;
   recommendationFile: string | null;
   passingGrade: number;
+  practicalPassingGrade: number | null;
   branchId?: number;
   branchName?: string;
   branchUnitId?: number;
@@ -52,6 +53,8 @@ interface EventItem {
   };
   isPractical: boolean;
   isSimulator: boolean;
+  theoryMode?: 'MODE_1' | 'MODE_2';
+  difficulty?: 'EASY' | 'HARD';
 }
 
 interface SessionGroup {
@@ -147,6 +150,13 @@ const { data, status, refresh } = await useFetch<EventsResponse>(
   },
 );
 
+const { data: passingGradeStandard, error: passingGradeError, refresh: refreshPassingGradeStandard } = await useFetch<{
+  theoryGrade: number;
+  practicalGrade: number;
+}>(`${apiBaseUrl}/api/passingGradeStandard`, {
+  headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+});
+
 // Extract and flatten events from all sessions
 const events = computed(() => {
   if (!data.value?.session || data.value.session.length === 0) return [];
@@ -166,7 +176,7 @@ const events = computed(() => {
     allEvents.push(...sessionEvents);
   });
 
-  return allEvents;
+  return allEvents.sort((a, b) => b.id - a.id);
 });
 
 // Filtered events based on selected session and sector
@@ -175,9 +185,9 @@ const filteredEvents = computed(() => {
 
   return events.value.filter((event) => {
     const sessionMatch =
-      !selectedSessionId.value || event.sessionId === selectedSessionId.value;
+      selectedSessionId.value == null || Number(event.sessionId) === Number(selectedSessionId.value);
     const sectorMatch =
-      !selectedSectorId.value || event.sectorId === selectedSectorId.value;
+      selectedSectorId.value == null || Number(event.sectorId) === Number(selectedSectorId.value);
     return sessionMatch && sectorMatch;
   });
 });
@@ -305,6 +315,26 @@ const columns: TableColumn<EventItem>[] = [
     cell: ({ row }) => {
       return h("div", { class: "text-muted" }, row.original.sessionName);
     },
+  },
+  {
+    accessorKey: "theoryMode",
+    header: "Theory Mode",
+    cell: ({ row }) => h(
+      "span",
+      { class: "font-medium text-highlighted whitespace-nowrap" },
+      row.original.theoryMode === "MODE_2" ? "Mode 2 — Shared Session"
+        : row.original.theoryMode === "MODE_1" ? "Mode 1 — Sequential" : "-",
+    ),
+  },
+  {
+    accessorKey: "difficulty",
+    header: "Difficulty",
+    cell: ({ row }) => h(
+      "span",
+      { class: "font-medium text-highlighted" },
+      row.original.difficulty === "EASY" ? "Easy"
+        : row.original.difficulty === "HARD" ? "Hard" : "-",
+    ),
   },
   {
     accessorKey: "formFillingDate",
@@ -463,7 +493,7 @@ const columns: TableColumn<EventItem>[] = [
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Passing Grade",
+        label: "Theory Passing Grade",
         icon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
@@ -482,8 +512,13 @@ const columns: TableColumn<EventItem>[] = [
     },
   },
   {
+    accessorKey: "practicalPassingGrade",
+    header: "Practical Passing Grade",
+    cell: ({ row }) => row.original.practicalPassingGrade == null ? "—" : `${row.original.practicalPassingGrade}%`,
+  },
+  {
     accessorKey: "isPractical",
-    header: "Practical",
+    header: "Live",
     cell: ({ row }) => {
       const UBadge = resolveComponent("UBadge");
       return h(UBadge, {
@@ -567,6 +602,10 @@ const pagination = ref({
   pageSize: 10,
 });
 
+watch([selectedSectorId, selectedSessionId], () => {
+  pagination.value.pageIndex = 0;
+});
+
 // Handle modal events
 function handleEventAdded() {
   refresh();
@@ -614,6 +653,14 @@ function handleModalClose() {
     </template>
 
     <template #body>
+      <UAlert
+        v-if="passingGradeError"
+        title="Passing grade standard unavailable"
+        description="The standard set by General Admin could not be loaded. Refresh the page before creating or updating an event."
+        color="error"
+        variant="soft"
+        class="mb-4"
+      />
       <!-- Context Info -->
       <div class="mb-4 p-3 bg-elevated/50 rounded-lg border border-default">
         <div class="flex items-center gap-4 text-sm">
@@ -659,6 +706,7 @@ function handleModalClose() {
           :sessions="availableSessions"
           :sectors="availableSectors"
           :remark-docs="availableRemarkDocs"
+          :passing-grade-standard="passingGradeStandard ?? null"
           @event-added="handleEventAdded"
         />
       </div>
@@ -677,7 +725,7 @@ function handleModalClose() {
             color="neutral"
             variant="outline"
             icon="i-lucide-refresh-cw"
-            @click="refresh"
+            @click="() => { refresh(); refreshPassingGradeStandard(); }"
           />
         </div>
       </div>
@@ -709,7 +757,7 @@ function handleModalClose() {
         class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
       >
         <div class="text-sm text-muted">
-          Showing {{ pagination.pageIndex * pagination.pageSize + 1 }} to
+          Showing {{ filteredEvents.length ? pagination.pageIndex * pagination.pageSize + 1 : 0 }} to
           {{
             Math.min(
               (pagination.pageIndex + 1) * pagination.pageSize,
@@ -738,6 +786,7 @@ function handleModalClose() {
         :sessions="availableSessions"
         :sectors="availableSectors"
         :remark-docs="availableRemarkDocs"
+        :passing-grade-standard="passingGradeStandard ?? null"
         @event-updated="handleEventUpdated"
         @close="handleModalClose"
       />

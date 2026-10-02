@@ -18,6 +18,7 @@ interface ScoreUserResponseItem {
         essayScore?: number | null;
         multipleChoiceScore?: number | null;
         finalScore?: number | null;
+        userRatings?: Array<{ id: number }> | null;
         status?: {
           status?: string | null;
         } | null;
@@ -44,6 +45,7 @@ interface ScoreRecapRow {
   mcScore: string;
   finalScore: string;
   status: string;
+  certificateScoreId?: number;
 }
 
 const { token } = useAuth();
@@ -149,6 +151,12 @@ const rows = computed<ScoreRecapRow[]>(() => {
             mcScore: formatScore(score.multipleChoiceScore),
             finalScore: formatScore(score.finalScore),
             status: score.status?.status || "-",
+            certificateScoreId:
+              score.status?.status === "SUCCESS" &&
+              score.userRatings?.length &&
+              score.id
+                ? score.id
+                : undefined,
           });
           isFirstEventRow = false;
           isFirstApplicationDocumentRow = false;
@@ -257,6 +265,9 @@ const errorMessage = computed(() => {
                   >
                     Status
                   </th>
+                  <th class="px-3 py-2 text-center font-medium border border-default">
+                    Certificate
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -314,12 +325,23 @@ const errorMessage = computed(() => {
                       {{ row.status }}
                     </UBadge>
                   </td>
+                  <td class="px-3 py-2 border text-center border-default">
+                    <UButton
+                      v-if="row.certificateScoreId"
+                      :to="`/userHistory/certificate/${row.certificateScoreId}`"
+                      label="View / Print"
+                      icon="i-lucide-award"
+                      size="xs"
+                      variant="outline"
+                    />
+                    <span v-else class="text-muted">—</span>
+                  </td>
                 </tr>
 
                 <tr v-if="rows.length === 0">
                   <td
                     class="px-3 py-3 text-muted border border-default"
-                    colspan="8"
+                    colspan="9"
                   >
                     No score recap data available.
                   </td>

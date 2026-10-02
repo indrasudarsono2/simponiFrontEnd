@@ -8,6 +8,7 @@ const UButton = resolveComponent("UButton");
 // Define interfaces based on new API response
 interface UserRole {
   id: number;
+  checkerRatings?: { ratingId: number | null }[];
   roles: {
     role: string;
   };

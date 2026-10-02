@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const training = useTrainingMode();
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 const { apiFetch } = useApiFetch();
@@ -187,12 +188,14 @@ const emit = defineEmits<{
                 @change="handleFileChange"
               />
               <UButton
+                v-if="!training.active.value"
                 label="Choose File"
                 color="neutral"
                 variant="outline"
                 icon="i-lucide-upload"
                 @click="triggerFileInput"
               />
+              <TrainingSampleButton v-else sample="LOGBOOK.pdf" @selected="state.file = $event" />
               <span v-if="state.file" class="text-sm text-muted">
                 {{ state.file.name }}
               </span>

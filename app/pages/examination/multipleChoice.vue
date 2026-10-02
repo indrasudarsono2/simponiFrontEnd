@@ -42,6 +42,9 @@ interface ExaminationMultipleChoiceResponse {
     time?: number;
   } | null;
   randomNumbers?: number[] | null;
+  draftAnswers?: Record<string, string>;
+  deadlineAt?: string | null;
+  requiresStart?: boolean;
 }
 interface SubmitFalseAnswerItem {
   id?: number;
@@ -98,11 +101,14 @@ const examinationMultipleChoiceMeta = useState<{
 const answers = reactive<Record<number, "A" | "B" | "C" | "D" | "">>({});
 const optionOrderByQuestion = reactive<Record<number, OptionKey[]>>({});
 const activeGroupId = ref<number | string | undefined>(undefined);
+const questionView = ref<"GROUP" | "SINGLE">("GROUP");
+const activeQuestionIndex = ref(0);
 const tabScrollerRef = ref<HTMLElement | null>(null);
 const remainingSeconds = ref(0);
 const isTimeUpToastShown = ref(false);
 const isSubmittingAnswers = ref(false);
 const hasSubmittedAnswers = ref(false);
+const lastDraftSavedAt = ref<string | null>(null);
 const cameraVideoRef = ref<HTMLVideoElement | null>(null);
 const cameraStream = ref<MediaStream | null>(null);
 const isCameraInitializing = ref(false);
@@ -122,7 +128,11 @@ const {
   captureScreenSnapshotBlob,
 } = useScreenMonitoring();
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
-let postTimeInterval: ReturnType<typeof setInterval> | null = null;
+let draftSaveInterval: ReturnType<typeof setInterval> | null = null;
+let draftSaveTimeout: ReturnType<typeof setTimeout> | null = null;
+let draftSaveRunning = false;
+let answerRevision = 0;
+let savedAnswerRevision = 0;
 let randomSnapshotTimeouts: Array<ReturnType<typeof setTimeout>> = [];
 let cameraObstructionInterval: ReturnType<typeof setInterval> | null = null;
 let lastCameraWarningAt = 0;
@@ -300,6 +310,28 @@ const totalQuestions = computed(() =>
   ),
 );
 
+const questionItems = computed(() => {
+  let number = 0;
+  return multipleChoiceGroups.value.flatMap((group, groupIndex) =>
+    (group.multipleChoice || []).map((item) => ({
+      question: item.multipleChoice,
+      groupName: getGroupDisplayName(group, groupIndex),
+      number: ++number,
+    })),
+  );
+});
+const activeQuestion = computed(() => questionItems.value[activeQuestionIndex.value] || null);
+const isQuestionAnswered = (questionId?: number) => Boolean(questionId && isAnsweredOption(answers[questionId]));
+const unansweredCount = computed(() => questionItems.value.filter((item) => !isQuestionAnswered(item.question?.id)).length);
+function nextUnansweredQuestion() {
+  const next = questionItems.value.findIndex((item, index) =>
+    index > activeQuestionIndex.value && !isQuestionAnswered(item.question?.id));
+  const wrapped = next < 0
+    ? questionItems.value.findIndex((item) => !isQuestionAnswered(item.question?.id))
+    : next;
+  if (wrapped >= 0) activeQuestionIndex.value = wrapped;
+}
+
 function hasImage(imagePath?: string | null): boolean {
   return typeof imagePath === "string" && imagePath.trim() !== "";
 }
@@ -391,13 +423,6 @@ function clearCountdown() {
   }
 }
 
-function clearPostTimeInterval() {
-  if (postTimeInterval) {
-    clearInterval(postTimeInterval);
-    postTimeInterval = null;
-  }
-}
-
 function clearRandomSnapshotTimeouts() {
   randomSnapshotTimeouts.forEach((timer) => clearTimeout(timer));
   randomSnapshotTimeouts = [];
@@ -423,11 +448,29 @@ function stopCameraStream() {
   isCameraObstructed.value = false;
 }
 
-function activateExamination(payload: ExaminationMultipleChoiceResponse) {
+async function activateExamination(payload: ExaminationMultipleChoiceResponse) {
   if (isExamStarted.value) return;
   isExamStarted.value = true;
-  startCountdown(getCountdownMinutes(payload));
-  startPostTimeInterval(payload);
+  const started = await postMonitorTime(payload, true);
+  if (!started) {
+    isExamStarted.value = false;
+    toast.add({
+      title: "Unable to start exam",
+      description: "The examination start time could not be saved. Please try again.",
+      color: "error",
+    });
+    return;
+  }
+  if (payload.requiresStart) {
+    await loadMultipleChoiceData();
+    if (!multipleChoiceData.value || multipleChoiceData.value.requiresStart || fetchError.value) {
+      isExamStarted.value = false;
+      return;
+    }
+    payload = multipleChoiceData.value;
+  }
+  startCountdown(getCountdownMinutes(payload), payload.deadlineAt);
+  startDraftAutosave();
   if (screenMonitoringEnabled) {
     scheduleRandomSnapshots(payload);
   }
@@ -512,7 +555,7 @@ async function startExamMonitoring() {
   }
 
   if (!canContinueExam.value || !multipleChoiceData.value) return;
-  activateExamination(multipleChoiceData.value);
+  await activateExamination(multipleChoiceData.value);
 }
 
 function detectCameraObstruction(): boolean {
@@ -722,10 +765,12 @@ function scheduleRandomSnapshots(payload: ExaminationMultipleChoiceResponse) {
   });
 }
 
-function startCountdown(minutes: number) {
+function startCountdown(minutes: number, deadlineAt?: string | null) {
   clearCountdown();
   isTimeUpToastShown.value = false;
-  remainingSeconds.value = Math.max(0, Math.floor(minutes * 60));
+  const serverDeadline = deadlineAt ? Date.parse(deadlineAt) : NaN;
+  const endAt = Number.isFinite(serverDeadline) ? serverDeadline : Date.now() + minutes * 60_000;
+  remainingSeconds.value = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
 
   if (remainingSeconds.value <= 0) return;
 
@@ -735,7 +780,7 @@ function startCountdown(minutes: number) {
       return;
     }
 
-    remainingSeconds.value -= 1;
+    remainingSeconds.value = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
 
     if (remainingSeconds.value <= 0 && !isTimeUpToastShown.value) {
       isTimeUpToastShown.value = true;
@@ -753,6 +798,7 @@ function startCountdown(minutes: number) {
 function getCountdownMinutes(
   payload: ExaminationMultipleChoiceResponse,
 ): number {
+  if (payload.deadlineAt) return Math.max(0, (Date.parse(payload.deadlineAt) - Date.now()) / 60_000);
   const totalMinutesRaw =
     payload.eventQuestion?.minutes ?? payload.eventShort?.minutes ?? 0;
   const totalMinutes = Number(totalMinutesRaw);
@@ -779,15 +825,15 @@ function getEventQuestionId(
   return parsed;
 }
 
-async function postMonitorTime(payload: ExaminationMultipleChoiceResponse) {
+async function postMonitorTime(payload: ExaminationMultipleChoiceResponse, isInitial = false): Promise<boolean> {
   const eventQuestionId = getEventQuestionId(payload);
   const currentAppRatingId = Number(
     payload.appRatingId ?? requestMeta.value?.appRatingId,
   );
-  if (!eventQuestionId || !Number.isFinite(currentAppRatingId)) return;
+  if (!eventQuestionId || !Number.isFinite(currentAppRatingId)) return false;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/postTime`, {
+    const clock = await $fetch<{ deadlineAt?: string | null }>(`${apiBaseUrl}/api/postTime`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -795,39 +841,50 @@ async function postMonitorTime(payload: ExaminationMultipleChoiceResponse) {
       body: {
         appRatingId: currentAppRatingId,
         eventQuestionId,
+        isInitial,
       },
     });
+    if (clock?.deadlineAt) payload.deadlineAt = clock.deadlineAt;
+    return true;
   } catch (_error) {
     // Silent background ping failure.
+    return false;
   }
 }
 
-function startPostTimeInterval(payload: ExaminationMultipleChoiceResponse) {
-  clearPostTimeInterval();
-
-  const eventQuestionId = getEventQuestionId(payload);
-  const currentAppRatingId = Number(
-    payload.appRatingId ?? requestMeta.value?.appRatingId,
-  );
-  if (
-    !eventQuestionId ||
-    !Number.isFinite(currentAppRatingId) ||
-    isTimeUp.value
-  ) {
-    return;
-  }
-
-  postTimeInterval = setInterval(
-    async () => {
-      if (isTimeUp.value) {
-        clearPostTimeInterval();
-        return;
-      }
-      await postMonitorTime(payload);
-    },
-    5 * 60 * 1000,
-  );
+async function saveDraft() {
+  const payload = multipleChoiceData.value;
+  if (!payload || !isExamStarted.value || isSubmittingAnswers.value || hasSubmittedAnswers.value || draftSaveRunning || answerRevision === savedAnswerRevision) return;
+  draftSaveRunning = true;
+  const revision = answerRevision;
+  try {
+    const ids = payload.multipleChoice?.flatMap((group) => group.multipleChoice || [])
+      .map((item) => item.multipleChoice?.id).filter((id): id is number => Number.isInteger(id)) || [];
+    const saved = await $fetch<{ savedAt?: string }>(`${apiBaseUrl}/api/examinationDraft`, {
+      method: "POST", headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+      body: { kind: "MULTIPLE_CHOICE", eventId: payload.eventId, appRatingId: payload.appRatingId,
+        answers: Object.fromEntries(ids.map((id) => [id, answers[id] || ""])) },
+    });
+    lastDraftSavedAt.value = saved?.savedAt || new Date().toISOString();
+    savedAnswerRevision = revision;
+  } catch (error: any) {
+    if (!isTimeUp.value) toast.add({ title: "Autosave failed", description: error?.data?.message || "Please check your connection. Your latest answer is still on this page.", color: "warning" });
+  } finally { draftSaveRunning = false; }
 }
+
+function startDraftAutosave() {
+  if (draftSaveInterval) clearInterval(draftSaveInterval);
+  if (draftSaveTimeout) clearTimeout(draftSaveTimeout);
+  draftSaveTimeout = setTimeout(() => {
+    void saveDraft();
+    draftSaveInterval = setInterval(() => void saveDraft(), 5 * 60 * 1000);
+  }, 5 * 60 * 1000 - Math.floor(Math.random() * 60_000));
+}
+
+watch(answers, () => {
+  if (!isExamStarted.value) return;
+  answerRevision += 1;
+}, { deep: true });
 
 function buildMultipleChoiceAnswersPayload(
   payload: ExaminationMultipleChoiceResponse,
@@ -923,7 +980,6 @@ async function submitAnswers(isAutoSubmit = false) {
 
     hasSubmittedAnswers.value = true;
     clearCountdown();
-    clearPostTimeInterval();
     clearRandomSnapshotTimeouts();
     examinationMultipleChoiceResponse.value = null;
     examinationMultipleChoiceMeta.value = null;
@@ -1022,18 +1078,7 @@ async function loadMultipleChoiceData() {
       return;
     }
 
-    const hasCachedPayload =
-      examinationMultipleChoiceMeta.value?.eventId === currentEventId &&
-      examinationMultipleChoiceMeta.value?.appRatingId === currentAppRatingId &&
-      !!examinationMultipleChoiceResponse.value;
-
-    let payload: ExaminationMultipleChoiceResponse;
-
-    if (hasCachedPayload) {
-      payload =
-        examinationMultipleChoiceResponse.value as ExaminationMultipleChoiceResponse;
-    } else {
-      payload = await $fetch<ExaminationMultipleChoiceResponse>(
+    const payload = await $fetch<ExaminationMultipleChoiceResponse>(
         `${apiBaseUrl}/api/examinationMultipleChoice`,
         {
           method: "POST",
@@ -1047,12 +1092,8 @@ async function loadMultipleChoiceData() {
         },
       );
 
-      examinationMultipleChoiceResponse.value = payload;
-      persistRequestMeta({
-        eventId: currentEventId,
-        appRatingId: currentAppRatingId,
-      });
-    }
+    examinationMultipleChoiceResponse.value = payload;
+    persistRequestMeta({ eventId: currentEventId, appRatingId: currentAppRatingId });
 
     multipleChoiceData.value = payload;
 
@@ -1062,16 +1103,17 @@ async function loadMultipleChoiceData() {
     for (const item of allQuestions) {
       const id = item.multipleChoice?.id;
       if (!id) continue;
-      if (!["A", "B", "C", "D"].includes(String(answers[id] || ""))) {
-        answers[id] = "";
-      }
+      const saved = String(payload.draftAnswers?.[String(id)] || "").toUpperCase();
+      answers[id] = (["A", "B", "C", "D"].includes(saved) ? saved : "") as "A" | "B" | "C" | "D" | "";
       if (!optionOrderByQuestion[id]) {
         optionOrderByQuestion[id] = shuffleOptionKeys();
       }
     }
+    await nextTick();
+    savedAnswerRevision = answerRevision;
 
     if (!screenMonitoringEnabled) {
-      activateExamination(payload);
+      await activateExamination(payload);
     }
   } catch (error: any) {
     fetchError.value =
@@ -1118,14 +1160,18 @@ watch(
   },
   { immediate: true },
 );
+watch(questionItems, (items) => {
+  if (activeQuestionIndex.value >= items.length) activeQuestionIndex.value = 0;
+});
 watch(isTimeUp, (value) => {
   if (value) {
     void submitAnswers(true);
   }
 });
 onBeforeUnmount(() => {
+  if (draftSaveInterval) clearInterval(draftSaveInterval);
+  if (draftSaveTimeout) clearTimeout(draftSaveTimeout);
   clearCountdown();
-  clearPostTimeInterval();
   clearRandomSnapshotTimeouts();
   stopCameraStream();
   stopScreenCapture();
@@ -1146,6 +1192,7 @@ onBeforeUnmount(() => {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
+          <span v-if="lastDraftSavedAt" class="text-xs text-muted">Autosaved {{ lastDraftSavedAt.slice(11, 16) }} UTC</span>
           <UButton
             label="Back"
             variant="ghost"
@@ -1181,7 +1228,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          v-else-if="multipleChoiceGroups.length === 0"
+          v-else-if="multipleChoiceGroups.length === 0 && !multipleChoiceData?.requiresStart"
           class="rounded-lg border p-4 text-muted"
         >
           No multiple choice data available.
@@ -1371,6 +1418,15 @@ onBeforeUnmount(() => {
             />
           </div>
 
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex gap-2" role="group" aria-label="Multiple Choice view">
+              <UButton label="Group Tabs" :variant="questionView === 'GROUP' ? 'solid' : 'outline'" @click="questionView = 'GROUP'" />
+              <UButton label="One by One" :variant="questionView === 'SINGLE' ? 'solid' : 'outline'" @click="questionView = 'SINGLE'" />
+            </div>
+            <span class="text-sm text-muted">{{ answeredCount }}/{{ totalQuestions }} answered</span>
+          </div>
+
+          <template v-if="questionView === 'GROUP'">
           <div class="flex min-w-0 items-center gap-2">
             <UButton
               icon="i-lucide-chevron-left"
@@ -1498,6 +1554,71 @@ onBeforeUnmount(() => {
               </div>
             </div>
             </UCard>
+          </template>
+
+          <div v-else class="space-y-4">
+            <div class="rounded-lg border border-default p-4">
+              <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p class="font-medium">Question navigator · {{ unansweredCount }} unanswered</p>
+                <UButton label="Next Unanswered" variant="outline" size="sm" :disabled="unansweredCount === 0" @click="nextUnansweredQuestion" />
+              </div>
+              <div class="flex max-h-44 flex-wrap gap-2 overflow-y-auto p-1">
+                <button
+                  v-for="(item, index) in questionItems"
+                  :key="`${item.groupName}-${item.question?.id || index}`"
+                  type="button"
+                  class="h-9 min-w-9 rounded border px-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  :class="[isQuestionAnswered(item.question?.id) ? 'border-green-400 bg-green-50 text-green-800' : 'border-orange-400 bg-orange-50 text-orange-800', index === activeQuestionIndex ? 'ring-2 ring-primary ring-offset-2' : '']"
+                  :aria-label="`Question ${item.number}, ${isQuestionAnswered(item.question?.id) ? 'answered' : 'unanswered'}`"
+                  :aria-current="index === activeQuestionIndex ? 'step' : undefined"
+                  :title="`${item.groupName} · ${isQuestionAnswered(item.question?.id) ? 'Answered' : 'Unanswered'}`"
+                  @click="activeQuestionIndex = index"
+                >{{ item.number }}</button>
+              </div>
+              <p class="mt-2 text-xs text-muted">Green: answered · Orange: unanswered · Ring: current question</p>
+            </div>
+
+            <UCard v-if="activeQuestion" :key="activeQuestion.question?.id || activeQuestionIndex">
+              <div class="space-y-3">
+                <p class="text-sm text-muted">{{ activeQuestion.groupName }} · Question {{ activeQuestion.number }} of {{ questionItems.length }}</p>
+                <img
+                  v-if="hasImage(activeQuestion.question?.image)"
+                  :src="resolveImageUrl(activeQuestion.question?.image)"
+                  alt="Multiple choice question image"
+                  class="mx-auto block max-h-72 w-auto rounded border border-default"
+                />
+                <div
+                  class="text-sm rich-preview [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1"
+                  v-html="activeQuestion.question?.question || '-'"
+                />
+                <div
+                  v-if="activeQuestion.question?.id"
+                  :class="isTimeUp || !canContinueExam ? 'pointer-events-none opacity-70' : ''"
+                  class="space-y-2"
+                >
+                  <label
+                    v-for="(slotKey, slotIndex) in displayOptionSlots"
+                    :key="`${activeQuestion.question.id}-${slotKey}`"
+                    class="flex items-center gap-2 text-sm"
+                  >
+                    <input
+                      :id="`single-q-${activeQuestion.question.id}-${slotKey}`"
+                      v-model="answers[activeQuestion.question.id]"
+                      type="radio"
+                      :name="`single-q-${activeQuestion.question.id}`"
+                      :value="getShuffledContentKey(activeQuestion.question.id, slotIndex)"
+                    />
+                    <span><strong>{{ slotKey }}.</strong> {{ getOptionText(activeQuestion.question, getShuffledContentKey(activeQuestion.question.id, slotIndex)) }}</span>
+                  </label>
+                </div>
+                <div v-else class="text-xs text-error">Invalid question ID.</div>
+              </div>
+            </UCard>
+            <div class="flex justify-between gap-2">
+              <UButton label="Previous" icon="i-lucide-chevron-left" variant="outline" :disabled="activeQuestionIndex === 0" @click="activeQuestionIndex--" />
+              <UButton label="Next" trailing-icon="i-lucide-chevron-right" variant="outline" :disabled="activeQuestionIndex >= questionItems.length - 1" @click="activeQuestionIndex++" />
+            </div>
+          </div>
           </template>
         </template>
       </div>

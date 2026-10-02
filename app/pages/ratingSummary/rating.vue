@@ -22,13 +22,13 @@ interface RatingSummaryUserItem {
 
 interface RatingSummaryRow {
   id: string;
-  userKey: string;
   nik: string;
   licenseNumber: string;
   name: string;
   rating: string;
   ratingStatus: "ACTIVE" | "RE_EXAMINATION_REQUIRED" | "-";
   expiredDate: string;
+  expiredAt: number | null;
   elapsedDays: number | null;
 }
 
@@ -44,7 +44,6 @@ type SortKey =
   | "licenseNumber"
   | "name"
   | "rating"
-  | "ratingStatus"
   | "expiredDate"
   | "elapsedDays";
 
@@ -52,6 +51,7 @@ const { token } = useAuth();
 
 const sortKey = ref<SortKey>("no");
 const sortDirection = ref<"asc" | "desc">("asc");
+const selectedRating = ref("all");
 
 const { data, status, error, refresh } = await useFetch<
   RatingSummaryUserItem[]
@@ -90,13 +90,13 @@ const rawRows = computed<RatingSummaryRow[]>(() => {
     if (ratings.length === 0) {
       rows.push({
         id: `${user.nik || userIndex}-empty`,
-        userKey: `${user.nik || "-"}|${user.licenseUserId || "-"}|${user.name || "-"}`,
         nik: user.nik || "-",
         licenseNumber: user.licenseUserId || "-",
         name: user.name || "-",
         rating: "-",
         ratingStatus: "-",
         expiredDate: "-",
+        expiredAt: null,
         elapsedDays: null,
       });
       return;
@@ -105,13 +105,13 @@ const rawRows = computed<RatingSummaryRow[]>(() => {
     ratings.forEach((userRating, ratingIndex) => {
       rows.push({
         id: `${user.nik || userIndex}-${userRating.id || ratingIndex}`,
-        userKey: `${user.nik || "-"}|${user.licenseUserId || "-"}|${user.name || "-"}`,
         nik: user.nik || "-",
         licenseNumber: user.licenseUserId || "-",
         name: user.name || "-",
         rating: userRating.rating?.rating || "-",
         ratingStatus: userRating.status || "ACTIVE",
         expiredDate: formatDate(userRating.expireddate),
+        expiredAt: userRating.expireddate ? new Date(userRating.expireddate).getTime() : null,
         elapsedDays: calculateElapsedDays(userRating.expireddate),
       });
     });
@@ -120,8 +120,30 @@ const rawRows = computed<RatingSummaryRow[]>(() => {
   return rows;
 });
 
+const ratingCounts = computed(() => {
+  const counts = new Map<string, number>();
+  for (const row of rawRows.value) {
+    if (row.rating === "-") continue;
+    const rating = row.rating.trim().toUpperCase();
+    counts.set(rating, (counts.get(rating) || 0) + 1);
+  }
+  const preferred = ["TWR", "APP", "APS"];
+  const names = [...new Set([...preferred, ...counts.keys()])];
+  return names.map((rating) => ({ rating, count: counts.get(rating) || 0 }));
+});
+
+const ratingOptions = computed(() => [
+  { label: "All ratings", value: "all" },
+  ...ratingCounts.value.filter((item) => item.count > 0).map((item) => ({
+    label: item.rating,
+    value: item.rating,
+  })),
+]);
+
 const rows = computed(() => {
-  const list = [...rawRows.value];
+  const list = rawRows.value.filter((row) =>
+    selectedRating.value === "all" || row.rating.trim().toUpperCase() === selectedRating.value,
+  );
 
   list.sort((a, b) => {
     const dir = sortDirection.value === "asc" ? 1 : -1;
@@ -139,10 +161,8 @@ const rows = computed(() => {
         return a.name.localeCompare(b.name) * dir;
       case "rating":
         return a.rating.localeCompare(b.rating) * dir;
-      case "ratingStatus":
-        return a.ratingStatus.localeCompare(b.ratingStatus) * dir;
       case "expiredDate":
-        return a.expiredDate.localeCompare(b.expiredDate) * dir;
+        return ((a.expiredAt ?? Number.NEGATIVE_INFINITY) - (b.expiredAt ?? Number.NEGATIVE_INFINITY)) * dir;
       case "elapsedDays":
         return (
           ((a.elapsedDays ?? Number.NEGATIVE_INFINITY) -
@@ -158,32 +178,35 @@ const rows = computed(() => {
 });
 
 const displayRows = computed<RatingSummaryDisplayRow[]>(() => {
-  const list = rows.value;
-  const result: RatingSummaryDisplayRow[] = [];
-  let groupNo = 0;
-
-  for (let i = 0; i < list.length; i += 1) {
-    const row = list[i]!;
-    const prev = i > 0 ? list[i - 1]! : null;
-    const isFirstInGroup = !prev || prev.userKey !== row.userKey;
-
-    let rowSpan = 1;
-    if (isFirstInGroup) {
-      for (let j = i + 1; j < list.length; j += 1) {
-        if (list[j]!.userKey !== row.userKey) break;
-        rowSpan += 1;
-      }
-      groupNo += 1;
-    }
-
-    result.push({
+  if (selectedRating.value !== "all") {
+    return rows.value.map((row, index) => ({
       ...row,
-      showUserInfo: isFirstInGroup,
-      userRowSpan: isFirstInGroup ? rowSpan : 0,
-      groupNo,
-    });
+      showUserInfo: true,
+      userRowSpan: 1,
+      groupNo: index + 1,
+    }));
   }
 
+  // Keep a user's ratings adjacent even when a rating or expiry sort was selected.
+  const groups = new Map<string, RatingSummaryRow[]>();
+  for (const row of rows.value) {
+    const userKey = row.nik;
+    const group = groups.get(userKey) || [];
+    group.push(row);
+    groups.set(userKey, group);
+  }
+
+  const result: RatingSummaryDisplayRow[] = [];
+  let groupNo = 0;
+  for (const group of groups.values()) {
+    groupNo += 1;
+    group.forEach((row, index) => result.push({
+      ...row,
+      showUserInfo: index === 0,
+      userRowSpan: index === 0 ? group.length : 0,
+      groupNo,
+    }));
+  }
   return result;
 });
 
@@ -270,24 +293,30 @@ function elapsedStyle(value: number | null): Record<string, string> {
           />
         </div>
 
-        <div v-else class="overflow-x-auto rounded-lg border">
+        <div v-else class="space-y-4">
+          <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div
+              v-for="item in ratingCounts"
+              :key="item.rating"
+              class="rounded-lg border border-default bg-muted/20 px-4 py-3"
+            >
+              <p class="text-sm text-muted">{{ item.rating }} ratings</p>
+              <p class="text-2xl font-semibold">{{ item.count }}</p>
+            </div>
+          </div>
+
+          <div class="max-w-xs">
+            <UFormField label="Filter by rating">
+              <USelect v-model="selectedRating" :items="ratingOptions" value-key="value" class="w-full" />
+            </UFormField>
+          </div>
+
+          <div class="overflow-x-auto rounded-lg border">
           <table
             class="min-w-full text-sm border-collapse border border-default"
           >
             <thead class="bg-muted/40">
               <tr>
-                <th
-                  class="px-3 py-2 text-center font-medium border border-default"
-                >
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1"
-                    @click="toggleSort('ratingStatus')"
-                  >
-                    Status
-                    <UIcon :name="sortIcon('ratingStatus')" class="size-4" />
-                  </button>
-                </th>
                 <th
                   class="px-3 py-2 text-center font-medium border border-default"
                 >
@@ -320,7 +349,7 @@ function elapsedStyle(value: number | null): Record<string, string> {
                     class="inline-flex items-center gap-1"
                     @click="toggleSort('licenseNumber')"
                   >
-                    License Number
+                    No License
                     <UIcon :name="sortIcon('licenseNumber')" class="size-4" />
                   </button>
                 </th>
@@ -377,44 +406,21 @@ function elapsedStyle(value: number | null): Record<string, string> {
 
             <tbody>
               <tr v-for="row in displayRows" :key="row.id">
-                <td
-                  v-if="row.showUserInfo"
-                  class="px-3 py-2 border border-default text-center align-middle"
-                  :rowspan="row.userRowSpan"
-                >
-                  {{ row.groupNo }}
-                </td>
-                <td
-                  v-if="row.showUserInfo"
-                  class="px-3 py-2 border border-default text-center align-middle"
-                  :rowspan="row.userRowSpan"
-                >
-                  {{ row.nik }}
-                </td>
-                <td
-                  v-if="row.showUserInfo"
-                  class="px-3 py-2 border border-default text-center align-middle"
-                  :rowspan="row.userRowSpan"
-                >
-                  {{ row.licenseNumber }}
-                </td>
-                <td
-                  v-if="row.showUserInfo"
-                  class="px-3 py-2 border border-default align-middle"
-                  :rowspan="row.userRowSpan"
-                >
-                  {{ row.name }}
-                </td>
+                <td v-if="row.showUserInfo" :rowspan="row.userRowSpan" class="px-3 py-2 border border-default text-center align-middle">{{ row.groupNo }}</td>
+                <td v-if="row.showUserInfo" :rowspan="row.userRowSpan" class="px-3 py-2 border border-default text-center align-middle">{{ row.nik }}</td>
+                <td v-if="row.showUserInfo" :rowspan="row.userRowSpan" class="px-3 py-2 border border-default text-center align-middle">{{ row.licenseNumber }}</td>
+                <td v-if="row.showUserInfo" :rowspan="row.userRowSpan" class="px-3 py-2 border border-default align-middle">{{ row.name }}</td>
                 <td class="px-3 py-2 border border-default text-center">
-                  {{ row.rating }}
-                </td>
-                <td class="px-3 py-2 border border-default text-center">
-                  <UBadge
-                    :color="row.ratingStatus === 'ACTIVE' ? 'success' : row.ratingStatus === 'RE_EXAMINATION_REQUIRED' ? 'warning' : 'neutral'"
-                    variant="soft"
-                  >
-                    {{ row.ratingStatus === 'RE_EXAMINATION_REQUIRED' ? 'Re-examination Required' : row.ratingStatus === 'ACTIVE' ? 'Active' : '-' }}
-                  </UBadge>
+                  <div class="flex flex-wrap items-center justify-center gap-1.5">
+                    <span>{{ row.rating }}</span>
+                    <UBadge
+                      v-if="row.ratingStatus !== '-'"
+                      :color="row.ratingStatus === 'ACTIVE' ? 'success' : 'warning'"
+                      variant="soft"
+                    >
+                      {{ row.ratingStatus === 'ACTIVE' ? 'Active' : 'Re-examination Required' }}
+                    </UBadge>
+                  </div>
                 </td>
                 <td class="px-3 py-2 border border-default text-center">
                   {{ row.expiredDate }}
@@ -432,13 +438,14 @@ function elapsedStyle(value: number | null): Record<string, string> {
               <tr v-if="displayRows.length === 0">
                 <td
                   class="px-3 py-3 text-muted border border-default text-center"
-                  colspan="8"
+                  colspan="7"
                 >
-                  No rating summary data available.
+                  No ratings match the selected filter.
                 </td>
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       </UCard>
     </template>

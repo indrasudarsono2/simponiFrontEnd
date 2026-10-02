@@ -6,10 +6,12 @@ const props = withDefaults(
   defineProps<{
     modelValue?: string;
     placeholder?: string;
+    disabled?: boolean;
   }>(),
   {
     modelValue: "",
     placeholder: "Start typing...",
+    disabled: false,
   },
 );
 
@@ -19,6 +21,7 @@ const emit = defineEmits<{
 
 const editor = useEditor({
   content: props.modelValue ?? "",
+  editable: !props.disabled,
   extensions: [StarterKit],
   editorProps: {
     attributes: {
@@ -29,6 +32,11 @@ const editor = useEditor({
     emit("update:modelValue", editor.getHTML());
   },
 });
+
+watch(
+  () => props.disabled,
+  (disabled) => editor.value?.setEditable(!disabled),
+);
 
 const isEmpty = computed(() => {
   if (!editor.value) return true;
@@ -53,6 +61,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     class="border border-default rounded-md bg-background overflow-hidden w-full"
+    :class="disabled ? 'opacity-70' : ''"
   >
     <!-- Toolbar -->
     <div
@@ -64,7 +73,7 @@ onBeforeUnmount(() => {
         color="neutral"
         :variant="editor?.isActive('bold') ? 'solid' : 'ghost'"
         size="xs"
-        :disabled="!editor"
+        :disabled="!editor || disabled"
         title="Bold"
         @click="editor?.chain().focus().toggleBold().run()"
       />
@@ -74,7 +83,7 @@ onBeforeUnmount(() => {
         color="neutral"
         :variant="editor?.isActive('italic') ? 'solid' : 'ghost'"
         size="xs"
-        :disabled="!editor"
+        :disabled="!editor || disabled"
         title="Italic"
         @click="editor?.chain().focus().toggleItalic().run()"
       />
@@ -87,7 +96,7 @@ onBeforeUnmount(() => {
         color="neutral"
         :variant="editor?.isActive('heading', { level: 1 }) ? 'solid' : 'ghost'"
         size="xs"
-        :disabled="!editor"
+        :disabled="!editor || disabled"
         title="Heading 1"
         @click="editor?.chain().focus().toggleHeading({ level: 1 }).run()"
       />
@@ -97,7 +106,7 @@ onBeforeUnmount(() => {
         color="neutral"
         :variant="editor?.isActive('heading', { level: 2 }) ? 'solid' : 'ghost'"
         size="xs"
-        :disabled="!editor"
+        :disabled="!editor || disabled"
         title="Heading 2"
         @click="editor?.chain().focus().toggleHeading({ level: 2 }).run()"
       />
@@ -110,7 +119,7 @@ onBeforeUnmount(() => {
         color="neutral"
         :variant="editor?.isActive('bulletList') ? 'solid' : 'ghost'"
         size="xs"
-        :disabled="!editor"
+        :disabled="!editor || disabled"
         title="Bullet List"
         @click="editor?.chain().focus().toggleBulletList().run()"
       />
@@ -120,7 +129,7 @@ onBeforeUnmount(() => {
         color="neutral"
         :variant="editor?.isActive('orderedList') ? 'solid' : 'ghost'"
         size="xs"
-        :disabled="!editor"
+        :disabled="!editor || disabled"
         title="Numbered List"
         @click="editor?.chain().focus().toggleOrderedList().run()"
       />
@@ -133,7 +142,7 @@ onBeforeUnmount(() => {
         color="neutral"
         :variant="editor?.isActive('blockquote') ? 'solid' : 'ghost'"
         size="xs"
-        :disabled="!editor"
+        :disabled="!editor || disabled"
         title="Blockquote"
         @click="editor?.chain().focus().toggleBlockquote().run()"
       />
@@ -146,7 +155,7 @@ onBeforeUnmount(() => {
         color="neutral"
         variant="ghost"
         size="xs"
-        :disabled="!editor?.can().undo()"
+        :disabled="disabled || !editor?.can().undo()"
         title="Undo"
         @click="editor?.chain().focus().undo().run()"
       />
@@ -156,7 +165,7 @@ onBeforeUnmount(() => {
         color="neutral"
         variant="ghost"
         size="xs"
-        :disabled="!editor?.can().redo()"
+        :disabled="disabled || !editor?.can().redo()"
         title="Redo"
         @click="editor?.chain().focus().redo().run()"
       />

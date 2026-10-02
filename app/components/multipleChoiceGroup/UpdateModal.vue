@@ -1,8 +1,7 @@
 <script setup lang="ts">
-const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-const { token } = useAuth();
+const { apiFetch } = useApiFetch();
 interface MultipleChoice {
   id: number;
   branchUnitId: number;
@@ -84,10 +83,13 @@ const emit = defineEmits<{
   close: [];
 }>();
 
+const MAX_GROUPS_PER_QUESTION = 5;
+
 const schema = z.object({
   selectedGroups: z
     .array(z.number())
-    .min(1, "At least one group must be selected"),
+    .min(1, "At least one group must be selected")
+    .max(MAX_GROUPS_PER_QUESTION, `A question can be assigned to a maximum of ${MAX_GROUPS_PER_QUESTION} groups`),
 });
 
 const open = ref(false);
@@ -97,6 +99,7 @@ type Schema = z.output<typeof schema>;
 const state = reactive<Partial<Schema>>({
   selectedGroups: [],
 });
+const selectedSectorId = ref(0);
 
 // Transform questionGroups prop to options format
 const groupOptions = computed<SectorRatingGroupOption[]>(() => {
@@ -120,8 +123,67 @@ const groupOptions = computed<SectorRatingGroupOption[]>(() => {
     );
 });
 
+const groupsBySector = computed(() => {
+  const sectors = new Map<
+    number,
+    {
+      id: number;
+      name: string;
+      ratings: Map<number, { id: number; name: string; groups: SectorRatingGroupOption[] }>;
+    }
+  >();
+
+  for (const group of groupOptions.value) {
+    let sector = sectors.get(group.sectorId);
+    if (!sector) {
+      sector = { id: group.sectorId, name: group.sector, ratings: new Map() };
+      sectors.set(group.sectorId, sector);
+    }
+
+    let rating = sector.ratings.get(group.ratingId);
+    if (!rating) {
+      rating = { id: group.ratingId, name: group.rating, groups: [] };
+      sector.ratings.set(group.ratingId, rating);
+    }
+    rating.groups.push(group);
+  }
+
+  return [...sectors.values()]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((sector) => ({
+      id: sector.id,
+      name: sector.name,
+      ratings: [...sector.ratings.values()]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((rating) => ({
+          ...rating,
+          groups: rating.groups.sort((a, b) =>
+            a.questionGroup.localeCompare(b.questionGroup),
+          ),
+        })),
+    }));
+});
+
+const sectorFilterOptions = computed(() => [
+  { label: "All sectors", value: 0 },
+  ...groupsBySector.value.map((sector) => ({ label: sector.name, value: sector.id })),
+]);
+const visibleGroupsBySector = computed(() =>
+  selectedSectorId.value === 0
+    ? groupsBySector.value
+    : groupsBySector.value.filter((sector) => sector.id === selectedSectorId.value),
+);
+
 function isGroupSelected(groupId: number) {
-  return state.selectedGroups?.includes(groupId) || false;
+  return state.selectedGroups?.includes(groupId) ?? false;
+}
+
+function toggleGroup(groupId: number, checked: boolean) {
+  const selected = state.selectedGroups ?? [];
+  if (checked && selected.length >= MAX_GROUPS_PER_QUESTION && !selected.includes(groupId)) return;
+  state.selectedGroups = checked
+    ? [...new Set([...selected, groupId])]
+    : selected.filter((id) => id !== groupId);
 }
 
 const ratingBadgeClasses = [
@@ -176,7 +238,9 @@ watch(
             const match = props.questionGroups?.find(
               (qg) =>
                 qg.group === mcqg.questionGroup?.group &&
-                qg.subBranchUnitRating.sector.sector === mcqg.sector?.sector,
+                qg.subBranchUnitRating.sector.sector === mcqg.sector?.sector &&
+                qg.subBranchUnitRating.rating.rating ===
+                  mcqg.questionGroup?.subBranchUnitRating.rating.rating,
             );
             return match?.id;
           })
@@ -184,6 +248,7 @@ watch(
 
       // Pre-select assigned groups
       state.selectedGroups = assignedGroupIds;
+      selectedSectorId.value = 0;
       open.value = true;
     }
   },
@@ -194,6 +259,7 @@ watch(
 watch(open, (isOpen) => {
   if (!isOpen) {
     state.selectedGroups = [];
+    selectedSectorId.value = 0;
     emit("close");
   }
 });
@@ -231,15 +297,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     }
 
     // Create assignments with array of questionGroupIds and sectorIds
-    await $fetch(`${apiBaseUrl}/api/multipleChoiceGroups`, {
+    await apiFetch("/api/multipleChoiceGroups", {
       method: "POST",
       body: {
         multipleChoiceId: props.multipleChoice.id,
         questionGroupId: selectedDetails.map((d) => d.questionGroupId),
         sectorId: selectedDetails.map((d) => d.sectorId),
-      },
-      headers: {
-        Authorization: token.value ? `Bearer ${token.value}` : "",
       },
     });
 
@@ -273,7 +336,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <UModal
     v-model:open="open"
     title="Assign Multiple Choice to Question Groups"
-    description="Select one or more sector-rating-group combinations"
+    description="Select up to five sector-rating-group combinations"
     :ui="{
       content: 'max-w-5xl',
     }"
@@ -304,76 +367,74 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </div>
         </div>
 
-        <!-- Multi-Select Group Combinations -->
-
+        <!-- Sector → rating → group assignment grid -->
         <UFormField
           label="Assign to Groups"
           name="selectedGroups"
           required
-          description="Select one or more sector-rating-group combinations"
-          class="relative z-50"
+          description="Choose up to five groups under the relevant sector and rating."
         >
-          <USelectMenu
-            v-model="state.selectedGroups"
-            :items="groupOptions"
-            label-key="label"
-            value-key="id"
-            placeholder="Search by group, rating, or sector..."
-            multiple
-            searchable
-            class="w-full"
-            :ui="{ item: 'p-0', content: 'z-50 max-h-80 overflow-y-auto' }"
-            :popper="{ placement: 'bottom-start', strategy: 'fixed' }"
+          <div class="mb-3 flex flex-wrap items-end gap-3">
+            <div class="min-w-52 flex-1 sm:flex-none">
+              <label class="mb-1 block text-sm font-medium">Filter by sector</label>
+              <USelect
+                v-model="selectedSectorId"
+                :items="sectorFilterOptions"
+                label-key="label"
+                value-key="value"
+                class="w-full"
+              />
+            </div>
+            <span class="pb-2 text-xs text-muted">
+              Changing the filter keeps groups already selected from other sectors.
+            </span>
+          </div>
+          <div
+            v-if="visibleGroupsBySector.length"
+            class="max-h-80 space-y-4 overflow-y-auto rounded-lg border border-default bg-elevated/30 p-3"
           >
-            <template #default>
-              <span
-                v-if="
-                  !state.selectedGroups || state.selectedGroups.length === 0
-                "
-              >
-                Search and select question groups...
-              </span>
-              <span v-else>
-                {{ state.selectedGroups.length }} group(s) selected
-              </span>
-            </template>
-
-            <template #item="{ item }">
-              <div
-                class="flex w-full items-start gap-3 rounded-md px-3 py-2.5"
-                :class="isGroupSelected(item.id) ? 'bg-primary/10' : ''"
-              >
-                <UIcon
-                  :name="
-                    isGroupSelected(item.id)
-                      ? 'i-lucide-check-square-2'
-                      : 'i-lucide-square'
-                  "
-                  class="mt-0.5 size-5 shrink-0"
-                  :class="isGroupSelected(item.id) ? 'text-primary' : 'text-muted'"
-                />
-                <div class="min-w-0 flex-1 space-y-1.5">
-                  <div class="whitespace-normal font-medium leading-snug text-highlighted">
-                    {{ item.questionGroup }}
-                  </div>
-                  <div class="flex flex-wrap gap-1.5 text-xs">
-                    <span
-                      class="rounded px-2 py-0.5 font-medium"
-                      :class="getRatingBadgeClass(item.rating)"
+            <section
+              v-for="sector in visibleGroupsBySector"
+              :key="sector.id"
+              class="overflow-hidden rounded-lg border border-default bg-default"
+            >
+              <h3 class="border-b border-default bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+                Sector: {{ sector.name }}
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2">
+                <div
+                  v-for="rating in sector.ratings"
+                  :key="rating.id"
+                  class="border-b border-default p-3 md:border-r"
+                >
+                  <h4 class="mb-2 text-sm font-semibold">
+                    Rating: {{ rating.name }}
+                  </h4>
+                  <div class="space-y-1">
+                    <label
+                      v-for="group in rating.groups"
+                      :key="group.id"
+                      class="flex items-start gap-2 rounded px-2 py-1.5 text-sm"
+                      :class="(state.selectedGroups?.length ?? 0) >= MAX_GROUPS_PER_QUESTION && !isGroupSelected(group.id) ? 'cursor-not-allowed text-muted' : 'cursor-pointer hover:bg-elevated'"
                     >
-                      Rating: {{ item.rating }}
-                    </span>
-                    <span
-                      class="rounded px-2 py-0.5 font-medium"
-                      :class="getSectorBadgeClass(item.sector)"
-                    >
-                      Sector: {{ item.sector }}
-                    </span>
+                      <input
+                        type="checkbox"
+                        class="mt-0.5 size-4 shrink-0 accent-primary"
+                        :aria-label="`${group.questionGroup}, rating ${group.rating}, sector ${group.sector}`"
+                        :checked="isGroupSelected(group.id)"
+                        :disabled="(state.selectedGroups?.length ?? 0) >= MAX_GROUPS_PER_QUESTION && !isGroupSelected(group.id)"
+                        @change="toggleGroup(group.id, ($event.target as HTMLInputElement).checked)"
+                      />
+                      <span class="min-w-0 flex-1 truncate" :title="group.questionGroup">{{ group.questionGroup }}</span>
+                    </label>
                   </div>
                 </div>
               </div>
-            </template>
-          </USelectMenu>
+            </section>
+          </div>
+          <p v-else class="rounded-lg border border-default p-4 text-sm text-muted">
+            No question groups are available for assignment.
+          </p>
         </UFormField>
 
         <!-- Show selected groups summary -->
@@ -392,7 +453,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             >
               <UIcon name="i-lucide-check-circle" class="mt-0.5 shrink-0 text-primary" />
               <div class="min-w-0 space-y-1">
-                <div class="font-medium text-highlighted">{{ detail.questionGroup }}</div>
+                <div class="max-w-72 truncate font-medium text-highlighted" :title="detail.questionGroup">{{ detail.questionGroup }}</div>
                 <div class="flex flex-wrap gap-1.5 text-xs">
                   <span
                     class="rounded px-2 py-0.5 font-medium"

@@ -110,6 +110,54 @@ const groupOptions = computed<SectorRatingGroupOption[]>(() => {
   }));
 });
 
+const groupsBySector = computed(() => {
+  const sectors = new Map<
+    number,
+    {
+      id: number;
+      name: string;
+      ratings: Map<number, { id: number; name: string; groups: SectorRatingGroupOption[] }>;
+    }
+  >();
+
+  for (const group of groupOptions.value) {
+    let sector = sectors.get(group.sectorId);
+    if (!sector) {
+      sector = { id: group.sectorId, name: group.sector, ratings: new Map() };
+      sectors.set(group.sectorId, sector);
+    }
+
+    let rating = sector.ratings.get(group.ratingId);
+    if (!rating) {
+      rating = { id: group.ratingId, name: group.rating, groups: [] };
+      sector.ratings.set(group.ratingId, rating);
+    }
+    rating.groups.push(group);
+  }
+
+  return [...sectors.values()]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((sector) => ({
+      id: sector.id,
+      name: sector.name,
+      ratings: [...sector.ratings.values()]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((rating) => ({
+          ...rating,
+          groups: rating.groups.sort((a, b) =>
+            a.questionGroup.localeCompare(b.questionGroup),
+          ),
+        })),
+    }));
+});
+
+function toggleGroup(groupId: number, checked: boolean) {
+  const selected = state.selectedGroups ?? [];
+  state.selectedGroups = checked
+    ? [...new Set([...selected, groupId])]
+    : selected.filter((id) => id !== groupId);
+}
+
 // Watch for essay prop changes to populate form
 watch(
   () => props.essay,
@@ -124,7 +172,9 @@ watch(
             const match = props.questionGroups?.find(
               (qg) =>
                 qg.group === eqg.questionGroup?.group &&
-                qg.subBranchUnitRating.sector.sector === eqg.sector?.sector,
+                qg.subBranchUnitRating.sector.sector === eqg.sector?.sector &&
+                qg.subBranchUnitRating.rating.rating ===
+                  eqg.questionGroup?.subBranchUnitRating.rating.rating,
             );
             return match?.id;
           })
@@ -250,39 +300,56 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </div>
         </div>
 
-        <!-- Multi-Select Group Combinations -->
+        <!-- Sector → rating → group assignment grid -->
         <UFormField
           label="Assign to Groups"
           name="selectedGroups"
           required
-          description="Select one or more sector-rating-group combinations (e.g., PENDEK ACP WEST)"
-          class="relative z-50"
+          description="Choose one or more groups under the relevant sector and rating."
         >
-          <USelectMenu
-            v-model="state.selectedGroups"
-            :items="groupOptions"
-            option-attribute="label"
-            value-key="id"
-            placeholder="Select groups..."
-            multiple
-            searchable
-            class="w-full"
-            :ui="{ item: 'text-sm', content: 'z-50 max-h-60 overflow-y-auto' }"
-            :popper="{ placement: 'bottom-start', strategy: 'fixed' }"
+          <div
+            v-if="groupsBySector.length"
+            class="max-h-80 space-y-4 overflow-y-auto rounded-lg border border-default bg-elevated/30 p-3"
           >
-            <template #default>
-              <span
-                v-if="
-                  !state.selectedGroups || state.selectedGroups.length === 0
-                "
-              >
-                Select groups...
-              </span>
-              <span v-else>
-                {{ state.selectedGroups.length }} group(s) selected
-              </span>
-            </template>
-          </USelectMenu>
+            <section
+              v-for="sector in groupsBySector"
+              :key="sector.id"
+              class="overflow-hidden rounded-lg border border-default bg-default"
+            >
+              <h3 class="border-b border-default bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+                Sector: {{ sector.name }}
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2">
+                <div
+                  v-for="rating in sector.ratings"
+                  :key="rating.id"
+                  class="border-b border-default p-3 md:border-r"
+                >
+                  <h4 class="mb-2 text-sm font-semibold">
+                    Rating: {{ rating.name }}
+                  </h4>
+                  <div class="space-y-1">
+                    <label
+                      v-for="group in rating.groups"
+                      :key="group.id"
+                      class="flex cursor-pointer items-start gap-2 rounded px-2 py-1.5 text-sm hover:bg-elevated"
+                    >
+                      <input
+                        type="checkbox"
+                        class="mt-0.5 size-4 shrink-0 accent-primary"
+                        :checked="state.selectedGroups?.includes(group.id) ?? false"
+                        @change="toggleGroup(group.id, ($event.target as HTMLInputElement).checked)"
+                      />
+                      <span>{{ group.questionGroup }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+          <p v-else class="rounded-lg border border-default p-4 text-sm text-muted">
+            No question groups are available for assignment.
+          </p>
         </UFormField>
 
         <!-- Show selected groups summary -->

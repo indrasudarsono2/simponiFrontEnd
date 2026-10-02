@@ -50,6 +50,7 @@ interface Event {
   briefingFile: string | null;
   recommendationFile: string | null;
   passingGrade: number;
+  practicalPassingGrade: number | null;
   branchId?: number;
   branchName?: string;
   branchUnitId?: number;
@@ -59,6 +60,8 @@ interface Event {
   };
   isPractical: boolean;
   isSimulator: boolean;
+  theoryMode?: 'MODE_1' | 'MODE_2';
+  difficulty?: 'EASY' | 'HARD';
 }
 
 const props = defineProps<{
@@ -66,6 +69,7 @@ const props = defineProps<{
   sessions: Session[];
   sectors: Sector[];
   remarkDocs: RemarkDoc[];
+  passingGradeStandard: { theoryGrade: number; practicalGrade: number } | null;
 }>();
 
 const emit = defineEmits<{
@@ -83,28 +87,10 @@ const schema = z.object({
   finishDate: z.string().min(1, "Finish date is required"),
   forExpDate: z.string().min(1, "ForExpDate is required"),
   briefingFile: z.instanceof(File).optional(),
-  recommendationFile: z.instanceof(File).optional(),
-  passingGrade: z.coerce
-    .number()
-    .min(0)
-    .max(100, "Passing grade must be between 0 and 100"),
   isPractical: z.boolean().default(false),
   isSimulator: z.boolean().default(false),
-}).superRefine((data, ctx) => {
-  const selectedRemark = props.remarkDocs.find(
-    (item) => Number(item.id) === Number(data.remarkDocId),
-  )?.remark;
-  if (
-    selectedRemark?.trim().toUpperCase() === "PENERBITAN" &&
-    !(data.recommendationFile instanceof File) &&
-    !props.event?.recommendationFile
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["recommendationFile"],
-      message: "Recommendation letter is required for PENERBITAN",
-    });
-  }
+  theoryMode: z.enum(['MODE_1', 'MODE_2']),
+  difficulty: z.enum(['EASY', 'HARD']),
 });
 
 const open = ref(false);
@@ -121,26 +107,16 @@ const state = reactive<Partial<Schema>>({
   remarkDocId: undefined,
   formFillingDate: undefined,
   briefingFile: undefined,
-  recommendationFile: undefined,
-  passingGrade: undefined,
   isPractical: false,
   isSimulator: false,
+  theoryMode: 'MODE_1',
+  difficulty: 'HARD',
 });
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFileName = ref("");
 const currentFileUrl = ref("");
 const keepExistingFile = ref(true);
-const recommendationFileInput = ref<HTMLInputElement | null>(null);
-const selectedRecommendationFileName = ref("");
-const currentRecommendationFileUrl = ref("");
-const keepExistingRecommendationFile = ref(true);
-const isPenerbitan = computed(() =>
-  props.remarkDocs
-    .find((item) => Number(item.id) === Number(state.remarkDocId))
-    ?.remark?.trim()
-    .toUpperCase() === "PENERBITAN",
-);
 const df = new DateFormatter("en-US", { dateStyle: "medium" });
 const startTime = ref("00:00");
 const endTime = ref("23:59");
@@ -240,19 +216,15 @@ watch(
       // API now returns remarkDoc with both id and remark
       state.remarkDocId = newEvent.remarkDoc?.id;
 
-      state.passingGrade = newEvent.passingGrade;
       state.isPractical = newEvent.isPractical;
       state.isSimulator = newEvent.isSimulator;
+      state.theoryMode = newEvent.theoryMode || 'MODE_1';
+      state.difficulty = newEvent.difficulty || 'HARD';
       currentFileUrl.value = newEvent.briefingFile || "";
       selectedFileName.value = newEvent.briefingFile
         ? newEvent.briefingFile.split("/").pop() || ""
         : "";
       keepExistingFile.value = true;
-      currentRecommendationFileUrl.value = newEvent.recommendationFile || "";
-      selectedRecommendationFileName.value = newEvent.recommendationFile
-        ? newEvent.recommendationFile.split("/").pop() || ""
-        : "";
-      keepExistingRecommendationFile.value = true;
       open.value = true;
     }
   },
@@ -271,17 +243,12 @@ watch(open, (isOpen) => {
     state.remarkDocId = undefined;
     state.formFillingDate = undefined;
     state.briefingFile = undefined;
-    state.recommendationFile = undefined;
-    state.passingGrade = undefined;
     startTime.value = "00:00";
     endTime.value = "23:59";
 
     selectedFileName.value = "";
     currentFileUrl.value = "";
     keepExistingFile.value = true;
-    selectedRecommendationFileName.value = "";
-    currentRecommendationFileUrl.value = "";
-    keepExistingRecommendationFile.value = true;
     emit("close");
   }
 });
@@ -298,20 +265,6 @@ function handleFileChange(evt: globalThis.Event) {
 
 function triggerFileInput() {
   fileInput.value?.click();
-}
-
-function handleRecommendationFileChange(evt: globalThis.Event) {
-  const target = evt.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (file) {
-    state.recommendationFile = file;
-    selectedRecommendationFileName.value = file.name;
-    keepExistingRecommendationFile.value = false;
-  }
-}
-
-function triggerRecommendationFileInput() {
-  recommendationFileInput.value?.click();
 }
 
 const toast = useToast();
@@ -339,9 +292,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     formData.append("forExpDate", event.data.forExpDate);
     formData.append("remarkDocId", String(event.data.remarkDocId));
 
-    formData.append("passingGrade", String(event.data.passingGrade));
     formData.append("isPractical", String(event.data.isPractical));
     formData.append("isSimulator", String(event.data.isSimulator));
+    formData.append('theoryMode', event.data.theoryMode);
+    formData.append('difficulty', event.data.difficulty);
 
     if (props.event.branchId) {
       formData.append("branchId", String(props.event.branchId));
@@ -353,9 +307,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     formData.append("keepExistingFile", String(keepExistingFile.value));
     if (event.data.briefingFile instanceof File) {
       formData.append("briefingFile", event.data.briefingFile);
-    }
-    if (event.data.recommendationFile instanceof File) {
-      formData.append("recommendationFile", event.data.recommendationFile);
     }
 
     // Call API to update event via local Nuxt API
@@ -395,6 +346,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     v-model:open="open"
     title="Update Event"
     description="Edit the event information"
+    :ui="{ content: 'w-[min(96vw,72rem)] max-w-5xl max-h-[94vh]', body: 'overflow-y-auto' }"
   >
     <template #body>
       <UForm
@@ -537,19 +489,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           />
         </UFormField>
 
-        <UFormField label="Passing Grade (%)" name="passingGrade" required>
-          <UInput
-            v-model="state.passingGrade"
-            type="number"
-            min="0"
-            max="100"
-            class="w-full"
-            placeholder="e.g., 75"
-          />
-        </UFormField>
+        <div class="grid grid-cols-2 gap-4 rounded-lg border border-default bg-elevated/50 p-3">
+          <div><p class="text-sm text-muted">Theory Passing Grade</p><p class="font-medium">{{ event?.passingGrade == null ? '—' : `${event.passingGrade}%` }}</p></div>
+          <div><p class="text-sm text-muted">Practical Passing Grade</p><p class="font-medium">{{ event?.practicalPassingGrade == null ? '—' : `${event.practicalPassingGrade}%` }}</p></div>
+          <p class="col-span-2 text-xs text-muted">Set by General Admin. Upcoming events follow the current standard ({{ passingGradeStandard?.theoryGrade ?? '—' }}% theory, {{ passingGradeStandard?.practicalGrade ?? '—' }}% practical).</p>
+        </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Practical" name="isPractical">
+          <UFormField label="Live" name="isPractical">
             <UCheckbox v-model="state.isPractical" label="Yes" />
           </UFormField>
 
@@ -601,51 +548,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </div>
         </UFormField>
 
-        <UFormField
-          v-if="isPenerbitan"
-          label="Recommendation Letter"
-          name="recommendationFile"
-          required
-        >
-          <div class="space-y-2">
-            <input
-              ref="recommendationFileInput"
-              type="file"
-              class="hidden"
-              accept=".pdf,.doc,.docx"
-              @change="handleRecommendationFileChange"
-            />
-            <UButton
-              type="button"
-              color="neutral"
-              variant="outline"
-              icon="i-lucide-upload"
-              :label="selectedRecommendationFileName || 'Choose Recommendation Letter'"
-              class="w-full justify-start"
-              @click="triggerRecommendationFileInput"
-            />
-            <p
-              v-if="currentRecommendationFileUrl && keepExistingRecommendationFile"
-              class="text-sm text-muted"
-            >
-              Current file:
-              <a
-                :href="currentRecommendationFileUrl"
-                target="_blank"
-                class="text-primary hover:underline"
-              >{{ selectedRecommendationFileName }}</a>
-            </p>
-            <p
-              v-else-if="selectedRecommendationFileName"
-              class="text-sm text-muted"
-            >
-              New file: {{ selectedRecommendationFileName }}
-            </p>
-            <p class="text-xs text-muted">
-              Supported formats: PDF, DOC, DOCX. Leave empty to keep the existing letter.
-            </p>
-          </div>
-        </UFormField>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <UFormField label="Theory Examination Mode" name="theoryMode" required>
+            <USelect v-model="state.theoryMode" :items="[{ label: 'Mode 1 — Sequential', value: 'MODE_1' }, { label: 'Mode 2 — Shared Timed Session', value: 'MODE_2' }]" class="w-full" />
+          </UFormField>
+          <UFormField label="Difficulty" name="difficulty" required>
+            <USelect v-model="state.difficulty" :items="[{ label: 'Hard — One re-check', value: 'HARD' }, { label: 'Easy — Unlimited re-checks', value: 'EASY' }]" class="w-full" />
+          </UFormField>
+        </div>
 
         <div class="flex justify-end gap-2 pt-4">
           <UButton
@@ -661,6 +571,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             variant="solid"
             type="submit"
             :loading="loading"
+            :disabled="!passingGradeStandard"
           />
         </div>
       </UForm>

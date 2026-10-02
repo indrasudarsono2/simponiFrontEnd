@@ -53,10 +53,18 @@ const state = reactive<Partial<Schema>>({
 });
 
 const eventData = ref<EventResponse | null>(null);
+const userSearch = ref("");
 
 // Computed property to get users from userFilter
 const availableUsers = computed(() => {
   return eventData.value?.userFilter || [];
+});
+const filteredUsers = computed(() => {
+  const term = userSearch.value.trim().toLowerCase();
+  if (!term) return availableUsers.value;
+  return availableUsers.value.filter((user) =>
+    `${user.name} ${user.nik}`.toLowerCase().includes(term),
+  );
 });
 
 // Watch for eventId changes to fetch data
@@ -75,6 +83,7 @@ watch(
 watch(open, (isOpen) => {
   if (!isOpen) {
     state.selectedUsers = [];
+    userSearch.value = "";
     eventData.value = null;
     emit("close");
   }
@@ -159,6 +168,17 @@ function isUserSelected(nik: string): boolean {
   return state.selectedUsers?.includes(nik) || false;
 }
 
+function toggleUser(nik: string, selected: boolean) {
+  const current = state.selectedUsers || [];
+  state.selectedUsers = selected
+    ? [...new Set([...current, nik])]
+    : current.filter((item) => item !== nik);
+}
+
+function selectFilteredUsers() {
+  state.selectedUsers = [...new Set([...(state.selectedUsers || []), ...filteredUsers.value.map((user) => user.nik)])];
+}
+
 // Helper to get user name by NIK
 function getUserNameByNik(nik: string): string {
   const user = availableUsers.value.find((u) => u.nik === nik);
@@ -178,6 +198,7 @@ function removeUser(nik: string) {
     v-model:open="open"
     title="Assign Users to Event"
     description="Select users to assign to this event"
+    :ui="{ content: 'w-[min(96vw,80rem)] max-w-7xl max-h-[94vh]', body: 'overflow-y-auto' }"
   >
     <template #body>
       <UForm
@@ -217,34 +238,38 @@ function removeUser(nik: string) {
 
         <!-- User Selection -->
         <UFormField label="Select Users" name="selectedUsers" required>
-          <USelectMenu
-            v-model="state.selectedUsers"
-            :items="availableUsers"
-            label-key="name"
-            value-key="nik"
-            multiple
-            searchable
-            placeholder="Search and select users..."
-            class="w-full"
-            :loading="dataLoading"
-          >
-            <template #item="{ item }">
-              <div class="flex items-center gap-2 w-full">
-                <UIcon
-                  :name="
-                    isUserSelected(item.nik)
-                      ? 'i-lucide-check-square'
-                      : 'i-lucide-square'
-                  "
-                  class="text-lg"
-                  :class="
-                    isUserSelected(item.nik) ? 'text-primary' : 'text-muted'
-                  "
-                />
-                <span>{{ item.name }} ({{ item.nik }})</span>
-              </div>
-            </template>
-          </USelectMenu>
+          <div class="space-y-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <UInput
+                v-model="userSearch"
+                icon="i-lucide-search"
+                placeholder="Search by name or NIK"
+                class="min-w-56 flex-1"
+                :disabled="dataLoading"
+              />
+              <UButton label="Select filtered" variant="outline" size="sm" :disabled="loading || dataLoading || !filteredUsers.length" @click="selectFilteredUsers" />
+            </div>
+            <div class="grid min-h-80 max-h-[60vh] grid-cols-1 overflow-y-auto rounded-lg border border-default md:grid-cols-2" role="group" aria-label="Available users">
+              <p v-if="dataLoading" class="p-3 text-sm text-muted">Loading available users...</p>
+              <p v-else-if="!availableUsers.length" class="p-3 text-sm text-muted">No users are available for this event.</p>
+              <p v-else-if="!filteredUsers.length" class="p-3 text-sm text-muted">No users match your search.</p>
+              <label
+                v-for="user in filteredUsers"
+                :key="user.nik"
+                class="flex cursor-pointer items-center gap-3 border-b border-default px-3 py-2 hover:bg-elevated/50"
+              >
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 accent-primary"
+                  :checked="isUserSelected(user.nik)"
+                  :disabled="loading"
+                  @change="toggleUser(user.nik, ($event.target as HTMLInputElement).checked)"
+                >
+                <span class="text-sm">{{ user.name }} <span class="text-muted">({{ user.nik }})</span></span>
+              </label>
+            </div>
+            <p class="text-xs text-muted">{{ state.selectedUsers?.length || 0 }} of {{ availableUsers.length }} available users selected</p>
+          </div>
         </UFormField>
 
         <!-- Selected Users Review -->
@@ -265,7 +290,7 @@ function removeUser(nik: string) {
               @click="state.selectedUsers = []"
             />
           </div>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex max-h-28 flex-wrap gap-2 overflow-y-auto">
             <UBadge
               v-for="nik in state.selectedUsers"
               :key="nik"

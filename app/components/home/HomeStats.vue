@@ -9,6 +9,8 @@ const props = defineProps<{
   refreshDashboardData?: () => Promise<void>;
 }>();
 const { token: authToken } = useAuth();
+const operationalGuide = useOperationalGuide();
+const training = useTrainingMode();
 const toast = useToast();
 const dashboardTokenInput = ref("");
 const isSubmittingDashboardToken = ref(false);
@@ -29,6 +31,7 @@ interface DashboardEventUser {
     event?: string;
     startDate?: string | null;
     finishDate?: string | null;
+    briefingFile?: string | null;
   } | null;
   applicationDocs?: DashboardApplicationDoc | DashboardApplicationDoc[] | null;
   applicationDoc?: DashboardApplicationDoc | DashboardApplicationDoc[] | null;
@@ -297,6 +300,12 @@ const isBriefingDateLocked = computed(() =>
   Boolean(available2Data.value.briefingDate),
 );
 
+const trainingBriefingFile = computed(() =>
+  training.active.value && isBriefingDateLocked.value
+    ? currentEventUser.value?.event?.briefingFile
+    : null,
+);
+
 async function submitDashboardToken() {
   if (isBriefingDateLocked.value) {
     return;
@@ -431,6 +440,7 @@ async function submitDashboardToken() {
     </UPageCard>
 
     <UPageCard
+      id="briefing-token"
       :icon="available2Data.icon"
       :title="available2Data.title"
       variant="subtle"
@@ -441,7 +451,8 @@ async function submitDashboardToken() {
           'p-2.5 rounded-full bg-primary/10 ring ring-inset ring-primary/25 flex-col',
         title: 'font-normal text-muted text-xs uppercase',
       }"
-      class="lg:rounded-none first:rounded-l-lg last:rounded-r-lg hover:z-1"
+      class="lg:rounded-none first:rounded-l-lg last:rounded-r-lg hover:z-1 scroll-mt-24"
+      :class="operationalGuide.active.value && operationalGuide.nextStep.value.key === 'briefing' ? 'ring-2 ring-warning' : ''"
     >
       <div class="flex flex-col gap-3 w-full">
         <USelect
@@ -468,6 +479,13 @@ async function submitDashboardToken() {
               {{ briefingDateUTCText }}
             </span>
           </div>
+          <UButton
+            v-if="trainingBriefingFile"
+            label="Open training briefing file"
+            icon="i-lucide-file-text"
+            variant="outline"
+            :to="`/file/view?url=${encodeURIComponent(trainingBriefingFile)}`"
+          />
         </template>
 
         <template v-else>

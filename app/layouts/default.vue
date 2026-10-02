@@ -15,9 +15,16 @@ const open = ref(false);
 
 // Use dynamic role modules from auth user instead of static API
 const { roleModulesData, roleOptions } = useDynamicRoleModules();
+const operationalGuide = useOperationalGuide();
 
 /** Selected role - persisted across navigation */
 const role = useState<string>("selectedRole", () => "");
+
+watch(() => route.path, () => {
+  if (import.meta.client && role.value === "OPERATIONAL" && operationalGuide.active.value) {
+    void operationalGuide.refresh();
+  }
+});
 
 /** Set default role once data arrives */
 watch(
@@ -41,15 +48,28 @@ const links = computed<[NavigationMenuItem[], NavigationMenuItem[]]>(() => {
   const selectedRole = role.value || config[0]?.role || "";
 
   const [main, bottom] = getSidebarLinksFromBackend(config, selectedRole);
+  const targetPath = selectedRole === "OPERATIONAL" && operationalGuide.active.value
+    ? operationalGuide.nextStep.value.to.split("#", 1)[0]
+    : null;
 
   // Patch each item so sidebar closes on select
   const patch = (items: NavigationMenuItem[]) =>
-    items.map((item) => ({
-      ...item,
-      onSelect: (_e: Event) => {
-        open.value = false;
-      },
-    }));
+    items.map((item) => {
+      const childMarked = item.children?.some((child) => child.to === targetPath);
+      const children = item.children?.map((child) => ({
+        ...child,
+        class: child.to === targetPath ? [child.class, "operational-guide-required"] : child.class,
+      }));
+      const marked = item.to === targetPath || childMarked;
+      return {
+        ...item,
+        children,
+        ui: { ...item.ui, linkLabel: marked ? "font-bold text-primary" : item.ui?.linkLabel },
+        onSelect: (_e: Event) => {
+          open.value = false;
+        },
+      };
+    });
 
   return [patch(main), patch(bottom)];
 });
@@ -159,6 +179,16 @@ onMounted(() => {
     <!-- REQUIRED in Nuxt layouts -->
     <NuxtPage />
 
+    <OperationalGuidePanel v-if="role === 'OPERATIONAL'" />
+    <TrainingModeBanner v-if="role === 'OPERATIONAL'" />
+
     <NotificationsSlideover />
   </UDashboardGroup>
 </template>
+
+<style>
+.operational-guide-required [data-slot="childLinkLabel"] {
+  font-weight: 700 !important;
+  color: var(--ui-primary) !important;
+}
+</style>

@@ -17,6 +17,7 @@ interface EssayCorrectionItem {
 
 interface FinalScoreItem {
   id?: number;
+  appRating?: { id?: number; rating?: { rating?: string | null } | null } | null;
   essayCorrections?: EssayCorrectionItem[] | null;
 }
 
@@ -44,11 +45,18 @@ const emit = defineEmits<{
   (e: "close"): void;
   (e: "submitted"): void;
 }>();
-const { token, authUser } = useAuth();
+const { authUser } = useAuth();
+const { apiFetch } = useApiFetch();
 const toast = useToast();
 const router = useRouter();
 
 const selectedScores = reactive<Record<string, number>>({});
+const selectedFinalScoreId = ref<number | null>(null);
+const pendingRatings = computed(() => props.finalScores.filter((score) => (score.essayCorrections?.length || 0) > 0));
+watch(() => [props.isOpen, props.finalScores], () => {
+  if (props.isOpen) selectedFinalScoreId.value = pendingRatings.value[0]?.id ?? null;
+}, { immediate: true });
+const activeFinalScore = computed(() => pendingRatings.value.find((score) => score.id === selectedFinalScoreId.value) || null);
 const isSubmitting = ref(false);
 const isBlurred = ref(false);
 const watermarkText = ref("");
@@ -120,7 +128,7 @@ onBeforeUnmount(() => {
 const correctionCards = computed<CorrectionCardItem[]>(() => {
   const cards: CorrectionCardItem[] = [];
 
-  props.finalScores.forEach((finalScore, finalScoreIndex) => {
+  (activeFinalScore.value ? [activeFinalScore.value] : []).forEach((finalScore, finalScoreIndex) => {
     (finalScore.essayCorrections || []).forEach((essayCorrection, correctionIndex) => {
       const key = `${finalScore.id ?? finalScoreIndex}-${essayCorrection.id ?? correctionIndex}`;
       cards.push({
@@ -207,11 +215,7 @@ function buildEssayCorrectionPayload() {
 }
 
 function getFinalScoreId(): number | null {
-  const ids = correctionCards.value
-    .map((card) => card.finalScoreId)
-    .filter((id): id is number => Number.isFinite(id) && Number(id) > 0);
-  if (ids.length === 0) return null;
-  return ids[0] ?? null;
+  return activeFinalScore.value?.id ?? null;
 }
 
 async function handleSubmit() {
@@ -235,11 +239,8 @@ async function handleSubmit() {
 
   try {
     isSubmitting.value = true;
-    await $fetch(`${apiBaseUrl}/api/performanceCheck`, {
+    await apiFetch(`/api/performanceCheck`, {
       method: "POST",
-      headers: {
-        Authorization: token.value ? `Bearer ${token.value}` : "",
-      },
       body: {
         finalScoreId,
         persentage: props.persentage,
@@ -286,6 +287,17 @@ async function handleSubmit() {
     @update:open="handleOpenChange"
   >
     <template #body>
+      <div v-if="pendingRatings.length > 1" class="mb-4 flex flex-wrap gap-2 border-b pb-3" role="tablist" aria-label="Rating to score">
+        <UButton v-for="score in pendingRatings" :key="score.id" role="tab"
+          :aria-selected="selectedFinalScoreId === score.id"
+          :label="score.appRating?.rating?.rating || `Rating ${score.appRating?.id || score.id}`"
+          :color="selectedFinalScoreId === score.id ? 'primary' : 'neutral'"
+          :variant="selectedFinalScoreId === score.id ? 'solid' : 'soft'"
+          :disabled="isSubmitting" @click="selectedFinalScoreId = score.id ?? null" />
+      </div>
+      <p v-else-if="pendingRatings.length === 1" class="mb-4 text-sm font-semibold text-primary">
+        Rating: {{ pendingRatings[0]?.appRating?.rating?.rating || '-' }}
+      </p>
       <div
         v-if="correctionCards.length === 0"
         class="text-sm text-muted py-4 protection-surface"

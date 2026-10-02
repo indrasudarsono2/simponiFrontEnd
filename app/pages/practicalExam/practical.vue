@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatPracticalType } from '~/utils/checkerHistory'
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface KindOfPracticalItem {
@@ -7,6 +9,7 @@ interface KindOfPracticalItem {
 
 interface PracticalTestItem {
   id: number;
+  ratingLicenseFile?: string | null;
   score?: number | null;
   file?: string | null;
   echainSyncs?: PracticalEchainSyncItem[];
@@ -20,10 +23,12 @@ interface PracticalEchainSyncItem {
   errorMessage?: string | null;
   echainRequestId?: string | null;
   createdAt?: string | null;
+  requestPayload?: { file?: { fileName?: string | null } | null } | null;
 }
 
 interface AppRatingItem {
   id: number;
+  practicalLicense?: { id: number; file?: string | null; expiredDate?: string | null } | null;
   statusId?: number | null;
   status?: {
     status?: string | null;
@@ -33,6 +38,7 @@ interface AppRatingItem {
   } | null;
   finalScores?: Array<{
     statusId?: number | null;
+    finalScore?: number | null;
     status?: {
       status?: string | null;
     } | null;
@@ -48,7 +54,10 @@ interface ApplicationDocItem {
   } | null;
   eventUser?: {
     event?: {
+      event?: string | null;
+      forExpiredDate?: string | null;
       passingGrade?: number | null;
+      practicalPassingGrade?: number | null;
     } | null;
   } | null;
   appRatings?: AppRatingItem[];
@@ -72,10 +81,11 @@ interface PracticalRecheckItem {
     passingGrade: number;
     appRating: {
       rating?: { rating?: string | null } | null;
+      practicalLicense?: { id: number; file?: string | null; expiredDate?: string | null } | null;
       applicationDoc?: {
         number?: string | null;
         user?: { name?: string | null } | null;
-        eventUser?: { event?: { event?: string | null } | null } | null;
+        eventUser?: { event?: { event?: string | null; forExpiredDate?: string | null } | null } | null;
       } | null;
     };
   };
@@ -98,11 +108,19 @@ interface PracticalUpdateResponse {
 
 interface PracticalGroupRow {
   no: number;
+  documentId: number;
+  documentRowSpan: number;
+  showDocumentCells: boolean;
   number: string;
   name: string;
   rating: string;
   status: string;
   canInputPractical: boolean;
+  canReviewTheory: boolean;
+  appRatingId: number;
+  practicalLicenseFile: string | null;
+  eventName: string | null;
+  licenseExpiredDate: string | null;
   passingGrade: number | null;
   practicalTests: PracticalTestItem[];
 }
@@ -128,6 +146,10 @@ const selectedPassingGrade = ref<number | null>(null);
 const belowPassingGradeConfirmed = ref(false);
 const inputScore = ref<string>("");
 const inputFile = ref<File | null>(null);
+const inputLicenseFile = ref<File | null>(null);
+const selectedRatingLicenseFile = ref<string | null>(null);
+const selectedLicenseEventName = ref<string | null>(null);
+const selectedLicenseExpiryDate = ref<string | null>(null);
 const fileInputKey = ref(0);
 const isSubmittingUpdate = ref(false);
 const isFilePreviewModalOpen = ref(false);
@@ -140,6 +162,33 @@ const isLoadingEchainPayload = ref(false);
 const selectedEchainTest = ref<PracticalTestItem | null>(null);
 const selectedEchainRecheck = ref<PracticalRecheckItem | null>(null);
 const echainPayload = ref<PracticalEchainPayload | null>(null);
+interface TheoryReview {
+  finalScoreId: number;
+  event: string | null;
+  reviewedBy: { name: string; nik: string };
+  applicationNumber: string | null;
+  name: string | null;
+  rating: string | null;
+  incorrectMultipleChoice: Array<{ id: number; question: string; image: string | null; selectedAnswer: string | null }>;
+  essay: Array<{ id: number; question: string; image: string | null; answer: string }>;
+}
+const isTheoryReviewOpen = ref(false);
+const isLoadingTheoryReview = ref(false);
+const theoryReview = ref<TheoryReview | null>(null);
+const { apiFetch } = useApiFetch();
+async function openTheoryReview(appRatingId: number) {
+  theoryReview.value = null;
+  isTheoryReviewOpen.value = true;
+  isLoadingTheoryReview.value = true;
+  try {
+    theoryReview.value = await apiFetch(`/api/practicalExam/theory-review/${appRatingId}`) as TheoryReview;
+  } catch (error) {
+    isTheoryReviewOpen.value = false;
+    toast.add({ title: 'Unable to load theory review', description: error instanceof Error ? error.message : 'Please try again.', color: 'error' });
+  } finally {
+    isLoadingTheoryReview.value = false;
+  }
+}
 
 const {
   data: practicalExamData,
@@ -161,11 +210,12 @@ const practicalRows = computed<PracticalGroupRow[]>(() => {
   let no = 1;
 
   for (const doc of docs) {
+    const firstRowIndex = rows.length;
     const ratings = doc.appRatings || [];
     for (const rating of ratings) {
       const tests =
         rating.practicalTests && rating.practicalTests.length > 0
-          ? rating.practicalTests
+          ? rating.practicalTests.map((test) => ({ ...test, ratingLicenseFile: rating.practicalLicense?.file || null }))
           : [
               {
                 id: -1,
@@ -177,6 +227,13 @@ const practicalRows = computed<PracticalGroupRow[]>(() => {
 
       rows.push({
         no,
+        documentId: doc.id,
+        documentRowSpan: 0,
+        showDocumentCells: false,
+        appRatingId: rating.id,
+        practicalLicenseFile: rating.practicalLicense?.file || null,
+        eventName: doc.eventUser?.event?.event || null,
+        licenseExpiredDate: doc.eventUser?.event?.forExpiredDate || null,
         number: doc.number || "-",
         name: doc.user?.name || "-",
         rating: rating.rating?.rating || "-",
@@ -184,12 +241,22 @@ const practicalRows = computed<PracticalGroupRow[]>(() => {
         canInputPractical:
           rating.status?.status === "WAITING PRACTICAL" &&
           rating.finalScores?.[0]?.status?.status === "WAITING PRACTICAL",
+        canReviewTheory:
+          rating.finalScores?.[0]?.status?.status !== "CHECKING ESSAY" &&
+          Number(rating.finalScores?.[0]?.finalScore ?? -1) >= Number(doc.eventUser?.event?.passingGrade ?? Infinity),
         passingGrade:
-          doc.eventUser?.event?.passingGrade == null
+          doc.eventUser?.event?.practicalPassingGrade == null
             ? null
-            : Number(doc.eventUser.event.passingGrade),
+            : Number(doc.eventUser.event.practicalPassingGrade),
         practicalTests: tests,
       });
+    }
+    if (rows.length > firstRowIndex) {
+      const firstRow = rows[firstRowIndex]!;
+      firstRow.showDocumentCells = true;
+      firstRow.documentRowSpan = rows.slice(firstRowIndex).reduce(
+        (count, row) => count + row.practicalTests.length, 0,
+      );
       no += 1;
     }
   }
@@ -228,7 +295,8 @@ function formatScore(score?: number | null): string {
 }
 
 function getLatestEchainSync(test?: PracticalTestItem | null) {
-  return test?.echainSyncs?.[0] || null;
+  const latest = test?.echainSyncs?.[0] || null;
+  return latest?.requestPayload?.file?.fileName === getFileName(test?.ratingLicenseFile) ? latest : null;
 }
 
 function getLatestRecheckEchainSync(task?: PracticalRecheckItem | null) {
@@ -265,14 +333,14 @@ function getEchainButtonIcon(test?: PracticalTestItem | null): string {
   return "i-lucide-send";
 }
 
-function getEchainTooltip(test?: PracticalTestItem | null): string {
-  if (!test?.file) return "Upload a PDF evidence file before sending to e-chain";
-  if (!isPdfPracticalFile(test.file)) return "Only PDF evidence files can be sent to e-chain";
+function getEchainTooltip(test?: PracticalTestItem | null, licenseFile?: string | null): string {
+  if (!licenseFile) return "Upload a PDF rating license before sending to e-chain";
+  if (!isPdfPracticalFile(licenseFile)) return "Only a PDF license can be sent to e-chain";
   const latestSync = getLatestEchainSync(test);
-  if (!latestSync) return "Send practical exam data to e-chain";
+  if (!latestSync) return "Send the rating license to e-chain";
   if (latestSync.status === "SUCCESS") return "Already sent to e-chain";
   if (latestSync.status === "FAILED") return latestSync.errorMessage || "Previous send failed";
-  return "Send practical exam data to e-chain";
+  return "Send the rating license to e-chain";
 }
 
 function canSendRowToEchain(row: PracticalGroupRow, test?: PracticalTestItem | null): boolean {
@@ -281,14 +349,14 @@ function canSendRowToEchain(row: PracticalGroupRow, test?: PracticalTestItem | n
       test.id > 0 &&
       test.score != null &&
       row.status === "SUCCESS" &&
-      isPdfPracticalFile(test.file) &&
+      isPdfPracticalFile(row.practicalLicenseFile) &&
       getLatestEchainSync(test)?.status !== "SUCCESS",
   );
 }
 
 function getRowEchainTooltip(row: PracticalGroupRow, test?: PracticalTestItem | null): string {
   if (row.status !== "SUCCESS") return "Only SUCCESS practical exam data can be sent to e-chain";
-  return getEchainTooltip(test);
+  return getEchainTooltip(test, row.practicalLicenseFile);
 }
 
 function canSendRecheckToEchain(task?: PracticalRecheckItem | null): boolean {
@@ -297,7 +365,7 @@ function canSendRecheckToEchain(task?: PracticalRecheckItem | null): boolean {
       task.id > 0 &&
       task.score != null &&
       task.authorization.status === "SUCCESS" &&
-      isPdfPracticalFile(task.file) &&
+      isPdfPracticalFile(task.authorization.appRating.practicalLicense?.file) &&
       getLatestRecheckEchainSync(task)?.status !== "SUCCESS",
   );
 }
@@ -312,12 +380,13 @@ function getRecheckEchainButtonLabel(task?: PracticalRecheckItem | null): string
 
 function getRecheckEchainTooltip(task?: PracticalRecheckItem | null): string {
   if (task?.authorization.status !== "SUCCESS") return "Only SUCCESS practical recheck data can be sent to e-chain";
-  if (!task?.file) return "Upload a PDF evidence file before sending to e-chain";
-  if (!isPdfPracticalFile(task.file)) return "Only PDF evidence files can be sent to e-chain";
+  const licenseFile = task?.authorization.appRating.practicalLicense?.file;
+  if (!licenseFile) return "Upload a PDF rating license before sending to e-chain";
+  if (!isPdfPracticalFile(licenseFile)) return "Only a PDF license can be sent to e-chain";
   const latestSync = getLatestRecheckEchainSync(task);
   if (latestSync?.status === "SUCCESS") return "Already sent to e-chain";
   if (latestSync?.status === "FAILED") return latestSync.errorMessage || "Previous send failed";
-  return "Send practical recheck data to e-chain";
+  return "Send the rating license to e-chain";
 }
 
 function getRecheckEchainButtonColor(task?: PracticalRecheckItem | null) {
@@ -340,16 +409,11 @@ async function sendPracticalToEchain(test?: PracticalTestItem | null) {
   const sendKey = getPracticalSendKey(test);
   sendingEchainKeys.value = new Set(sendingEchainKeys.value).add(sendKey);
   try {
-    await $fetch(`${apiBaseUrl}/api/practicalExam/${test.id}/send-echain`, {
-      method: "POST",
-      headers: {
-        Authorization: token.value ? `Bearer ${token.value}` : "",
-      },
-    });
+    await apiFetch(`/api/practicalExam/${test.id}/send-echain`, { method: "POST" });
 
     toast.add({
       title: "Sent to e-chain",
-      description: "Practical exam data has been sent successfully.",
+      description: "The rating license has been sent successfully.",
       color: "success",
     });
     await refresh();
@@ -358,7 +422,7 @@ async function sendPracticalToEchain(test?: PracticalTestItem | null) {
     toast.add({
       title: "Send Failed",
       description:
-        err?.data?.message || err?.message || "Failed to send practical exam data to e-chain.",
+        err?.data?.message || err?.message || "Failed to send the rating license to e-chain.",
       color: "error",
     });
     await refresh();
@@ -375,16 +439,11 @@ async function sendRecheckToEchain(task?: PracticalRecheckItem | null) {
   const sendKey = getRecheckSendKey(task);
   sendingEchainKeys.value = new Set(sendingEchainKeys.value).add(sendKey);
   try {
-    await $fetch(`${apiBaseUrl}/api/practicalExam/recheck/${task.id}/send-echain`, {
-      method: "POST",
-      headers: {
-        Authorization: token.value ? `Bearer ${token.value}` : "",
-      },
-    });
+    await apiFetch(`/api/practicalExam/recheck/${task.id}/send-echain`, { method: "POST" });
 
     toast.add({
       title: "Sent to e-chain",
-      description: "Practical recheck data has been sent successfully.",
+      description: "The rating license has been sent successfully.",
       color: "success",
     });
     await refresh();
@@ -503,7 +562,8 @@ function formatDateTime(value?: string | null): string {
   return date.toLocaleString("id-ID", {
     dateStyle: "medium",
     timeStyle: "short",
-  });
+    timeZone: "UTC",
+  }) + " UTC";
 }
 
 function getFileName(filePath?: string | null): string {
@@ -602,6 +662,11 @@ function openUpdateModal(test: PracticalTestItem, passingGrade: number | null) {
       ? ""
       : String(test.score);
   inputFile.value = null;
+  inputLicenseFile.value = null;
+  const row = practicalRows.value.find((item) => item.practicalTests.some((candidate) => candidate.id === test.id));
+  selectedRatingLicenseFile.value = row?.practicalLicenseFile || null;
+  selectedLicenseEventName.value = row?.eventName || null;
+  selectedLicenseExpiryDate.value = row?.licenseExpiredDate || null;
   fileInputKey.value += 1;
   isUpdateModalOpen.value = true;
 }
@@ -612,6 +677,10 @@ function openRecheckModal(recheck: PracticalRecheckItem) {
   selectedPassingGrade.value = Number(recheck.authorization.passingGrade);
   inputScore.value = recheck.score == null ? "" : String(recheck.score);
   inputFile.value = null;
+  inputLicenseFile.value = null;
+  selectedRatingLicenseFile.value = recheck.authorization.appRating.practicalLicense?.file || null;
+  selectedLicenseEventName.value = recheck.authorization.appRating.applicationDoc?.eventUser?.event?.event || null;
+  selectedLicenseExpiryDate.value = recheck.authorization.appRating.applicationDoc?.eventUser?.event?.forExpiredDate || null;
   belowPassingGradeConfirmed.value = false;
   fileInputKey.value += 1;
   isUpdateModalOpen.value = true;
@@ -625,6 +694,10 @@ function closeUpdateModal() {
   belowPassingGradeConfirmed.value = false;
   inputScore.value = "";
   inputFile.value = null;
+  inputLicenseFile.value = null;
+  selectedRatingLicenseFile.value = null;
+  selectedLicenseEventName.value = null;
+  selectedLicenseExpiryDate.value = null;
   fileInputKey.value += 1;
 }
 
@@ -632,6 +705,10 @@ function onFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0] || null;
   inputFile.value = file;
+}
+
+function onLicenseFileChange(event: Event) {
+  inputLicenseFile.value = (event.target as HTMLInputElement).files?.[0] || null;
 }
 
 function isAllowedUploadFile(file: File): boolean {
@@ -651,12 +728,18 @@ function validateUpdateForm(): string | null {
     return "Score must be an integer between 1 and 100.";
   }
 
-  if (!inputFile.value) {
-    return "File is required.";
+  if (!inputFile.value && !(selectedRecheck.value?.file || selectedPracticalTest.value?.file)) {
+    return "An evaluation sheet PDF is required for this practical exam.";
   }
 
-  if (!isAllowedUploadFile(inputFile.value)) {
-    return "File must be PDF.";
+  if (inputFile.value && !isAllowedUploadFile(inputFile.value)) {
+    return "Evaluation sheet must be PDF.";
+  }
+  if (!inputLicenseFile.value && !selectedRatingLicenseFile.value) {
+    return "A license PDF is required for this rating.";
+  }
+  if (inputLicenseFile.value && !isAllowedUploadFile(inputLicenseFile.value)) {
+    return "License must be PDF.";
   }
 
   if (isBelowPassingGrade.value && !belowPassingGradeConfirmed.value) {
@@ -688,23 +771,23 @@ async function submitPracticalUpdate() {
     String(isBelowPassingGrade.value && belowPassingGradeConfirmed.value),
   );
   if (inputFile.value) {
-    formData.append("file", inputFile.value);
+    formData.append("evaluationFile", inputFile.value);
+  }
+  if (inputLicenseFile.value) {
+    formData.append("licenseFile", inputLicenseFile.value);
   }
 
   try {
     isSubmittingUpdate.value = true;
-    const response = await $fetch<PracticalUpdateResponse>(
+    const response = await apiFetch(
       selectedRecheck.value
-        ? `${apiBaseUrl}/api/practicalExam/recheck/${testId}`
-        : `${apiBaseUrl}/api/practicalExam/${testId}`,
+        ? `/api/practicalExam/recheck/${testId}`
+        : `/api/practicalExam/${testId}`,
       {
       method: "PUT",
-      headers: {
-        Authorization: token.value ? `Bearer ${token.value}` : "",
-      },
       body: formData,
       },
-    );
+    ) as PracticalUpdateResponse;
 
     toast.add({
       title:
@@ -806,7 +889,7 @@ async function submitPracticalUpdate() {
                       {{ group.rating }}
                     </td>
                     <td class="border px-3 py-2 text-center">{{ task.authorization.status || '-' }}</td>
-                    <td class="border px-3 py-2">{{ task.practicalTest.kindOfPractical?.kind || '-' }}</td>
+                    <td class="border px-3 py-2">{{ formatPracticalType(task.practicalTest.kindOfPractical?.kind) }}</td>
                     <td class="border px-3 py-2 text-center">{{ task.practicalTest.score ?? '-' }}</td>
                     <td class="border px-3 py-2 text-center">
                       <UButton
@@ -832,24 +915,14 @@ async function submitPracticalUpdate() {
                       <span v-else>-</span>
                     </td>
                     <td class="border px-3 py-2 text-center">
-                      <UButton
-                        :label="getRecheckEchainButtonLabel(task)"
-                        size="xs"
-                        :color="getRecheckEchainButtonColor(task)"
-                        variant="soft"
-                        :icon="getRecheckEchainButtonIcon(task)"
-                        :title="getRecheckEchainTooltip(task)"
-                        :loading="sendingEchainKeys.has(getRecheckSendKey(task))"
-                        :disabled="!canSendRecheckToEchain(task)"
-                        @click="openRecheckEchainConfirmModal(task)"
-                      />
+                      <span class="text-xs text-muted">Send the shared rating license in Practical Exam Data</span>
                     </td>
                     <td class="border px-3 py-2 text-center">
                       <UButton
                         :label="
                           task.authorization.status === 'ACTIVE'
                             ? task.score == null ? 'Check Again' : 'Update Recheck'
-                            : 'Update File'
+                            : 'Update Files'
                         "
                         icon="i-lucide-rotate-ccw"
                         color="warning"
@@ -928,13 +1001,16 @@ async function submitPracticalUpdate() {
                     Status
                   </th>
                   <th class="border border-gray-300 px-4 py-2 text-center">
+                    Theory Review
+                  </th>
+                  <th class="border border-gray-300 px-4 py-2 text-center">
                     Practical
                   </th>
                   <th class="border border-gray-300 px-4 py-2 text-center">
                     Score
                   </th>
                   <th class="border border-gray-300 px-4 py-2 text-center">
-                    File
+                    Evaluation sheet
                   </th>
                   <th class="border border-gray-300 px-4 py-2 text-center">
                     e-chain
@@ -947,24 +1023,27 @@ async function submitPracticalUpdate() {
               <tbody>
                 <template
                   v-for="row in practicalRows"
-                  :key="`${row.no}-${row.number}-${row.rating}`"
+                  :key="`${row.documentId}-${row.appRatingId}`"
                 >
                   <tr class="hover:bg-gray-50">
                     <td
+                      v-if="row.showDocumentCells"
                       class="border border-gray-300 px-4 py-2 text-center align-top"
-                      :rowspan="row.practicalTests.length"
+                      :rowspan="row.documentRowSpan"
                     >
                       {{ row.no }}
                     </td>
                     <td
+                      v-if="row.showDocumentCells"
                       class="border border-gray-300 px-4 py-2 align-top"
-                      :rowspan="row.practicalTests.length"
+                      :rowspan="row.documentRowSpan"
                     >
                       {{ row.number }}
                     </td>
                     <td
+                      v-if="row.showDocumentCells"
                       class="border border-gray-300 px-4 py-2 align-top"
-                      :rowspan="row.practicalTests.length"
+                      :rowspan="row.documentRowSpan"
                     >
                       {{ row.name }}
                     </td>
@@ -972,7 +1051,9 @@ async function submitPracticalUpdate() {
                       class="border border-gray-300 px-4 py-2 align-top"
                       :rowspan="row.practicalTests.length"
                     >
-                      {{ row.rating }}
+                      <div>{{ row.rating }}</div>
+                      <UButton v-if="row.practicalLicenseFile" label="View license" size="xs" variant="link"
+                        @click="openFilePreview(row.practicalLicenseFile)" />
                     </td>
                     <td
                       class="border border-gray-300 px-4 py-2 text-center align-top"
@@ -980,9 +1061,13 @@ async function submitPracticalUpdate() {
                     >
                       {{ row.status }}
                     </td>
+                    <td class="border border-gray-300 px-4 py-2 text-center align-top" :rowspan="row.practicalTests.length">
+                      <UButton v-if="row.canReviewTheory" label="Review" icon="i-lucide-eye" size="xs" variant="soft" @click="openTheoryReview(row.appRatingId)" />
+                      <span v-else class="text-muted">-</span>
+                    </td>
 
                     <td class="border border-gray-300 px-4 py-2">
-                      {{ row.practicalTests[0]?.kindOfPractical?.kind || "-" }}
+                      {{ formatPracticalType(row.practicalTests[0]?.kindOfPractical?.kind) }}
                     </td>
                     <td class="border border-gray-300 px-4 py-2 text-center">
                       {{ formatScore(row.practicalTests[0]?.score) }}
@@ -1049,7 +1134,7 @@ async function submitPracticalUpdate() {
                     class="hover:bg-gray-50"
                   >
                     <td class="border border-gray-300 px-4 py-2">
-                      {{ test.kindOfPractical?.kind || "-" }}
+                      {{ formatPracticalType(test.kindOfPractical?.kind) }}
                     </td>
                     <td class="border border-gray-300 px-4 py-2 text-center">
                       {{ formatScore(test.score) }}
@@ -1069,19 +1154,7 @@ async function submitPracticalUpdate() {
                       </div>
                     </td>
                     <td class="border border-gray-300 px-4 py-2 text-center">
-                      <UButton
-                        v-if="test.id > 0"
-                        :label="getEchainButtonLabel(test)"
-                        size="xs"
-                        :color="getEchainButtonColor(test)"
-                        variant="soft"
-                        :icon="getEchainButtonIcon(test)"
-                        :title="getRowEchainTooltip(row, test)"
-                        :loading="sendingEchainKeys.has(getPracticalSendKey(test))"
-                        :disabled="!canSendRowToEchain(row, test)"
-                        @click="openEchainConfirmModal(test)"
-                      />
-                      <span v-else class="text-muted">-</span>
+                      <span class="text-xs text-muted">Shared per rating</span>
                     </td>
                     <td class="border border-gray-300 px-4 py-2 text-center">
                       <UButton
@@ -1110,6 +1183,37 @@ async function submitPracticalUpdate() {
     </template>
   </UDashboardPanel>
 
+  <UModal v-model:open="isTheoryReviewOpen" title="Theory Examination Review" :ui="{ content: 'sm:max-w-4xl' }">
+    <template #body>
+      <div v-if="isLoadingTheoryReview" class="p-4 text-sm text-muted">Loading examination answers…</div>
+      <div v-else-if="theoryReview" class="theory-review-content relative max-h-[75vh] space-y-6 overflow-y-auto p-2" :data-watermark="`PERFORMA · THEORY REVIEW · ${theoryReview.applicationNumber || 'NO NUMBER'} · ${theoryReview.rating || 'NO RATING'} · OPENED BY ${theoryReview.reviewedBy.name} (${theoryReview.reviewedBy.nik})`">
+        <div class="relative z-0 rounded-lg border border-default bg-muted/10 p-3 text-sm">
+          <p class="font-semibold">Source: Theory examination result #{{ theoryReview.finalScoreId }}</p>
+          <p class="text-muted">{{ theoryReview.name }} · {{ theoryReview.rating }} · {{ theoryReview.applicationNumber }} · {{ theoryReview.event }}</p>
+          <p class="mt-1 text-muted">Opened by checker: {{ theoryReview.reviewedBy.name }} ({{ theoryReview.reviewedBy.nik }})</p>
+        </div>
+        <section class="space-y-3">
+          <h3 class="font-semibold">Incorrect Multiple Choice ({{ theoryReview.incorrectMultipleChoice.length }})</h3>
+          <p v-if="!theoryReview.incorrectMultipleChoice.length" class="text-sm text-muted">No incorrect answers.</p>
+          <div v-for="(item, index) in theoryReview.incorrectMultipleChoice" :key="`mc-${item.id}-${index}`" class="space-y-2 rounded-lg border border-default p-3">
+            <div class="flex gap-2"><span>{{ index + 1 }}.</span><div class="rich-question" v-html="item.question" /></div>
+            <img v-if="item.image" :src="item.image" alt="Question illustration" class="max-h-64 object-contain">
+            <div class="text-sm text-error">User answer: <span v-if="item.selectedAnswer" v-html="item.selectedAnswer" /><span v-else>Not answered</span></div>
+          </div>
+        </section>
+        <section class="space-y-3">
+          <h3 class="font-semibold">Essay Questions and Answers ({{ theoryReview.essay.length }})</h3>
+          <p v-if="!theoryReview.essay.length" class="text-sm text-muted">No essay questions in this examination.</p>
+          <div v-for="(item, index) in theoryReview.essay" :key="`essay-${item.id}-${index}`" class="space-y-2 rounded-lg border border-default p-3">
+            <div class="flex gap-2"><span>{{ index + 1 }}.</span><div class="rich-question" v-html="item.question" /></div>
+            <img v-if="item.image" :src="item.image" alt="Question illustration" class="max-h-64 object-contain">
+            <div class="rounded bg-muted/20 p-3 text-sm"><p class="mb-1 font-medium">User answer</p><div v-if="item.answer" class="rich-question" v-html="item.answer" /><p v-else class="text-muted">Not answered</p></div>
+          </div>
+        </section>
+      </div>
+    </template>
+  </UModal>
+
   <UModal
     v-model:open="isUpdateModalOpen"
     title="Update Practical Exam"
@@ -1131,7 +1235,7 @@ async function submitPracticalUpdate() {
         </div>
         <UFormField label="Practical">
           <UInput
-            :model-value="selectedPracticalTest?.kindOfPractical?.kind || '-'"
+            :model-value="formatPracticalType(selectedPracticalTest?.kindOfPractical?.kind)"
             disabled
           />
         </UFormField>
@@ -1174,9 +1278,9 @@ async function submitPracticalUpdate() {
         </div>
 
         <UFormField
-          label="File"
-          description="Allowed: PDF only"
-          required
+          label="Evaluation sheet"
+          description="PDF for this Live or Simulator practical exam; kept as practical evidence and never sent to e-chain."
+          :required="!(selectedRecheck?.file || selectedPracticalTest?.file)"
         >
           <label
             :for="`practical-upload-${selectedPracticalTest?.id || 'new'}`"
@@ -1185,7 +1289,7 @@ async function submitPracticalUpdate() {
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-upload" class="size-4 text-primary" />
               <span class="font-medium text-primary">
-                {{ inputFile ? "Change file" : "Choose file to upload" }}
+                {{ inputFile ? "Change evaluation sheet" : "Choose evaluation sheet" }}
               </span>
             </div>
             <span class="text-xs text-muted">PDF</span>
@@ -1202,9 +1306,28 @@ async function submitPracticalUpdate() {
             {{
               inputFile
                 ? `Selected: ${inputFile.name}`
-                : "No file selected yet."
+                : selectedRecheck?.file || selectedPracticalTest?.file ? "Existing evaluation sheet will be kept." : "No evaluation sheet selected yet."
             }}
           </p>
+        </UFormField>
+        <UFormField label="License" description="One PDF license per rating, visible in the examinee's Operational License menu. Only this file is sent to e-chain."
+          :required="!selectedRatingLicenseFile">
+          <p class="mb-2 text-xs text-muted">License note: {{ selectedLicenseEventName || '-' }} · Expiry: {{ selectedLicenseExpiryDate ? formatDateTime(selectedLicenseExpiryDate) : 'Not configured' }}</p>
+          <label :for="`license-upload-${selectedPracticalTest?.id || 'new'}`"
+            class="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-primary/40 bg-primary/5 px-4 py-3 text-sm">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-upload" class="size-4 text-primary" />
+              <span class="font-medium text-primary">{{ inputLicenseFile ? 'Change license' : 'Choose license' }}</span>
+            </div>
+            <span class="text-xs text-muted">PDF</span>
+          </label>
+          <input :id="`license-upload-${selectedPracticalTest?.id || 'new'}`" :key="`license-${fileInputKey}`"
+            type="file" accept=".pdf,application/pdf" class="sr-only" @change="onLicenseFileChange" />
+          <p class="text-xs text-muted mt-2">
+            {{ inputLicenseFile ? `Selected: ${inputLicenseFile.name}` : selectedRatingLicenseFile ? 'Existing rating license will be kept.' : 'No license selected yet.' }}
+          </p>
+          <UButton v-if="selectedRatingLicenseFile" label="View current license" size="xs" variant="link"
+            @click="openFilePreview(selectedRatingLicenseFile)" />
         </UFormField>
       </div>
     </template>
@@ -1257,7 +1380,7 @@ async function submitPracticalUpdate() {
 
       <div v-else-if="echainPayload" class="space-y-4">
         <div class="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
-          Please verify this practical examination data before sending it to e-chain.
+          Please verify this rating license before sending it to e-chain. The evaluation sheet stays in PERFORMA and is not sent.
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2">
@@ -1283,7 +1406,7 @@ async function submitPracticalUpdate() {
         </div>
 
         <div class="rounded border border-gray-200 p-3 text-sm">
-          <p class="text-xs text-muted">PDF File</p>
+          <p class="text-xs text-muted">License PDF</p>
           <p class="font-medium">{{ echainPayload.file?.fileName || "-" }}</p>
           <p class="break-all text-xs text-muted">{{ echainPayload.file?.fileUrl || "-" }}</p>
           <p class="text-xs text-muted">{{ echainPayload.file?.fileMimeType || "-" }}</p>
@@ -1374,3 +1497,24 @@ async function submitPracticalUpdate() {
     </template>
   </UModal>
 </template>
+
+<style scoped>
+.theory-review-content::before {
+  content: attr(data-watermark);
+  position: absolute;
+  z-index: 2;
+  top: 48%;
+  left: 50%;
+  width: max-content;
+  max-width: 90%;
+  color: currentColor;
+  font-size: clamp(1.1rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  opacity: 0.09;
+  pointer-events: none;
+  text-align: center;
+  white-space: normal;
+  transform: translate(-50%, -50%) rotate(-18deg);
+}
+</style>

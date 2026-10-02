@@ -45,7 +45,7 @@ const loading = ref(false);
 const { token } = useAuth();
 
 const roleOptions = computed(() => {
-  return props.roles.map((role) => ({
+  return props.roles.filter((role) => role.role !== "GENERAL ADMIN").map((role) => ({
     value: role.id,
     label: role.role,
   }));
@@ -70,7 +70,7 @@ watch(
   (newUser) => {
     if (newUser) {
       selectedRoles.value =
-        newUser.userRoles?.map((userRole) => ({
+        newUser.userRoles?.filter((userRole) => props.roles.some((role) => role.id === userRole.roles?.id && role.role !== "GENERAL ADMIN")).map((userRole) => ({
           value: userRole.roles.id,
           label: userRole.roles.role,
         })) || [];

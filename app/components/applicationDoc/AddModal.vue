@@ -101,7 +101,7 @@ interface CompetenceItem {
   id: number;
   userId: string;
   ratingId: number;
-  competence?: string;
+  rating?: { id: number; rating: string | null } | null;
   institution: string;
   released: string;
   file: string;
@@ -429,6 +429,22 @@ const letterDate = ref("");
 const ojtControlHour = ref("");
 const ojtId = ref("");
 const ojtName = ref("");
+const eligibleOjti = ref<{ nik: string; name: string; licenseUserId: string }[]>([]);
+const isPenerbitan = computed(() => eventOptions.value.find((item) => item.id === selectedEventId.value)?.remark === "PENERBITAN");
+const selectedOjti = computed(() => eligibleOjti.value.find((item) => item.licenseUserId === ojtId.value));
+watch(selectedOjti, (user) => { if (isPenerbitan.value) ojtName.value = user?.name || ""; });
+watch(selectedEventId, async (eventId) => {
+  eligibleOjti.value = [];
+  ojtId.value = "";
+  if (!eventId || !isPenerbitan.value) return;
+  try {
+    const users = await $fetch<{ nik: string; name: string; licenseUserId: string }[]>(`${apiBaseUrl}/api/ojtiRecommendations/eligible`, {
+      query: { eventId },
+      headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
+    });
+    if (selectedEventId.value === eventId) eligibleOjti.value = users;
+  } catch { if (selectedEventId.value === eventId) eligibleOjti.value = []; }
+}, { immediate: true });
 const isDrugs = ref<boolean | null>(null);
 
 // Part 4
@@ -491,6 +507,8 @@ const canSubmit = computed(() => {
   )
     return false;
   if (!atsName.value.trim() || !address.value.trim()) return false;
+  if (isPenerbitan.value && !ojtId.value) return false;
+  if (isPenerbitan.value && (!userData.value.competence.length || userData.value.competence.some((item) => !item.file))) return false;
 
   // Check if at least one rating is selected
   const hasSelectedRating = ratingOptions.value.some(
@@ -626,9 +644,9 @@ async function onSubmit() {
         ratings: previousRatings.value,
         location: location.value,
         dateForExpired: dateForExp.value,
-        confirmOjt: confirmOjt.value,
-        letterNumber: letterNumber.value,
-        letterDate: letterDate.value,
+        confirmOjt: isPenerbitan.value ? false : confirmOjt.value,
+        letterNumber: isPenerbitan.value ? null : letterNumber.value,
+        letterDate: isPenerbitan.value ? null : letterDate.value,
         controlHour: ojtControlHour.value,
         ojtNik: ojtId.value,
         ojtName: ojtName.value,
@@ -1262,7 +1280,23 @@ async function onSubmit() {
               </p>
             </div>
 
+            <div v-if="isPenerbitan" class="border border-default rounded-lg p-4 space-y-3">
+              <p class="text-sm font-semibold">12. OJTI recommendation for PENERBITAN</p>
+              <p class="text-xs text-muted">Select an OPERATIONAL user in your branch unit. The OJTI will review and accept your request; the system then creates the letter number and date.</p>
+              <select v-model="ojtId" class="w-full rounded-md border border-default bg-default p-2 text-sm">
+                <option value="">Select OJTI</option>
+                <option v-for="item in eligibleOjti" :key="item.nik" :value="item.licenseUserId">{{ item.name }} — {{ item.licenseUserId }}</option>
+              </select>
+              <div>
+                <label class="block text-sm font-medium mb-1">12d. Jumlah Jam Pemanduan</label>
+                <UInput v-model="ojtControlHour" placeholder="Total control hours" class="max-w-xs" />
+              </div>
+              <p class="text-sm">12e. OJTI License Number: {{ selectedOjti?.licenseUserId || '—' }}</p>
+              <p class="text-sm">12f. OJTI Name: {{ selectedOjti?.name || '—' }}</p>
+              <p class="text-xs text-muted">Letter number and date: assigned after OJTI acceptance.</p>
+            </div>
             <!-- 12a. OJT -->
+            <div v-else>
             <div class="border border-default rounded-lg p-4 space-y-3">
               <label class="block text-sm font-semibold">
                 12a. Do you have an OJTI recommendation letter?
@@ -1342,6 +1376,7 @@ async function onSubmit() {
                 </div>
               </div>
             </div>
+            </div>
 
             <!-- 13. Drugs -->
             <div class="border border-default rounded-lg p-4 space-y-3">
@@ -1394,7 +1429,7 @@ async function onSubmit() {
                   <UBadge
                     color="primary"
                     variant="subtle"
-                    :label="comp.competence"
+                    :label="comp.rating?.rating || 'Unknown competency'"
                   />
                   <span class="text-sm font-medium">{{
                     comp.institution
@@ -1409,6 +1444,9 @@ async function onSubmit() {
                 class="text-sm text-muted italic"
               >
                 No competency data available
+              </p>
+              <p v-if="isPenerbitan && (!userData.competence.length || userData.competence.some((item) => !item.file))" class="text-sm text-error">
+                PENERBITAN requires a file for every competency certification listed here.
               </p>
             </div>
           </div>

@@ -1,108 +1,105 @@
 <script setup lang="ts">
-const apiBaseUrl = useApiBaseUrl()
-const { token } = useAuth();
+const { apiFetch } = useApiFetch()
 
 interface RatingInfo {
-  id: number;
-  professionId: number;
-  rating: string;
-  description: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+  id: number
+  professionId: number
+  rating: string
+  description: string
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
 }
 
 interface SectorInfo {
-  id: number;
-  branchUnitId: number;
-  sector: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+  id: number
+  branchUnitId: number
+  sector: string
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
 }
 
 interface SubBranchUnitRating {
-  id: number;
-  sectorId: number;
-  ratingId: number;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  rating: RatingInfo;
-  sector: SectorInfo;
+  id: number
+  sectorId: number
+  ratingId: number
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
+  rating: RatingInfo
+  sector: SectorInfo
 }
 
 const props = defineProps<{
-  ratingChecker: SubBranchUnitRating | null;
-}>();
+  ratingChecker: SubBranchUnitRating | null
+}>()
 
 const emit = defineEmits<{
-  ratingCheckerDeleted: [];
-  close: [];
-}>();
+  ratingCheckerDeleted: []
+  close: []
+}>()
 
-const open = ref(false);
-const loading = ref(false);
+const open = ref(false)
+const loading = ref(false)
 
 // Watch for ratingChecker prop changes to open modal
 watch(
   () => props.ratingChecker,
   (newRatingChecker) => {
     if (newRatingChecker) {
-      open.value = true;
+      open.value = true
     }
   },
-  { immediate: true },
-);
+  { immediate: true }
+)
 
 // Reset when modal closes
 watch(open, (isOpen) => {
   if (!isOpen) {
-    emit("close");
+    emit('close')
   }
-});
+})
 
-const toast = useToast();
+const toast = useToast()
 
 async function onSubmit() {
-  if (!props.ratingChecker) return;
+  if (!props.ratingChecker) return
 
-  loading.value = true;
+  loading.value = true
 
   try {
     // Call API to delete rating checker
-    await $fetch(
-      `${apiBaseUrl}/api/ratingCheckerAdmins/${props.ratingChecker.id}`,
+    await apiFetch(
+      `/api/ratingCheckerAdmins/${props.ratingChecker.id}`,
       {
-        method: "DELETE",
-        headers: {
-          Authorization: token.value ? `Bearer ${token.value}` : "",
-        },
-      },
-    );
+        method: 'DELETE'
+      }
+    )
 
     toast.add({
-      title: "Success",
+      title: 'Success',
       description: `Rating "${props.ratingChecker.rating?.rating}" for sector "${props.ratingChecker.sector?.sector}" has been deleted successfully`,
-      color: "success",
-    });
+      color: 'success'
+    })
 
-    open.value = false;
+    open.value = false
 
     // Emit event to refresh parent table
-    emit("ratingCheckerDeleted");
-  } catch (error: any) {
-    const errorMessage =
-      error?.data?.statusMessage ||
-      error?.message ||
-      "Failed to delete rating. Please try again.";
+    emit('ratingCheckerDeleted')
+  } catch (error: unknown) {
+    const fetchError = error as { data?: { statusMessage?: string }, message?: string }
+    const errorMessage
+      = fetchError.data?.statusMessage
+        || fetchError.message
+        || 'Failed to delete rating. Please try again.'
     toast.add({
-      title: "Error",
+      title: 'Error',
       description: errorMessage,
-      color: "error",
-    });
+      color: 'error'
+    })
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 </script>
@@ -130,7 +127,9 @@ async function onSubmit() {
             </div>
           </div>
         </div>
-        <p class="text-sm text-muted">This action cannot be undone.</p>
+        <p class="text-sm text-muted">
+          This action cannot be undone.
+        </p>
       </div>
     </template>
     <template #body>

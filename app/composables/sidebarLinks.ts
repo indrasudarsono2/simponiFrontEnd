@@ -29,6 +29,13 @@ export function getSidebarLinksFromBackend(
     (module) => !module.startsWith("dashboard"),
   );
 
+  const ojtiIndex = regularModules.indexOf("ojtiRequests");
+  const applicationDocIndex = regularModules.indexOf("applicationDoc");
+  if (ojtiIndex >= 0 && applicationDocIndex >= 0) {
+    const [ojtiModule] = regularModules.splice(ojtiIndex, 1);
+    if (ojtiModule) regularModules.splice(regularModules.indexOf("applicationDoc") + 1, 0, ojtiModule);
+  }
+
   const sectorIndex = regularModules.indexOf("sectorManagement");
   const ratingIndexes = ["ratingManagement", "ratingCheckerAdmin"]
     .map((module) => regularModules.indexOf(module as ModuleKey))
@@ -43,7 +50,18 @@ export function getSidebarLinksFromBackend(
   }
 
   const orderedModules = dashboardModules.concat(regularModules);
-  const mainLinks = orderedModules.map((module) => MODULE_TO_ITEM[module]);
+  const mainLinks = orderedModules.map((module) => {
+    const item = MODULE_TO_ITEM[module];
+    if (module !== "pfcScore" || role.trim().toUpperCase() === "GENERAL ADMIN") return item;
+    return {
+      ...item,
+      children: item.children?.filter((child) => child.to !== "/pfcScore/branchUnit"),
+    };
+  });
+
+  if (role.trim().toUpperCase() === "OPERATIONAL" && found) {
+    mainLinks.push({ label: "Examination Guide", icon: "i-lucide-list-checks", to: "/operationalGuide" });
+  }
 
   return [mainLinks, bottomLinks];
 }

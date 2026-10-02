@@ -8,9 +8,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{ "update:role": [string] }>();
 
+const displayRole = (value: string) => value === "CHECKER EXAMINATION LEAD" ? "EXAMINATION LEAD" : value;
+
 const items = computed(() => [
   props.roles.map((r) => ({
-    label: r,
+    label: displayRole(r),
     icon: r === props.role ? "i-lucide-check" : undefined,
     disabled: props.loading,
     onSelect: (_e: Event) => {
@@ -21,16 +23,17 @@ const items = computed(() => [
 </script>
 
 <template>
-  <div class="p-2">
+  <div class="min-w-0 p-2">
     <UDropdownMenu :items="items" :disabled="collapsed || !!loading">
       <UButton
         color="neutral"
         variant="ghost"
-        :class="collapsed ? 'w-full justify-center' : 'w-full justify-between'"
+        :class="collapsed ? 'w-full justify-center' : 'w-full min-w-0 justify-between overflow-hidden'"
         :disabled="collapsed || !!loading"
+        :title="role || 'Select role'"
       >
-        <span v-if="!collapsed" class="truncate">{{
-          role || "Select role"
+        <span v-if="!collapsed" class="min-w-0 flex-1 truncate text-left">{{
+          displayRole(role) || "Select role"
         }}</span>
         <UIcon name="i-lucide-chevron-down" class="shrink-0" />
       </UButton>

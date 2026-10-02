@@ -236,7 +236,8 @@ function formatDate(value: string | null | undefined) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+    timeZone: "UTC",
+  }).format(new Date(value)) + " UTC";
 }
 
 function formatExpiryDate(value: string | null | undefined) {
