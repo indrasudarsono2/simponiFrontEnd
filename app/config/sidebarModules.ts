@@ -623,6 +623,7 @@ export function isPathAllowedForModules(
   assignedRoles: string[] = [],
 ): boolean {
   const requestedPath = normalizePath(path);
+  if (requestedPath.startsWith('/branchQuestionMonitor/')) return assignedRoles.some(role => role.trim().toUpperCase() === 'GENERAL ADMIN') && assignedModules.some(module => module.trim().toLowerCase() === 'pfcscore');
 
   if (AUTHENTICATED_UTILITY_ROUTES.some((route) => requestedPath === route)) {
     return true;

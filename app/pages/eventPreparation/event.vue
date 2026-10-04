@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
+import EventQuestionConfigurationModal from "~/components/event/QuestionConfigurationModal.vue";
 import { getPaginationRowModel } from "@tanstack/table-core";
 import { format, parseISO } from "date-fns";
 const { token } = useAuth();
@@ -91,6 +92,7 @@ const eventToUpdate = ref<EventItem | null>(null);
 const eventToDelete = ref<EventItem | null>(null);
 const eventToAssignUsers = ref<number | null>(null);
 const eventToViewUsers = ref<number | null>(null);
+const eventToViewConfiguration = ref<number | null>(null);
 
 // Table state
 const columnFilters = ref([
@@ -288,9 +290,8 @@ const columns: TableColumn<EventItem>[] = [
     },
     cell: ({ row }) => {
       return h(
-        "div",
-        { class: "font-medium text-highlighted" },
-        row.original.event,
+        UButton,
+        { variant: "link", class: "p-0 text-left whitespace-normal", label: row.original.event, onClick: () => { eventToViewConfiguration.value = row.original.id; } },
       );
     },
   },
@@ -805,6 +806,10 @@ function handleModalClose() {
       />
 
       <!-- View Assigned Users Modal -->
+      <EventQuestionConfigurationModal
+        :event-id="eventToViewConfiguration"
+        @close="eventToViewConfiguration = null"
+      />
       <EventViewUsersModal
         :event-id="eventToViewUsers"
         @close="handleUsersViewed"

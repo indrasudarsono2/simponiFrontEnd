@@ -6,25 +6,18 @@ export type DynamicRoleModulesRow = {
 };
 
 export function useDynamicRoleModules() {
-  const { authUser, getRoleNames, getRoleModules, isAuthenticated } = useAuth();
+  const { getRoleNames, getRoleModules, isAuthenticated } = useAuth();
 
   // Transform authUser roles to the format expected by sidebar
   const roleModulesData = computed<DynamicRoleModulesRow[]>(() => {
-    if (!isAuthenticated.value || !authUser.value?.roles) {
+    if (!isAuthenticated.value) {
       return [];
     }
 
-    return authUser.value.roles.map((roleData) => {
-      const roleName = roleData.roles.role;
-      const modules = roleData.roles.rolesMenu.map(
-        (rm) => rm.menu.menu,
-      ) as ModuleKey[];
-
-      return {
-        role: roleName,
-        modules,
-      };
-    });
+    return getRoleNames().map((roleName) => ({
+      role: roleName,
+      modules: getRoleModules(roleName) as ModuleKey[],
+    }));
   });
 
   // Available roles for dropdown

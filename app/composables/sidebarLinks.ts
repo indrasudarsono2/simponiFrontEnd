@@ -62,6 +62,13 @@ export function getSidebarLinksFromBackend(
   if (role.trim().toUpperCase() === "OPERATIONAL" && found) {
     mainLinks.push({ label: "Examination Guide", icon: "i-lucide-list-checks", to: "/operationalGuide" });
   }
+  if (role.trim().toUpperCase() === 'GENERAL ADMIN' && validModules.includes('pfcScore')) {
+    mainLinks.push({ label: 'Branch Question Monitor', icon: 'i-lucide-chart-no-axes-combined', type: 'trigger', children: [
+      { label: 'Question Monitor', to: '/branchQuestionMonitor/questions' },
+      { label: 'Statistic Multiple Choice', to: '/branchQuestionMonitor/multipleChoice' },
+      { label: 'Statistic Essay', to: '/branchQuestionMonitor/essay' },
+    ] });
+  }
 
   return [mainLinks, bottomLinks];
 }

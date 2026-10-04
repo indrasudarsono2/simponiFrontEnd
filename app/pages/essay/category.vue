@@ -92,7 +92,7 @@ interface ApiResponse {
   } | null;
 }
 // Fetch question groups data
-const { data, status, refresh } = await useFetch<ApiResponse>(
+const { data, status, error, refresh } = await useFetch<ApiResponse>(
   `${apiBaseUrl}/api/questionGroupsEssay`,
   {
     headers: {
@@ -131,6 +131,9 @@ const availableRatings = computed(() => {
 // Context derived from API response
 const currentBranch = computed(
   () => data.value?.sector?.[0]?.branchUnit?.branch?.branch || "-",
+);
+const fetchErrorMessage = computed(() =>
+  (error.value?.data as { message?: string } | undefined)?.message || error.value?.message || 'Request failed',
 );
 
 const targetQuestions = computed(() =>
@@ -260,7 +263,8 @@ const columns: TableColumn<QuestionGroup>[] = [
     },
   },
   {
-    accessorKey: "subBranchUnitRating.sector.sector",
+    id: "sectorName",
+    accessorFn: (row) => row.subBranchUnitRating.sector.sector,
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
       return h(UButton, {
@@ -678,6 +682,10 @@ function handleModalClose() {
             @click="refresh"
           />
         </div>
+      </div>
+
+      <div v-if="error" class="mb-4 rounded-lg border border-error/30 bg-error/5 p-4 text-sm text-error">
+        Unable to load essay categories: {{ fetchErrorMessage }}
       </div>
 
       <UTable

@@ -5,7 +5,7 @@ import { getDashboardRoute } from '~/utils/dashboardRoute'
 definePageMeta({ layout: false })
 
 const config = useRuntimeConfig()
-const { setAuthFromResponse } = useAuth()
+const { setAuthFromResponse, getRoleNames } = useAuth()
 const csrfToken = useCookie<string | null>('csrf_token')
 const failure = ref(false)
 
@@ -24,7 +24,7 @@ onMounted(async () => {
       csrfToken: csrfToken.value,
       user: session.user
     })
-    await navigateTo(getDashboardRoute(session.user.roles.map(role => role.roles.role)), { replace: true })
+    await navigateTo(getDashboardRoute(getRoleNames()), { replace: true })
   } catch {
     failure.value = true
   }

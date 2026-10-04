@@ -16,7 +16,10 @@ export type AuthUser = {
   name: string;
   email: string;
   authenticationType: "AIRNAV_SSO" | "LOCAL" | null;
-  roles: RoleData[];
+  roles?: RoleData[];
+  roleNames?: string[];
+  menuNames?: string[];
+  roleModules?: Record<string, string[]>;
 };
 
 export type LoginSuccessResponse = {
@@ -82,11 +85,34 @@ export const useAuth = (): UseAuthReturn => {
     "auth-user",
     () => userCookie.value,
   );
+  if (import.meta.client && authUser.value && !authUser.value.roleModules) {
+    try {
+      const storedRoleModules = sessionStorage.getItem("performa_role_modules");
+      if (storedRoleModules) {
+        authUser.value = { ...authUser.value, roleModules: JSON.parse(storedRoleModules) };
+      }
+    } catch {
+      sessionStorage.removeItem("performa_role_modules");
+    }
+  }
   // Sync cookie changes to state
   watch(
     () => userCookie.value,
     (newValue) => {
-      authUser.value = newValue;
+      if (!newValue) {
+        authUser.value = null;
+        return;
+      }
+      let roleModules = authUser.value?.roleModules;
+      if (import.meta.client && !roleModules) {
+        try {
+          const storedRoleModules = sessionStorage.getItem("performa_role_modules");
+          roleModules = storedRoleModules ? JSON.parse(storedRoleModules) : undefined;
+        } catch {
+          sessionStorage.removeItem("performa_role_modules");
+        }
+      }
+      authUser.value = roleModules ? { ...newValue, roleModules } : newValue;
     },
     { immediate: true },
   );
@@ -100,8 +126,31 @@ export const useAuth = (): UseAuthReturn => {
       maxAge: 60 * 60 * 3,
     });
     csrfToken.value = payload.csrfToken;
-    userCookie.value = payload.user;
-    authUser.value = payload.user;
+    const roleNames = payload.user.roles?.map((item) => item.roles.role).filter(Boolean)
+      || payload.user.roleNames
+      || [];
+    const roleModules = payload.user.roles
+      ? Object.fromEntries(payload.user.roles.map((item) => [
+          item.roles.role,
+          [...new Set(item.roles.rolesMenu.map((roleMenu) => roleMenu.menu.menu).filter(Boolean))],
+        ]))
+      : payload.user.roleModules || {};
+    const menuNames = [...new Set(Object.values(roleModules).flat())];
+    // Persist only the compact authorization projection. The backend reloads
+    // authoritative roles and menus from the database for every API request.
+    const compactUser: AuthUser = {
+      nik: payload.user.nik,
+      name: payload.user.name,
+      email: payload.user.email,
+      authenticationType: payload.user.authenticationType,
+      roleNames,
+      menuNames,
+    };
+    userCookie.value = compactUser;
+    authUser.value = { ...compactUser, roleModules };
+    if (import.meta.client) {
+      sessionStorage.setItem("performa_role_modules", JSON.stringify(roleModules));
+    }
     loginTimestamp.value = Date.now();
   };
 
@@ -143,6 +192,7 @@ export const useAuth = (): UseAuthReturn => {
     authUser.value = null;
     loginTimestamp.value = null;
     selectedRole.value = "";
+    if (import.meta.client) sessionStorage.removeItem("performa_role_modules");
   };
 
   // Check if session has expired (3 hours = 10800000 ms)
@@ -157,11 +207,16 @@ export const useAuth = (): UseAuthReturn => {
 
   // Helper to get role names from authUser
   const getRoleNames = () => {
-    return authUser.value?.roles?.map((r) => r.roles.role) || [];
+    return authUser.value?.roleNames
+      || authUser.value?.roles?.map((r) => r.roles.role)
+      || [];
   };
 
   // Helper to get modules for a specific role
   const getRoleModules = (roleName: string) => {
+    if (authUser.value?.roleModules) {
+      return authUser.value.roleModules[roleName] || [];
+    }
     const roleData = authUser.value?.roles?.find(
       (r) => r.roles.role === roleName,
     );
@@ -173,6 +228,16 @@ export const useAuth = (): UseAuthReturn => {
   // Helper to get all unique modules across all roles
   const getAllModules = () => {
     const modules = new Set<string>();
+    if (authUser.value?.menuNames) {
+      authUser.value.menuNames.forEach((module) => modules.add(module.toLowerCase()));
+      return Array.from(modules);
+    }
+    if (authUser.value?.roleModules) {
+      Object.values(authUser.value.roleModules).forEach((roleModules) => {
+        roleModules.forEach((module) => modules.add(module.toLowerCase()));
+      });
+      return Array.from(modules);
+    }
     authUser.value?.roles?.forEach((role) => {
       role.roles.rolesMenu?.forEach((rm) => {
         modules.add(rm.menu.menu.toLowerCase());

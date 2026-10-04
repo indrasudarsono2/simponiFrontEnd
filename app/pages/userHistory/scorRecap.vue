@@ -4,6 +4,7 @@ const apiBaseUrl = useApiBaseUrl()
 interface ScoreUserResponseItem {
   event?: {
     event?: string | null;
+    briefingFile?: string | null;
   } | null;
   applicationDocs?: Array<{
     id?: number;
@@ -33,6 +34,7 @@ interface ScoreRecapRow {
   showNo: boolean;
   noRowSpan: number;
   event: string;
+  briefingFile: string | null;
   showEvent: boolean;
   eventRowSpan: number;
   applicationDocument: string;
@@ -99,6 +101,7 @@ const rows = computed<ScoreRecapRow[]>(() => {
 
   payload.forEach((item, itemIndex) => {
     const eventName = item.event?.event || "-";
+    const briefingFile = item.event?.briefingFile || null;
     const docs = item.applicationDocs || [];
     const safeDocs =
       docs.length > 0 ? docs : [{ id: undefined, number: "-", appRatings: [] }];
@@ -139,6 +142,7 @@ const rows = computed<ScoreRecapRow[]>(() => {
             showNo: isFirstEventRow,
             noRowSpan: eventRowSpan,
             event: eventName,
+            briefingFile,
             showEvent: isFirstEventRow,
             eventRowSpan,
             applicationDocument: documentNumber,
@@ -284,7 +288,16 @@ const errorMessage = computed(() => {
                     class="px-3 py-2 border border-default align-middle"
                     :rowspan="row.eventRowSpan"
                   >
-                    {{ row.event }}
+                    <div>{{ row.event }}</div>
+                    <UButton
+                      v-if="row.briefingFile"
+                      :to="`/file/view?url=${encodeURIComponent(row.briefingFile)}`"
+                      label="View / Download Briefing"
+                      icon="i-lucide-file-down"
+                      size="xs"
+                      variant="link"
+                      class="mt-1 px-0"
+                    />
                   </td>
                   <td
                     v-if="row.showApplicationDocument"

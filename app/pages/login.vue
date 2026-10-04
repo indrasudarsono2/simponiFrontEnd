@@ -77,8 +77,7 @@ const handleLogin = async () => {
       color: 'success'
     })
 
-    const roleNames = response.user.roles.map(role => role.roles.role)
-    await router.push(getDashboardRoute(roleNames))
+    await router.push(getDashboardRoute(getRoleNames()))
   } catch (error: unknown) {
     toast.add({
       title: 'Login failed',

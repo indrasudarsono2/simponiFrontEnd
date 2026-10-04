@@ -69,6 +69,7 @@ interface EventUserOption {
 }
 
 interface RoomItem {
+  defaultEventId?: number | null;
   id: number;
   name: string;
   startDate?: string | null;
@@ -157,6 +158,7 @@ function hasAttendanceRecord(eventUser: EventUserItem): boolean {
   const attendances = toArray(eventUser.attendances as any);
   const records = [...attendaces, ...attendances];
   return records.some((item) => {
+    if (item?.room?.defaultEventId || item?.deletedAt) return false;
     const roomId = Number(item?.roomId);
     const attendanceId = Number(item?.id);
     const eventUserId = Number(item?.eventUserId);
@@ -228,6 +230,7 @@ const eventUserOptions = computed<EventUserOption[]>(() => {
   const assignedIds = new Set<number>();
 
   rooms.value.forEach((room) => {
+    if (room.defaultEventId) return;
     toArray(room.attendances).forEach((attendance) => {
       const idFromEventUser = Number(attendance?.eventUser?.id);
       const idFromAttendance = Number(attendance?.eventUserId);
@@ -441,6 +444,7 @@ const columns: TableColumn<RoomItem>[] = [
     id: "action",
     header: "Action",
     cell: ({ row }) => {
+      if (row.original.defaultEventId) return h('span', { class: 'text-sm text-muted' }, 'Automatic · managed by event');
       return h("div", { class: "flex items-center gap-2" }, [
         h(UButton, {
           icon: "i-lucide-pencil",
