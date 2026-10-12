@@ -9,6 +9,11 @@ interface KindOfPracticalItem {
 
 interface PracticalTestItem {
   id: number;
+  canScore?: boolean;
+  canUploadLicense?: boolean;
+  canSendLicense?: boolean;
+  requiresLicense?: boolean;
+  checkerName?: string;
   ratingLicenseFile?: string | null;
   score?: number | null;
   file?: string | null;
@@ -73,6 +78,11 @@ interface PracticalEventResponse {
 
 interface PracticalRecheckItem {
   id: number;
+  canScore?: boolean;
+  canUploadLicense?: boolean;
+  canSendLicense?: boolean;
+  requiresLicense?: boolean;
+  checkerName?: string;
   score?: number | null;
   file?: string | null;
   echainSyncs?: PracticalEchainSyncItem[];
@@ -143,8 +153,11 @@ interface PracticalEchainPayload {
 const { token } = useAuth();
 const toast = useToast();
 const isUpdateModalOpen = ref(false);
+const licenseOnly = ref(false);
 const selectedPracticalTest = ref<PracticalTestItem | null>(null);
 const selectedRecheck = ref<PracticalRecheckItem | null>(null);
+const selectedCanUploadLicense = computed(() => (selectedRecheck.value || selectedPracticalTest.value)?.canUploadLicense !== false);
+const selectedRequiresLicense = computed(() => (selectedRecheck.value || selectedPracticalTest.value)?.requiresLicense !== false);
 const selectedPassingGrade = ref<number | null>(null);
 const belowPassingGradeConfirmed = ref(false);
 const inputScore = ref<string>("");
@@ -262,8 +275,8 @@ const practicalRows = computed<PracticalGroupRow[]>(() => {
         rating: rating.rating?.rating || "-",
         status: rating.status?.status || "-",
         canInputPractical:
-          rating.status?.status === "WAITING PRACTICAL" &&
-          rating.finalScores?.[0]?.status?.status === "WAITING PRACTICAL",
+          rating.finalScores?.[0]?.status?.status !== 'CHECKING ESSAY' &&
+          Number(rating.finalScores?.[0]?.finalScore ?? -1) >= Number(doc.eventUser?.event?.passingGrade ?? Infinity),
         canReviewTheory:
           rating.finalScores?.[0]?.status?.status !== "CHECKING ESSAY" &&
           Number(rating.finalScores?.[0]?.finalScore ?? -1) >= Number(doc.eventUser?.event?.passingGrade ?? Infinity),
@@ -368,7 +381,7 @@ function getEchainTooltip(test?: PracticalTestItem | null, licenseFile?: string 
 
 function canSendRowToEchain(row: PracticalGroupRow, test?: PracticalTestItem | null): boolean {
   return Boolean(
-    test &&
+    test && test.canSendLicense !== false &&
       test.id > 0 &&
       test.score != null &&
       row.status === "SUCCESS" &&
@@ -378,13 +391,14 @@ function canSendRowToEchain(row: PracticalGroupRow, test?: PracticalTestItem | n
 }
 
 function getRowEchainTooltip(row: PracticalGroupRow, test?: PracticalTestItem | null): string {
+  if (test?.canSendLicense === false) return 'Only the assigned PIC may send the license to e-chain';
   if (row.status !== "SUCCESS") return "Only SUCCESS practical exam data can be sent to e-chain";
   return getEchainTooltip(test, row.practicalLicenseFile);
 }
 
 function canSendRecheckToEchain(task?: PracticalRecheckItem | null): boolean {
   return Boolean(
-    task &&
+    task && task.canSendLicense !== false &&
       task.id > 0 &&
       task.score != null &&
       task.authorization.status === "SUCCESS" &&
@@ -677,6 +691,8 @@ watch(inputScore, () => {
 
 function openUpdateModal(test: PracticalTestItem, passingGrade: number | null) {
   if (!test?.id || test.id <= 0) return;
+  licenseOnly.value = false;
+  selectedRecheck.value = null;
   selectedPracticalTest.value = test;
   selectedPassingGrade.value = passingGrade;
   belowPassingGradeConfirmed.value = false;
@@ -695,6 +711,7 @@ function openUpdateModal(test: PracticalTestItem, passingGrade: number | null) {
 }
 
 function openRecheckModal(recheck: PracticalRecheckItem) {
+  licenseOnly.value = false;
   selectedRecheck.value = recheck;
   selectedPracticalTest.value = recheck.practicalTest;
   selectedPassingGrade.value = Number(recheck.authorization.passingGrade);
@@ -724,6 +741,11 @@ function closeUpdateModal() {
   fileInputKey.value += 1;
 }
 
+function openLicenseModal(test: PracticalTestItem) {
+  openUpdateModal(test, null);
+  licenseOnly.value = true;
+}
+
 function onFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0] || null;
@@ -741,6 +763,7 @@ function isAllowedUploadFile(file: File): boolean {
 }
 
 function validateUpdateForm(): string | null {
+  if (licenseOnly.value) return inputLicenseFile.value && isAllowedUploadFile(inputLicenseFile.value) ? null : 'Choose a PDF license.';
   const score = Number(inputScore.value);
   if (
     !Number.isFinite(score) ||
@@ -758,7 +781,7 @@ function validateUpdateForm(): string | null {
   if (inputFile.value && !isAllowedUploadFile(inputFile.value)) {
     return "Evaluation sheet must be PDF.";
   }
-  if (!inputLicenseFile.value && !selectedRatingLicenseFile.value) {
+  if (selectedRequiresLicense.value && !inputLicenseFile.value && !selectedRatingLicenseFile.value) {
     return "A license PDF is required for this rating.";
   }
   if (inputLicenseFile.value && !isAllowedUploadFile(inputLicenseFile.value)) {
@@ -805,7 +828,7 @@ async function submitPracticalUpdate() {
     const response = await apiFetch(
       selectedRecheck.value
         ? `/api/practicalExam/recheck/${testId}`
-        : `/api/practicalExam/${testId}`,
+        : `/api/practicalExam/${testId}${licenseOnly.value ? '/license' : ''}`,
       {
       method: "PUT",
       body: formData,
@@ -961,6 +984,7 @@ async function submitPracticalUpdate() {
                     </td>
                     <td class="border px-3 py-2 text-center">
                       <UButton
+                        v-if="task.canScore !== false"
                         :label="
                           task.authorization.status === 'ACTIVE'
                             ? task.score == null ? 'Check Again' : 'Update Recheck'
@@ -1100,6 +1124,7 @@ async function submitPracticalUpdate() {
                       <div>{{ row.rating }}</div>
                       <UButton v-if="row.practicalLicenseFile" label="View license" size="xs" variant="link"
                         @click="openFilePreview(row.practicalLicenseFile)" />
+                      <UButton v-if="row.practicalTests[0]?.canUploadLicense" :label="row.practicalLicenseFile ? 'Replace license (PIC)' : 'Upload license (PIC)'" size="xs" variant="soft" class="mt-2" @click="openLicenseModal(row.practicalTests[0]!)" />
                     </td>
                     <td
                       class="border border-gray-300 px-4 py-2 text-center align-top"
@@ -1114,6 +1139,7 @@ async function submitPracticalUpdate() {
 
                     <td class="border border-gray-300 px-4 py-2">
                       {{ formatPracticalType(row.practicalTests[0]?.kindOfPractical?.kind) }}
+                      <div v-if="row.practicalTests[0]?.checkerName" class="text-xs text-muted">Checker: {{ row.practicalTests[0]?.checkerName }}</div>
                     </td>
                     <td class="border border-gray-300 px-4 py-2 text-center">
                       {{ formatScore(row.practicalTests[0]?.score) }}
@@ -1134,7 +1160,7 @@ async function submitPracticalUpdate() {
                     </td>
                     <td class="border border-gray-300 px-4 py-2 text-center">
                       <UButton
-                        v-if="(row.practicalTests[0]?.id ?? 0) > 0"
+                        v-if="(row.practicalTests[0]?.id ?? 0) > 0 && row.practicalTests[0]?.canSendLicense !== false"
                         :label="getEchainButtonLabel(row.practicalTests[0])"
                         size="xs"
                         :color="getEchainButtonColor(row.practicalTests[0])"
@@ -1149,7 +1175,7 @@ async function submitPracticalUpdate() {
                     </td>
                     <td class="border border-gray-300 px-4 py-2 text-center">
                       <UButton
-                        v-if="(row.practicalTests[0]?.id ?? 0) > 0"
+                        v-if="(row.practicalTests[0]?.id ?? 0) > 0 && row.practicalTests[0]?.canScore !== false"
                         :label="
                           row.practicalTests[0]?.score == null
                             ? 'Input'
@@ -1181,6 +1207,7 @@ async function submitPracticalUpdate() {
                   >
                     <td class="border border-gray-300 px-4 py-2">
                       {{ formatPracticalType(test.kindOfPractical?.kind) }}
+                      <div v-if="test.checkerName" class="text-xs text-muted">Checker: {{ test.checkerName }}</div>
                     </td>
                     <td class="border border-gray-300 px-4 py-2 text-center">
                       {{ formatScore(test.score) }}
@@ -1204,7 +1231,7 @@ async function submitPracticalUpdate() {
                     </td>
                     <td class="border border-gray-300 px-4 py-2 text-center">
                       <UButton
-                        v-if="test.id > 0"
+                        v-if="test.id > 0 && test.canScore !== false"
                         :label="test.score == null ? 'Input' : 'Update'"
                         size="xs"
                         color="primary"
@@ -1262,7 +1289,7 @@ async function submitPracticalUpdate() {
 
   <UModal
     v-model:open="isUpdateModalOpen"
-    title="Update Practical Exam"
+    :title="licenseOnly ? 'Upload Rating License (PIC)' : 'Update Practical Exam'"
     :dismissible="!isSubmittingUpdate"
     :close="!isSubmittingUpdate"
   >
@@ -1279,14 +1306,14 @@ async function submitPracticalUpdate() {
             This recheck is already {{ selectedRecheck.authorization.status }}. Only the PDF evidence file can be updated.
           </p>
         </div>
-        <UFormField label="Practical">
+        <UFormField v-if="!licenseOnly" label="Practical">
           <UInput
             :model-value="formatPracticalType(selectedPracticalTest?.kindOfPractical?.kind)"
             disabled
           />
         </UFormField>
 
-        <UFormField label="Score (1-100)" required>
+        <UFormField v-if="!licenseOnly" label="Score (1-100)" required>
           <UInput
             v-model="inputScore"
             type="number"
@@ -1324,6 +1351,7 @@ async function submitPracticalUpdate() {
         </div>
 
         <UFormField
+          v-if="!licenseOnly"
           label="Evaluation sheet"
           description="PDF for this Live or Simulator practical exam; kept as practical evidence and never sent to e-chain."
           :required="!(selectedRecheck?.file || selectedPracticalTest?.file)"
@@ -1356,8 +1384,8 @@ async function submitPracticalUpdate() {
             }}
           </p>
         </UFormField>
-        <UFormField label="License" description="One PDF license per rating, visible in the examinee's Operational License menu. Only this file is sent to e-chain."
-          :required="!selectedRatingLicenseFile">
+        <UFormField v-if="selectedCanUploadLicense" label="License" description="Only PIC uploads and sends this rating license to e-chain. Evaluation sheets remain in PERFORMA."
+          :required="licenseOnly || (selectedRequiresLicense && !selectedRatingLicenseFile)">
           <p class="mb-2 text-xs text-muted">License note: {{ selectedLicenseEventName || '-' }} · Expiry: {{ selectedLicenseExpiryDate ? formatDateTime(selectedLicenseExpiryDate) : 'Not configured' }}</p>
           <label :for="`license-upload-${selectedPracticalTest?.id || 'new'}`"
             class="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-primary/40 bg-primary/5 px-4 py-3 text-sm">

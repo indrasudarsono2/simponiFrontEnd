@@ -24,6 +24,7 @@ interface Sector {
   id: number;
   sector: string;
   users: User[];
+  subBranchUnitRatings?: { ratingId: number; rating: { id: number; rating: string } }[];
 }
 
 interface RemarkDoc {
@@ -79,6 +80,9 @@ interface BranchUnit {
 
 interface DefiningCheckerRow {
   id: number;
+  assignmentPolicy: number;
+  ratingIds: number[];
+  assignments: { ratingId: number; checker: string }[];
   eventId: number;
   eventName: string;
   sectorId: number;
@@ -102,6 +106,7 @@ interface GroupUserPic {
 interface CheckerGroupItem {
   id: number;
   checker: string;
+  ratingAssignments?: { ratingId: number; rating: { rating: string } }[];
   userChecker: {
     name: string;
   };
@@ -131,6 +136,9 @@ interface GroupEvent {
 
 interface DefiningCheckerGroup {
   id: number;
+  pic: string;
+  assignmentPolicy: number;
+  ratingIds: number[] | null;
   group: string;
   createdAt: string;
   userPic: GroupUserPic;
@@ -235,8 +243,7 @@ const normalizedGroups = computed<DefiningCheckerRow[]>(() => {
     const picChecker = item.checkerGroups?.find(
       (cg) => cg.userChecker?.name === picName,
     );
-    const picNik =
-      picChecker?.checker ?? item.checkerGroups?.[0]?.checker ?? "";
+    const picNik = item.pic || "";
 
     // Get checker NIKs and names
     const checkerNiks =
@@ -260,6 +267,9 @@ const normalizedGroups = computed<DefiningCheckerRow[]>(() => {
 
     return {
       id: item.id, // Use actual group ID from API
+      assignmentPolicy: item.assignmentPolicy,
+      ratingIds: item.ratingIds || [],
+      assignments: item.checkerGroups.flatMap(c => (c.ratingAssignments || []).map(a => ({ ratingId: a.ratingId, checker: c.checker }))),
       eventId: item.event?.id ?? 0,
       eventName: item.event?.event ?? "-",
       sectorId: item.event?.sector?.id ?? 0,
@@ -312,7 +322,9 @@ function renderCheckerList(checkers: string[], row: DefiningCheckerRow) {
     const checkerGroup = groupData?.checkerGroups?.find(
       (cg) => cg.checker === nik,
     );
-    return checkerGroup?.userChecker?.name || nik;
+    const name = checkerGroup?.userChecker?.name || nik;
+    const ratings = checkerGroup?.ratingAssignments?.map(a => a.rating.rating).join(', ');
+    return `${name}${ratings ? ` — ${ratings}` : ' — legacy assignment'}`;
   });
 
   return h(

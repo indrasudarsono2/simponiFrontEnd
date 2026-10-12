@@ -157,10 +157,10 @@ const updateSchema = z.object({
 
 type UpdateSchema = z.output<typeof updateSchema>;
 
-const genderOptions = [
+const genderOptions = ref([
   { value: "1", label: "LAKI-LAKI" },
   { value: "2", label: "PEREMPUAN" },
-];
+]);
 
 const formState = reactive<Partial<UpdateSchema>>({
   name: "",
@@ -233,32 +233,25 @@ async function onManualSubmit(event: FormSubmitEvent<UpdateSchema>) {
   }
 }
 
-// ─── Sync from External System (Dummy) ────────────────────────────────────
+// Load ECHAIN values for review; saving remains an explicit user action.
 async function syncFromExternalSystem() {
   isSyncing.value = true;
   try {
-    // Simulate API call to external system
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Dummy data from external system
-    const dummyExternalData = {
-      name: "INDRA SUDARSONO",
-      dateOfBirth: "1992-11-04",
-      placeOfBirth: "JAKARTA",
-      personalAddress: "Jl. Sudirman No. 123, Jakarta",
-      nationality: "INDONESIA",
-      phoneNumber: "081234567890",
-      email: "synced@example.com",
-    };
-
-    // Prefill form with synced data
-    formState.name = dummyExternalData.name;
-    formState.dateOfBirth = dummyExternalData.dateOfBirth;
-    formState.placeOfBirth = dummyExternalData.placeOfBirth;
-    formState.personalAddress = dummyExternalData.personalAddress;
-    formState.nationality = dummyExternalData.nationality;
-    formState.phoneNumber = dummyExternalData.phoneNumber;
-    formState.email = dummyExternalData.email;
+    const csrfToken = useCookie<string | null>("csrf_token");
+    const response = await $fetch<{success: boolean; message?: string; data: Partial<UpdateSchema> & {genderLabel?: string}}>(`${apiBaseUrl}/api/profile/sync-echain`, {
+      method: "POST", credentials: "include",
+      headers: csrfToken.value ? {"X-CSRF-Token": csrfToken.value} : undefined,
+    });
+    if (!response.success) throw new Error(response.message || "ECHAIN sync failed");
+    const values = response.data;
+    for (const field of ["name", "dateOfBirth", "placeOfBirth", "personalAddress", "phoneNumber", "email"] as const) {
+      if (typeof values[field] === "string" && values[field]?.trim()) formState[field] = values[field];
+    }
+    if (values.genderId && values.genderLabel) {
+      genderOptions.value = genderOptions.value.filter(item => item.label !== values.genderLabel && item.value !== values.genderId);
+      genderOptions.value.push({value: values.genderId, label: values.genderLabel});
+      formState.genderId = values.genderId;
+    }
 
     // Switch to manual mode to review/edit before saving
     updateMode.value = "manual";
@@ -272,7 +265,7 @@ async function syncFromExternalSystem() {
   } catch (err: any) {
     toast.add({
       title: "Sync Failed",
-      description: err?.message || "Failed to sync from external system.",
+      description: err?.data?.message || err?.message || "Failed to sync from external system.",
       color: "error",
     });
   } finally {

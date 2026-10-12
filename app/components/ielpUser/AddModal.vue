@@ -3,7 +3,7 @@ const training = useTrainingMode();
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 const { authUser } = useAuth();
-const canSyncEchain = computed(() => authUser.value?.authenticationType !== "LOCAL");
+const canSyncEchain = computed(() => authUser.value?.authenticationType === "AIRNAV_SSO");
 
 defineOptions({
   name: "IELPUserAddModal",
@@ -23,11 +23,16 @@ const schema = z.object({
   echainFileSizeBytes: z.number().nullable().optional(),
   requestedCheckerNik: z.string().optional(),
   syncReceipt: z.string().nullable().optional(),
+  expirySource: z.enum(['ECHAIN', 'PERFORMA']).optional(),
+  echainExpired: z.string().nullable().optional(),
+  calculatedExpired: z.string().nullable().optional(),
 });
 
 const open = ref(false);
 const syncMode = ref(false);
 const syncLoading = ref(false);
+const institutionMissing = ref(false);
+const syncReceipts = ref<Partial<Record<'ECHAIN' | 'PERFORMA', string>>>({});
 
 type Schema = z.output<typeof schema>;
 
@@ -48,6 +53,13 @@ const state = reactive<Partial<Schema>>({
 });
 
 const toast = useToast();
+const hasReview = computed(() => !!syncReceipts.value.ECHAIN);
+const correctionNeeded = computed(() => syncMode.value && state.expirySource === 'PERFORMA' && state.echainExpired !== state.calculatedExpired);
+function chooseExpiry(source: 'ECHAIN' | 'PERFORMA') {
+  state.expirySource = source;
+  state.expired = (source === 'ECHAIN' ? state.echainExpired : state.calculatedExpired) || undefined;
+  state.syncReceipt = syncReceipts.value[source] || null;
+}
 const loading = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const { apiFetch } = useApiFetch();
@@ -93,8 +105,11 @@ interface IelpUserSyncResponse {
     fileUrlExpiresAt?: string | null;
     fileMimeType?: string | null;
     fileSizeBytes?: number | null;
+    echainExpired: string | null;
+    calculatedExpired: string | null;
+    institutionMissing?: boolean;
   };
-  syncReceipt: string;
+  syncReceipts: Record<'ECHAIN' | 'PERFORMA', string>;
 }
 
 function handleFileChange(event: Event) {
@@ -115,6 +130,9 @@ function triggerFileInput() {
 }
 
 function toggleSyncMode() {
+  syncReceipts.value = {};
+  state.syncReceipt = null;
+  state.expirySource = undefined;
   syncMode.value = !syncMode.value;
   if (!syncMode.value) {
     // Reset form when switching to manual mode
@@ -134,16 +152,22 @@ function toggleSyncMode() {
 
 async function syncFromSystem() {
   syncLoading.value = true;
+  syncReceipts.value = {};
+  state.syncReceipt = null;
+  state.expirySource = undefined;
 
   try {
     const response = (await apiFetch("/api/ielpUser/sync-echain", {
       method: "POST",
     })) as IelpUserSyncResponse;
 
-    state.institution = response.data.institution;
+    institutionMissing.value = response.data.institutionMissing === true;
+    state.institution = response.data.institution || undefined;
     state.level = response.data.level;
     state.released = response.data.released;
-    state.expired = response.data.expired;
+    state.expired = undefined;
+    state.echainExpired = response.data.echainExpired;
+    state.calculatedExpired = response.data.calculatedExpired;
     state.rater = response.data.rater ?? undefined;
     state.file = undefined;
     state.echainFileName = response.data.fileName ?? null;
@@ -151,7 +175,7 @@ async function syncFromSystem() {
     state.echainFileUrlExpiresAt = response.data.fileUrlExpiresAt ?? null;
     state.echainFileMimeType = response.data.fileMimeType ?? null;
     state.echainFileSizeBytes = response.data.fileSizeBytes ?? null;
-    state.syncReceipt = response.syncReceipt;
+    syncReceipts.value = response.syncReceipts;
 
     toast.add({
       title: "Sync Success",
@@ -177,6 +201,10 @@ async function syncFromSystem() {
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
+  if (syncMode.value && (!state.expirySource || !state.syncReceipt)) {
+    toast.add({ title: 'Choose expiry', description: 'Review both dates and choose the correct expiry before saving.', color: 'error' });
+    return;
+  }
   if (!syncMode.value && !event.data.requestedCheckerNik) {
     toast.add({ title: "Checker required", description: "Please select who will verify this manual IELP.", color: "error" });
     return;
@@ -193,6 +221,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     formData.append("rater", event.data.rater);
     formData.append("source", syncMode.value ? "ECHAIN" : "MANUAL");
     if (syncMode.value && event.data.syncReceipt) formData.append("syncReceipt", event.data.syncReceipt);
+    if (syncMode.value) {
+      if (institutionMissing.value) formData.append('institutionMissing', 'true');
+      formData.append('expirySource', state.expirySource!);
+      formData.append('echainExpired', state.echainExpired || '');
+      formData.append('calculatedExpired', state.calculatedExpired || '');
+    }
     if (!syncMode.value && event.data.requestedCheckerNik) formData.append("requestedCheckerNik", event.data.requestedCheckerNik);
 
     if (event.data.file instanceof File) {
@@ -229,7 +263,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     toast.add({
       title: "Success",
-      description: `IELP record has been created successfully`,
+      description: correctionNeeded.value ? 'IELP saved using PERFORMA calculation. Please correct the expiry in ECHAIN.' : 'IELP record has been created successfully',
       color: "success",
     });
 
@@ -247,6 +281,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.echainFileSizeBytes = null;
     state.requestedCheckerNik = undefined;
     state.syncReceipt = null;
+    syncReceipts.value = {};
+    state.expirySource = undefined;
     syncMode.value = false;
     open.value = false;
 
@@ -335,7 +371,7 @@ const emit = defineEmits<{
               @click="syncFromSystem"
             />
 
-            <div v-if="state.institution" class="p-3 bg-success/10 rounded-lg">
+            <div v-if="hasReview" class="p-3 bg-success/10 rounded-lg">
               <p class="text-sm text-success font-medium">
                 ✓ Data synced successfully!
               </p>
@@ -348,6 +384,20 @@ const emit = defineEmits<{
               >
                 File: {{ state.echainFileName }}
               </p>
+            </div>
+            <div v-if="hasReview" class="space-y-3">
+              <p v-if="institutionMissing" class="text-sm text-warning" role="alert">Institution is missing in ECHAIN. Enter it below before saving, and please correct it in ECHAIN. Other IELP data can still be reviewed.</p>
+              <p class="text-sm font-medium">Choose the correct expiry date</p>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="radio" name="ielp-expiry-source" :checked="state.expirySource === 'ECHAIN'" @change="chooseExpiry('ECHAIN')" />
+                ECHAIN: {{ state.echainExpired || 'Lifetime' }}
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="radio" name="ielp-expiry-source" :checked="state.expirySource === 'PERFORMA'" @change="chooseExpiry('PERFORMA')" />
+                PERFORMA calculation: {{ state.calculatedExpired || 'Lifetime' }}
+              </label>
+              <p v-if="correctionNeeded" class="text-sm text-warning" role="alert">Please correct the IELP expiry in ECHAIN. This saves your choice in PERFORMA only; ECHAIN is not changed.</p>
+              <p class="text-xs text-muted">Review before saving. ECHAIN does not provide the rater name in this API; enter it below.</p>
             </div>
           </div>
 
@@ -406,7 +456,7 @@ const emit = defineEmits<{
               v-model="state.institution"
               class="w-full"
               placeholder="e.g., PPIC CURUG"
-              :disabled="syncMode && !!state.institution"
+              :disabled="syncMode && hasReview && !institutionMissing"
             />
           </UFormField>
 
@@ -438,7 +488,7 @@ const emit = defineEmits<{
 
             <UFormField :label="state.level === '6' ? 'Validity' : 'Expired Date'" name="expired" :required="state.level !== '6'">
               <UInput
-                v-if="state.level !== '6'"
+                v-if="syncMode ? (!state.expirySource || !!state.expired) : state.level !== '6'"
                 v-model="state.expired"
                 type="date"
                 class="w-full"
@@ -477,6 +527,7 @@ const emit = defineEmits<{
               variant="solid"
               type="submit"
               :loading="loading"
+              :disabled="syncMode && (!state.expirySource || !state.syncReceipt || syncLoading)"
             />
           </div>
         </UForm>

@@ -18,6 +18,7 @@ interface IELPUser {
   file?: string;
   source: "ECHAIN" | "MANUAL" | "LEGACY";
   verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+  verificationNote?: string | null;
   requestedChecker?: { nik: string; name?: string | null } | null;
   verifiedBy?: { nik: string; name?: string | null } | null;
 }
@@ -224,7 +225,11 @@ const columns = computed((): TableColumn<IELPUser>[] => [
       return h(
         "div",
         { class: isExpired ? "text-error font-medium" : "text-muted" },
-        row.original.level === "6" ? "Lifetime" : formatDate(row.original.expired),
+        [
+          h('span', row.original.expired ? formatDate(row.original.expired) : row.original.level === '6' ? 'Lifetime' : 'Not available'),
+          row.original.verificationNote?.includes('Please correct the IELP expiry in ECHAIN.')
+            ? h('p', { class: 'text-xs text-warning mt-1' }, 'Please correct the IELP expiry in ECHAIN.') : null,
+        ],
       );
     },
   },

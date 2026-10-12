@@ -4,7 +4,7 @@ import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
 const { apiFetch } = useApiFetch();
 const { authUser } = useAuth();
-const canSyncEchain = computed(() => authUser.value?.authenticationType !== "LOCAL");
+const canSyncEchain = computed(() => authUser.value?.authenticationType === "AIRNAV_SSO");
 defineOptions({
   name: "MedexUserAddModal",
 });
@@ -27,6 +27,21 @@ const schema = z.object({
 const open = ref(false);
 const syncMode = ref(false);
 const syncLoading = ref(false);
+const records = ref<Array<{data: MedexUserSyncResponse['data']; syncReceipt:string}>>([]);
+const selectedRecord = ref<number | null>(null);
+const institutionMissing = ref(false);
+const examinerMissing = ref(false);
+function selectRecord(index:number) {
+  const record=records.value[index];
+  if (!record) return;
+  selectedRecord.value=index;
+  Object.assign(state,{institution:record.data.institution||undefined,released:record.data.released,expired:record.data.expired,
+    examiner:record.data.examiner||undefined,file:undefined,echainFileName:record.data.fileName??null,echainFileUrl:record.data.fileUrl??null,
+    echainFileUrlExpiresAt:record.data.fileUrlExpiresAt??null,echainFileMimeType:record.data.fileMimeType??null,
+    echainFileSizeBytes:record.data.fileSizeBytes??null,syncReceipt:record.syncReceipt});
+  institutionMissing.value=record.data.institutionMissing===true;
+  examinerMissing.value=record.data.examinerMissing===true;
+}
 
 type Schema = z.output<typeof schema>;
 
@@ -76,8 +91,12 @@ interface MedexUserSyncResponse {
     fileUrlExpiresAt?: string | null;
     fileMimeType?: string | null;
     fileSizeBytes?: number | null;
+    testDate?:string;
+    institutionMissing?:boolean;
+    examinerMissing?:boolean;
   };
   syncReceipt: string;
+  records?:Array<{data:MedexUserSyncResponse['data'];syncReceipt:string}>;
 }
 
 function handleFileChange(event: Event) {
@@ -98,7 +117,9 @@ function triggerFileInput() {
 }
 
 function toggleSyncMode() {
+  if (loading.value || syncLoading.value) return;
   syncMode.value = !syncMode.value;
+  records.value=[];selectedRecord.value=null;state.syncReceipt=null;
   if (!syncMode.value) {
     // Reset form when switching to manual mode
     state.institution = undefined;
@@ -116,29 +137,22 @@ function toggleSyncMode() {
 
 async function syncFromSystem() {
   syncLoading.value = true;
+  records.value=[];selectedRecord.value=null;state.syncReceipt=null;
+  state.institution=undefined;state.examiner=undefined;state.released=undefined;state.expired=undefined;
+  state.echainFileName=null;state.echainFileUrl=null;
 
   try {
     const response = (await apiFetch("/api/medexUser/sync-echain", {
       method: "POST",
     })) as MedexUserSyncResponse;
 
-    state.institution = response.data.institution;
-    state.released = response.data.released;
-    state.expired = response.data.expired;
-    state.examiner = response.data.examiner ?? undefined;
-    state.file = undefined;
-    state.echainFileName = response.data.fileName ?? null;
-    state.echainFileUrl = response.data.fileUrl ?? null;
-    state.echainFileUrlExpiresAt = response.data.fileUrlExpiresAt ?? null;
-    state.echainFileMimeType = response.data.fileMimeType ?? null;
-    state.echainFileSizeBytes = response.data.fileSizeBytes ?? null;
-    state.syncReceipt = response.syncReceipt;
+    if (!response.success || !response.records?.length) throw new Error('No MEDEX records returned.');
+    records.value=response.records;
+    if (records.value.length===1) selectRecord(0);
 
     toast.add({
       title: "Sync Success",
-      description: response.data.fileName
-        ? `Medex data synced from e-chain: ${response.data.fileName}`
-        : "Medex data synced from e-chain. Please review before saving.",
+      description: records.value.length>1 ? 'Multiple latest examinations found. Choose the correct record before saving.' : 'MEDEX loaded. Review and complete missing fields before saving.',
       color: "success",
     });
   } catch (error: any) {
@@ -158,6 +172,7 @@ async function syncFromSystem() {
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
+  if (syncMode.value && (selectedRecord.value===null || !state.syncReceipt || syncLoading.value)) return;
   if (!syncMode.value && !event.data.requestedCheckerNik) {
     toast.add({ title: "Checker required", description: "Please select who will verify this manual MEDEX.", color: "error" });
     return;
@@ -173,6 +188,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     formData.append("examiner", event.data.examiner);
     formData.append("source", syncMode.value ? "ECHAIN" : "MANUAL");
     if (syncMode.value && event.data.syncReceipt) formData.append("syncReceipt", event.data.syncReceipt);
+    if (syncMode.value) {
+      formData.append('institutionMissing',String(institutionMissing.value));
+      formData.append('examinerMissing',String(examinerMissing.value));
+    }
     if (!syncMode.value && event.data.requestedCheckerNik) formData.append("requestedCheckerNik", event.data.requestedCheckerNik);
 
     if (event.data.file instanceof File) {
@@ -226,6 +245,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.echainFileSizeBytes = null;
     state.requestedCheckerNik = undefined;
     state.syncReceipt = null;
+    records.value=[];selectedRecord.value=null;
     syncMode.value = false;
     open.value = false;
 
@@ -233,7 +253,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     emit("medexUserAdded");
   } catch (error: any) {
     const errorMessage =
-      error?.data?.statusMessage ||
+      error?.data?.message || error?.data?.statusMessage ||
       error?.message ||
       "Failed to create Medex record. Please try again.";
     toast.add({
@@ -314,7 +334,18 @@ const emit = defineEmits<{
               @click="syncFromSystem"
             />
 
-            <div v-if="state.institution" class="p-3 bg-success/10 rounded-lg">
+            <fieldset v-if="records.length > 1" class="space-y-2">
+              <legend class="text-sm font-medium">Choose the correct latest examination</legend>
+              <p class="text-xs text-warning">These records share the latest examination date. No record is selected automatically.</p>
+              <label v-for="(record,index) in records" :key="record.syncReceipt" class="block rounded border p-3 text-sm">
+                <input type="radio" name="medex-record" :checked="selectedRecord===index" :disabled="loading || syncLoading" @change="selectRecord(index)" />
+                Exam: {{ record.data.testDate }} · Released: {{ record.data.released }} · Expiry: {{ record.data.expired }}
+                <span class="block text-xs text-muted">Examiner: {{ record.data.examiner || 'Missing' }} · File: {{ record.data.fileName || 'No file' }}</span>
+              </label>
+            </fieldset>
+            <p v-if="selectedRecord!==null && institutionMissing" class="text-sm text-warning">ECHAIN does not provide an institution. Enter it below before saving. ECHAIN will not be modified.</p>
+            <p v-if="selectedRecord!==null && examinerMissing" class="text-sm text-warning">The ECHAIN examiner is missing. Enter it below and ask for the source data to be corrected.</p>
+            <div v-if="selectedRecord!==null" class="p-3 bg-success/10 rounded-lg">
               <p class="text-sm text-success font-medium">
                 ✓ Data synced successfully!
               </p>
@@ -385,7 +416,7 @@ const emit = defineEmits<{
               v-model="state.institution"
               class="w-full"
               placeholder="e.g., RS Aviation"
-              :disabled="syncMode && !!state.institution"
+              :disabled="syncMode && (selectedRecord===null || !institutionMissing)"
             />
           </UFormField>
 
@@ -421,6 +452,7 @@ const emit = defineEmits<{
               v-model="state.examiner"
               class="w-full"
               placeholder="e.g., DR. DINAR"
+              :disabled="syncMode && (selectedRecord===null || !examinerMissing)"
             />
           </UFormField>
 
@@ -438,6 +470,7 @@ const emit = defineEmits<{
               variant="solid"
               type="submit"
               :loading="loading"
+              :disabled="syncLoading || (syncMode && (selectedRecord===null || !state.syncReceipt))"
             />
           </div>
         </UForm>
