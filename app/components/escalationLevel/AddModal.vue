@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -42,7 +44,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/escalationLevels`, {
+    await csrfFetch(`${apiBaseUrl}/api/escalationLevels`, {
       method: "POST",
       body: {
         level: event.data.level,

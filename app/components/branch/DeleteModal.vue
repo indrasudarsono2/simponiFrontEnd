@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
@@ -54,7 +56,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete branch
-    await $fetch(`${apiBaseUrl}/api/branches/${props.branch.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/branches/${props.branch.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -47,7 +49,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create branch
-    await $fetch(`${apiBaseUrl}/api/branches`, {
+    await csrfFetch(`${apiBaseUrl}/api/branches`, {
       method: "POST",
       body: {
         branch: event.data.branch,

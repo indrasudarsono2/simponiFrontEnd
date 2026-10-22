@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
@@ -50,7 +52,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete rating
-    await $fetch(`${apiBaseUrl}/api/ratings/${props.rating.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/ratings/${props.rating.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

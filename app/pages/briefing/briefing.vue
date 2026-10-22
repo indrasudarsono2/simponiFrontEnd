@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import {
@@ -298,7 +300,7 @@ async function getBriefings(showSuccessToast = true) {
   loading.value = true;
 
   try {
-    const response = await $fetch<Briefing[]>(
+    const response = await csrfFetch<Briefing[]>(
       `${apiBaseUrl}/api/briefings`,
       {
         method: "POST",

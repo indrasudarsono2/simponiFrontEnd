@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface Rating {
@@ -107,7 +109,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/cwpFrequencies/${props.cwp.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/cwpFrequencies/${props.cwp.id}`, {
       method: "PUT",
       body: {
         frequencies: frequencies.value

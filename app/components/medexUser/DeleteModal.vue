@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 defineOptions({
@@ -53,7 +55,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete MedexUser
-    await $fetch(`${apiBaseUrl}/api/medexUser/${props.medexUser.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/medexUser/${props.medexUser.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

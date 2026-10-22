@@ -28,7 +28,6 @@ const schema = z.object({
   expired: z.string().min(1, "Expired date is required"),
   examiner: z.string().min(2, "Examiner must be at least 2 characters"),
   file: z.instanceof(File).optional(),
-  requestedCheckerNik: z.string().min(1, "Verification checker is required"),
 });
 
 const open = ref(false);
@@ -41,18 +40,9 @@ const state = reactive<Partial<Schema>>({
   expired: undefined,
   examiner: undefined,
   file: undefined,
-  requestedCheckerNik: undefined,
 });
-const checkerOptions = ref<Array<{ label: string; value: string }>>([]);
+const selfDeclared = ref(false);
 
-async function loadCheckers() {
-  if (checkerOptions.value.length) return;
-  const checkers = await apiFetch("/api/credentialVerification/checkers") as Array<{ nik: string; name?: string; ratings?: string[] }>;
-  checkerOptions.value = checkers.map((checker) => ({
-    value: checker.nik,
-    label: `${checker.name || checker.nik}${checker.ratings?.length ? ` [${checker.ratings.join(", ")}]` : ""}`,
-  }));
-}
 
 // Helper function to format date to YYYY-MM-DD
 function formatDateForInput(
@@ -68,13 +58,13 @@ watch(
   () => props.medexUser,
   async (newMedexUser) => {
     if (newMedexUser) {
+      selfDeclared.value = false;
       // Reset state first to ensure clean slate
       state.institution = undefined;
       state.released = undefined;
       state.expired = undefined;
       state.examiner = undefined;
       state.file = undefined;
-      state.requestedCheckerNik = undefined;
 
       // Wait for next tick to ensure DOM is ready
       await nextTick();
@@ -84,8 +74,6 @@ watch(
       state.released = formatDateForInput(newMedexUser.released);
       state.expired = formatDateForInput(newMedexUser.expired);
       state.examiner = newMedexUser.examiner;
-      state.requestedCheckerNik = newMedexUser.requestedChecker?.nik || newMedexUser.verifiedBy?.nik || undefined;
-      loadCheckers().catch(() => undefined);
 
       // Open modal after state is populated
       open.value = true;
@@ -97,12 +85,12 @@ watch(
 // Reset form when modal closes
 watch(open, (isOpen) => {
   if (!isOpen) {
+    selfDeclared.value = false;
     state.institution = undefined;
     state.released = undefined;
     state.expired = undefined;
     state.examiner = undefined;
     state.file = undefined;
-    state.requestedCheckerNik = undefined;
     emit("close");
   }
 });
@@ -125,16 +113,20 @@ function triggerFileInput() {
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!props.medexUser) return;
 
+  if (!selfDeclared.value) {
+    toast.add({ title: "Confirm accuracy", description: "Confirm the accuracy of this manual entry before saving.", color: "error" });
+    return;
+  }
   loading.value = true;
 
   try {
     const formData = new FormData();
+    formData.append("selfDeclared", String(selfDeclared.value));
 
     formData.append("institution", event.data.institution);
     formData.append("released", event.data.released);
     formData.append("expired", event.data.expired);
     formData.append("examiner", event.data.examiner);
-    formData.append("requestedCheckerNik", event.data.requestedCheckerNik);
 
     if (event.data.file instanceof File) {
       formData.append("file", event.data.file);
@@ -157,7 +149,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     emit("medexUserUpdated");
   } catch (error: any) {
     const errorMessage =
-      error?.data?.statusMessage ||
+      error?.data?.message || error?.data?.statusMessage ||
       error?.message ||
       "Failed to update Medex record. Please try again.";
     toast.add({
@@ -183,6 +175,7 @@ const emit = defineEmits<{
     description="Edit the Medex record information"
   >
     <template #body>
+      <UAlert class="mb-4" color="warning" title="Manual entry — self-declared" description="Only records not used by an application may be revised. e-Chain is the primary source; manual entry is a fallback without checker approval." />
       <UForm
         :schema="schema"
         :state="state"
@@ -225,17 +218,7 @@ const emit = defineEmits<{
           />
         </UFormField>
 
-        <UFormField label="Verification Checker" name="requestedCheckerNik" required>
-          <USelect
-            v-model="state.requestedCheckerNik"
-            :items="checkerOptions"
-            value-key="value"
-            label-key="label"
-            class="w-full"
-            placeholder="Select checker for this revision"
-          />
-          <p class="mt-1 text-xs text-muted">The approved version remains active until this revision is approved.</p>
-        </UFormField>
+          <UCheckbox v-model="selfDeclared" label="I confirm that this information and supporting document are accurate. I accept responsibility for this manual entry. This is not verification by a checker, AirNav, or e-Chain." />
 
         <div class="grid grid-cols-2 gap-4">
           <UFormField label="Released Date" name="released" required>

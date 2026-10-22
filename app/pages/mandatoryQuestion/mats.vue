@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 import type { TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel } from '@tanstack/table-core'
 
@@ -175,7 +177,7 @@ async function updateQuestionCategory(question: MatsQuestion, value: number) {
   categorySaveStatus.value[question.id] = 'saving'
 
   try {
-    await $fetch(`${apiBaseUrl}/api/mats/questions/${question.id}/category`, {
+    await csrfFetch(`${apiBaseUrl}/api/mats/questions/${question.id}/category`, {
       method: 'PATCH',
       headers: authHeaders.value,
       body: { mandatoryItemId }
@@ -360,7 +362,7 @@ async function saveConfiguration() {
   }
   savingQuantity.value = true
   try {
-    await $fetch(`${apiBaseUrl}/api/mats/configuration`, {
+    await csrfFetch(`${apiBaseUrl}/api/mats/configuration`, {
       method: 'PUT',
       headers: authHeaders.value,
       body: { quantity: quantity.value, mode: mode.value }
@@ -377,7 +379,7 @@ async function saveConfiguration() {
 async function saveAllocations() {
   savingAllocations.value = true
   try {
-    await $fetch(`${apiBaseUrl}/api/mats/allocations`, {
+    await csrfFetch(`${apiBaseUrl}/api/mats/allocations`, {
       method: 'PUT', headers: authHeaders.value,
       body: { allocations: (data.value?.mandatoryItems || []).map(item => ({
         mandatoryItemId: item.id, quantity: Number(allocationValues.value[item.id] || 0)
@@ -416,7 +418,7 @@ async function saveQuestion() {
     if (selectedFile.value) body.append('image', selectedFile.value)
 
     const id = editingQuestion.value?.id
-    await $fetch(
+    await csrfFetch(
       id
         ? `${apiBaseUrl}/api/mats/questions/${id}`
         : `${apiBaseUrl}/api/mats/questions`,
@@ -437,7 +439,7 @@ async function deleteQuestion() {
   if (!deletingItem.value) return
   deletingQuestion.value = true
   try {
-    await $fetch(`${apiBaseUrl}/api/mats/questions/${deletingItem.value.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/mats/questions/${deletingItem.value.id}`, {
       method: 'DELETE',
       headers: authHeaders.value
     })
@@ -510,7 +512,7 @@ async function importCsv() {
   try {
     const body = new FormData()
     body.append('csv', selectedCsvFile.value)
-    const response = await $fetch<{ imported: number, created: number, updated: number }>(
+    const response = await csrfFetch<{ imported: number, created: number, updated: number }>(
       `${apiBaseUrl}/api/mats/questions/import-csv`,
       { method: 'POST', headers: authHeaders.value, body }
     )

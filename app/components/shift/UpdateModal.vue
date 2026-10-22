@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftDetail {
@@ -135,7 +137,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/shifts/${props.shiftName.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/shifts/${props.shiftName.id}`, {
       method: "PUT",
       body: {
         shift: shift.value,

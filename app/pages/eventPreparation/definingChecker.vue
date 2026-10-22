@@ -43,6 +43,7 @@ interface GroupMember {
 }
 
 interface Group {
+  id: number;
   checkerGroups: CheckerGroup[];
   groupMembers: GroupMember[];
 }
@@ -211,7 +212,9 @@ const availableEvents = computed(() => {
         sector: event.sector,
         remarkDoc: event.remarkDoc,
         eventUsers: event.eventUsers || [],
-        groups: event.groups || [],
+        // Use the active group rows, which include IDs and only active members.
+        // The nested event summary omits IDs, so it cannot exclude the edited group.
+        groups: (data.value?.group || []).filter((group) => group.event.id === event.id),
       });
     });
   });
@@ -314,7 +317,7 @@ function handleDelete(item: DefiningCheckerRow) {
   definingCheckerToDelete.value = item;
 }
 
-// Render checker list as <ul><li> with names
+// Render checker names as a numbered list.
 function renderCheckerList(checkers: string[], row: DefiningCheckerRow) {
   // Get the original group data by finding the group with matching ID
   const groupData = data.value?.group?.find((g) => g.id === row.id);
@@ -328,13 +331,13 @@ function renderCheckerList(checkers: string[], row: DefiningCheckerRow) {
   });
 
   return h(
-    "ul",
-    { class: "list-disc list-inside text-sm text-muted space-y-0.5" },
+    "ol",
+    { class: "list-decimal list-inside text-sm text-muted space-y-0.5" },
     checkerNames.map((name) => h("li", {}, name)),
   );
 }
 
-// Render member list as <ul><li> with names
+// Render member names as a numbered list.
 function renderMemberList(members: string[], row: DefiningCheckerRow) {
   // Get the original group data by finding the group with matching ID
   const groupData = data.value?.group?.find((g) => g.id === row.id);
@@ -346,8 +349,8 @@ function renderMemberList(members: string[], row: DefiningCheckerRow) {
   });
 
   return h(
-    "ul",
-    { class: "list-disc list-inside text-sm text-muted space-y-0.5" },
+    "ol",
+    { class: "list-decimal list-inside text-sm text-muted space-y-0.5" },
     memberNames.map((name) => h("li", {}, name)),
   );
 }

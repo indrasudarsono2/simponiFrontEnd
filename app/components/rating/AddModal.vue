@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -55,7 +57,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create rating
-    await $fetch(`${apiBaseUrl}/api/ratings`, {
+    await csrfFetch(`${apiBaseUrl}/api/ratings`, {
       method: "POST",
       body: {
         rating: event.data.rating,

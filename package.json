@@ -46,11 +46,31 @@
     "overrides": {
       "@tiptap/core": "3.30.5",
       "@tiptap/pm": "3.20.0",
+      "vue": "3.5.42",
+      "@vue/compiler-core": "3.5.42",
+      "@vue/compiler-dom": "3.5.42",
+      "@vue/compiler-ssr": "3.5.42",
+      "@vue/reactivity": "3.5.42",
+      "@vue/runtime-core": "3.5.42",
+      "@vue/runtime-dom": "3.5.42",
+      "@vue/server-renderer": "3.5.42",
+      "@vue/shared": "3.5.42",
+      "devalue": "5.9.3",
+      "prosemirror-view": "1.42.3",
+      "source-map-js": "1.2.2",
+      "seroval": "1.6.3",
+      "undici": "8.10.2",
+      "simple-git": "4.0.1",
+      "@simple-git/argv-parser": "2.0.1",
+      "shell-quote": "1.11.0",
       "defu": "6.1.5",
       "esbuild": "0.28.1",
       "maplibre-gl": "6.4.1",
       "picomatch": "4.0.4",
       "svgo": "4.1.0"
+    },
+    "patchedDependencies": {
+      "@nuxt/devtools": "patches/@nuxt__devtools.patch"
     }
   }
 }

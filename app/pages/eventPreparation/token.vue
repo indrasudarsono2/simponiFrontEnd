@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import TokenCreateModal from "~/components/eventPreparation/TokenCreateModal.vue";
@@ -72,7 +74,7 @@ const formData = ref({
 async function fetchTokens() {
   isLoading.value = true;
   try {
-    const response = await $fetch<Token[] | Token | null>(
+    const response = await csrfFetch<Token[] | Token | null>(
       `${apiBaseUrl}/api/token`,
       {
         headers: {
@@ -172,7 +174,7 @@ async function createToken() {
   }
 
   try {
-    await $fetch(`${apiBaseUrl}/api/token`, {
+    await csrfFetch(`${apiBaseUrl}/api/token`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -230,7 +232,7 @@ async function updateToken() {
   }
 
   try {
-    await $fetch(`${apiBaseUrl}/api/token/${selectedToken.value.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/token/${selectedToken.value.id}`, {
       method: "PUT",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

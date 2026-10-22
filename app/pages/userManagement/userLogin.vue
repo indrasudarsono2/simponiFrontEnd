@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 import type { TableColumn } from '@nuxt/ui'
 
 interface Branch {
@@ -12,6 +14,8 @@ interface LoginStatus {
   firstFailedAt: string | null
   lastFailedAt: string | null
   lockedUntil: string | null
+  blockedAt: string | null
+  isAdminLocked: boolean
   isCooldownActive: boolean
   retryAfterSeconds: number
   user: {
@@ -46,6 +50,7 @@ const { data, status, refresh } = await useFetch<LoginStatusResponse>(
 
 const loginStatuses = computed(() => data.value?.data || [])
 const activeCooldowns = computed(() => loginStatuses.value.filter(item => item.isCooldownActive).length)
+const adminLockedAccounts = computed(() => loginStatuses.value.filter(item => item.isAdminLocked).length)
 
 const branchOptions = computed(() => {
   const branches = new Map<number, string>()
@@ -97,13 +102,20 @@ const getErrorMessage = (error: unknown) => {
 const clearLoginStatus = async (item: LoginStatus) => {
   const displayName = item.user.name || item.userNik
   if (!window.confirm(`Clear failed login status for ${displayName}?`)) return
+  const reason = window.prompt('Reason for unlocking this account (5–100 characters):')?.trim()
+  if (!reason) return
+  if (reason.length < 5 || reason.length > 100) {
+    toast.add({ title: 'Reason required', description: 'Enter between 5 and 100 characters.', color: 'error' })
+    return
+  }
 
   clearingNik.value = item.userNik
   try {
-    const result = await $fetch<{ success: boolean, message: string }>(
+    const result = await csrfFetch<{ success: boolean, message: string }>(
       `${apiBaseUrl}/api/userLoginSecurity/${encodeURIComponent(item.userNik)}/clear`,
       {
         method: 'POST',
+        body: { reason },
         credentials: 'include',
         headers: csrfToken.value ? { 'X-CSRF-Token': csrfToken.value } : undefined
       }
@@ -143,7 +155,9 @@ const columns: TableColumn<LoginStatus>[] = [
   {
     id: 'status',
     header: 'Login Status',
-    cell: ({ row }) => row.original.isCooldownActive
+    cell: ({ row }) => row.original.isAdminLocked
+      ? h(UBadge, { color: 'error', variant: 'solid', label: 'Locked · General Admin unlock required' })
+      : row.original.isCooldownActive
       ? h(UBadge, { color: 'error', variant: 'soft', label: `Cooldown · ${formatRemaining(row.original.retryAfterSeconds)}` })
       : h(UBadge, { color: 'warning', variant: 'soft', label: 'Failed attempts recorded' })
   },
@@ -156,7 +170,7 @@ const columns: TableColumn<LoginStatus>[] = [
     id: 'actions',
     header: 'Action',
     cell: ({ row }) => h(UButton, {
-      label: 'Clear Status',
+      label: row.original.isAdminLocked ? 'Unlock Account' : 'Clear Status',
       icon: 'i-lucide-lock-open',
       color: 'primary',
       variant: 'soft',
@@ -180,6 +194,7 @@ const columns: TableColumn<LoginStatus>[] = [
     </template>
 
     <template #body>
+      <UAlert v-if="adminLockedAccounts" color="error" icon="i-lucide-lock-keyhole" :title="`${adminLockedAccounts} account(s) require General Admin unlock`" description="Ten incorrect passwords within 24 hours lock local login. Verify the user's identity before unlocking. Every unlock requires a reason and is audited." />
       <div class="grid gap-4 sm:grid-cols-2">
         <UCard>
           <div class="flex items-center justify-between">

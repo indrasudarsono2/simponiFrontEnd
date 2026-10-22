@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface EscalationLevel {
@@ -37,7 +39,7 @@ async function onDelete() {
   loading.value = true;
 
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/escalationLevels/${props.escalationLevel.id}`,
       {
         method: "DELETE",

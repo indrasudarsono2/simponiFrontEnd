@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -110,7 +112,7 @@ async function loadOptions() {
   optionsLoading.value = true;
 
   try {
-    options.value = await $fetch<OptionsResponse>(
+    options.value = await csrfFetch<OptionsResponse>(
       `${apiBaseUrl}/api/cwpSectors/options`,
       {
         query: {
@@ -196,7 +198,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       ...new Set(event.data.cwps.map((cwpRow) => cwpRow.cwpId)),
     ];
 
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/cwpSectors/${props.sector?.id || event.data.sectorId}`,
       {
         method: "PUT",

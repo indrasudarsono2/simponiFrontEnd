@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
@@ -433,7 +435,7 @@ const newestFirst = <T extends { id: number; createdAt: string }>(items: T[]) =>
 const licenseOptions = computed(() => newestFirst(userData.value.license).map((item) => ({
   id: String(item.id), label: item.note,
 })));
-const logbookOptions = computed(() => newestFirst(userData.value.logbook).map((item) => ({
+const logbookOptions = computed(() => newestFirst(userData.value.logbook).filter(item => !item.deletedAt && Boolean(item.file?.trim())).map((item) => ({
   id: String(item.id), label: item.note,
 })));
 
@@ -654,7 +656,7 @@ watch(selectedEventUserId, async (eventId) => {
   if (eventId && eventId !== String(props.applicationDoc?.eventUser?.eventId || "")) ojtId.value = "";
   if (!eventId || !isPenerbitan.value) return;
   try {
-    const users = await $fetch<{ nik: string; name: string; licenseUserId: string }[]>(`${apiBaseUrl}/api/ojtiRecommendations/eligible`, {
+    const users = await csrfFetch<{ nik: string; name: string; licenseUserId: string }[]>(`${apiBaseUrl}/api/ojtiRecommendations/eligible`, {
       query: { eventId },
       headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
     });
@@ -1003,7 +1005,7 @@ async function onSubmit() {
       ielpId: selectedIelpId.value ? Number(selectedIelpId.value) : null,
     };
 
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/applicationDocument/${props.applicationDoc.id}`,
       {
         method: "PUT",

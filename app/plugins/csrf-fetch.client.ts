@@ -1,3 +1,4 @@
+import { readCsrfToken } from '../utils/csrfToken'
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 
 function requestUrl(request: RequestInfo | URL): string {
@@ -30,18 +31,18 @@ function isPerformaApiRequest(url: string, apiBaseUrl: string): boolean {
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
   const apiBaseUrl = String(config.public.apiBaseUrl || '')
-  const csrfToken = useCookie<string | null>('csrf_token')
   const baseFetch = globalThis.$fetch
 
   globalThis.$fetch = baseFetch.create({
     onRequest({ request, options }) {
       const method = String(options.method || 'GET').toUpperCase()
-      if (SAFE_METHODS.has(method) || !csrfToken.value) return
+      const csrfToken = readCsrfToken(document.cookie)
+      if (SAFE_METHODS.has(method) || !csrfToken) return
       if (!isPerformaApiRequest(requestUrl(request), apiBaseUrl)) return
 
       const headers = new Headers(options.headers)
       if (!headers.has('X-CSRF-Token')) {
-        headers.set('X-CSRF-Token', csrfToken.value)
+        headers.set('X-CSRF-Token', csrfToken)
       }
       options.headers = headers
       options.credentials = 'include'

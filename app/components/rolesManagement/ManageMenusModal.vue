@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import { MODULE_TO_ITEM, type ModuleKey } from "../../config/sidebarModules";
 
@@ -76,7 +78,7 @@ async function loadMenuOptions() {
   optionsLoading.value = true;
 
   try {
-    menuOptions.value = await $fetch<Menu[]>(
+    menuOptions.value = await csrfFetch<Menu[]>(
       `${apiBaseUrl}/api/rolesManagement/menus`,
       {
         headers: {
@@ -139,7 +141,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/rolesManagement/${props.role.id}/menus`,
       {
         method: "PUT",

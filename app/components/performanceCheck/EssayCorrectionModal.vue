@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { resolveSignedImage } from '../../utils/signedImage';
+const selectedSidebarRole = useState<string>('selectedRole');
 const apiBaseUrl = useApiBaseUrl()
+const takeoverReason = ref('')
 
 interface EssayItem {
   id?: number;
@@ -172,10 +175,7 @@ function hasImage(imagePath?: string | null): boolean {
 }
 
 function resolveImageUrl(imagePath?: string | null): string {
-  const trimmed = (imagePath || "").trim();
-  if (!trimmed) return "";
-  if (/^(data|blob):/i.test(trimmed)) return trimmed;
-  return `/api/essay/image?image=${encodeURIComponent(trimmed)}`;
+  return resolveSignedImage(imagePath, apiBaseUrl);
 }
 
 function getScoreOptions(maxValue: number) {
@@ -245,6 +245,8 @@ async function handleSubmit() {
         finalScoreId,
         persentage: props.persentage,
         essayCorrection,
+        takeoverReason: takeoverReason.value,
+        scope: selectedSidebarRole.value?.trim().toUpperCase() === 'CHECKER ADMIN' ? 'admin' : 'checker',
       },
     });
 
@@ -287,6 +289,9 @@ async function handleSubmit() {
     @update:open="handleOpenChange"
   >
     <template #body>
+      <UFormField label="Administrative takeover reason" description="Required for Checker Admin scoring (10–1000 characters). Ordinary assigned checkers can leave this blank.">
+        <UTextarea v-model="takeoverReason" :maxlength="1000" class="w-full" placeholder="Why are you scoring on behalf of the assigned checker?" />
+      </UFormField>
       <div v-if="pendingRatings.length > 1" class="mb-4 flex flex-wrap gap-2 border-b pb-3" role="tablist" aria-label="Rating to score">
         <UButton v-for="score in pendingRatings" :key="score.id" role="tab"
           :aria-selected="selectedFinalScoreId === score.id"

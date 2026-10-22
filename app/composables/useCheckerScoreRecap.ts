@@ -1,3 +1,4 @@
+import { csrfFetch } from "~/utils/csrfFetch";
 import type { ScoreCheckerRemarkItem, ScoreCheckerAppRatingItem, ScoreCheckerApplicationDocItem, ScoreCheckerResultItem, ScoreCheckerEvidenceItem, ReExaminationAttemptItem, ReExaminationHistoryResponse, ScoreCheckerRow, CheckerTheoryReview } from '~/types/checkerScoreRecap'
 
 export async function useCheckerScoreRecap() {
@@ -211,7 +212,7 @@ export async function useCheckerScoreRecap() {
 
     try {
       resultLoading.value = true
-      const response = await $fetch<
+      const response = await csrfFetch<
       ScoreCheckerResultItem[] | ScoreCheckerResultItem
       >(`${apiBaseUrl}/api/scoreChecker`, {
         method: 'POST',
@@ -258,7 +259,7 @@ export async function useCheckerScoreRecap() {
       evidenceItems.value = []
       selectedEvidenceAppRatingId.value = appRatingId
 
-      const response = await $fetch<
+      const response = await csrfFetch<
       ScoreCheckerEvidenceItem[] | ScoreCheckerEvidenceItem
       >(`${apiBaseUrl}/api/scoreCheckerEvidance`, {
         method: 'POST',
@@ -290,7 +291,7 @@ export async function useCheckerScoreRecap() {
     isTheoryReviewModalOpen.value = true
     theoryReviewLoadingId.value = appRatingId
     try {
-      theoryReview.value = await $fetch<CheckerTheoryReview>(`${apiBaseUrl}/api/scoreChecker/theory-review/${appRatingId}`, {
+      theoryReview.value = await csrfFetch<CheckerTheoryReview>(`${apiBaseUrl}/api/scoreChecker/theory-review/${appRatingId}`, {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : '' }
       })
     } catch (fetchError: unknown) {
@@ -305,7 +306,7 @@ export async function useCheckerScoreRecap() {
     if (!appRatingId || evidenceDownloadLoadingId.value !== null) return
     evidenceDownloadLoadingId.value = appRatingId
     try {
-      const archive = await $fetch<Blob>(`${apiBaseUrl}/api/scoreChecker/evidence-download/${appRatingId}`, {
+      const archive = await csrfFetch<Blob>(`${apiBaseUrl}/api/scoreChecker/evidence-download/${appRatingId}`, {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : '' },
         responseType: 'blob'
       })
@@ -348,7 +349,7 @@ export async function useCheckerScoreRecap() {
       isReExaminationHistoryModalOpen.value = true
 
       reExaminationHistory.value
-        = await $fetch<ReExaminationHistoryResponse>(
+        = await csrfFetch<ReExaminationHistoryResponse>(
           `${apiBaseUrl}/api/scoreChecker/reexamination-history/${appRatingId}`,
           {
             credentials: 'include',
@@ -400,7 +401,7 @@ export async function useCheckerScoreRecap() {
 
     try {
       invalidationLoading.value = true
-      const response = await $fetch<{ message?: string }>(
+      const response = await csrfFetch<{ message?: string }>(
         `${apiBaseUrl}/api/scoreChecker/invalidate-attempt`,
         {
           method: 'POST',

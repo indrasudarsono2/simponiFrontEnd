@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface MandatoryItem {
@@ -42,7 +44,7 @@ async function onSubmit() {
 
   loading.value = true;
   try {
-    const response = await $fetch<{ message?: string }>(
+    const response = await csrfFetch<{ message?: string }>(
       `${apiBaseUrl}/api/mandatoryItem/${props.mandatoryItem.id}`,
       {
         method: "DELETE",

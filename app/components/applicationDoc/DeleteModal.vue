@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 defineOptions({ name: "ApplicationDocDeleteModal" });
@@ -43,7 +45,7 @@ async function onSubmit() {
   if (!props.applicationDoc) return;
   loading.value = true;
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/applicationDocument/${props.applicationDoc.id}`,
       {
         method: "DELETE",

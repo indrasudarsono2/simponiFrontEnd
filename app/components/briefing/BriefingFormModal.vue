@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { csrfFetch } from '~/utils/csrfFetch'
 const apiBaseUrl = useApiBaseUrl()
 
 interface Profession {
@@ -191,7 +192,7 @@ async function submit() {
         : `${apiBaseUrl}/api/briefings/${props.briefing?.id}`;
     const method = props.mode === "add" ? "POST" : "PUT";
 
-    await $fetch(url, {
+    await csrfFetch(url, {
       method,
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

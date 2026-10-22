@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -90,7 +92,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Submit to API - assign multiple users to a sector
-    await $fetch(`${apiBaseUrl}/api/userBranchUnit/assignSector`, {
+    await csrfFetch(`${apiBaseUrl}/api/userBranchUnit/assignSector`, {
       method: "POST",
       body: {
         sectorId: event.data.sectorId,

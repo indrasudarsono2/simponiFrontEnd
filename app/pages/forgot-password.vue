@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 definePageMeta({ layout: false })
 
 const apiBaseUrl = useApiBaseUrl()
@@ -10,7 +12,7 @@ const message = ref("")
 async function submitRequest() {
   loading.value = true
   try {
-    const response = await $fetch<{ message: string }>(`${apiBaseUrl}/api/auth/forgot-password`, {
+    const response = await csrfFetch<{ message: string }>(`${apiBaseUrl}/api/auth/forgot-password`, {
       method: "POST",
       credentials: "include",
       body: { identifier: identifier.value.trim() }

@@ -32,6 +32,7 @@ export default defineEventHandler(async () => {
         "dashboard",
         "userManagement", //konfigurasi user ada di subBranch mana dan profession apa
         "ratingCheckerAdmin",
+        "performanceCheck",
         "essayChoiceQuestion",
         "multipleChoiceQuestion",
         "eventPreparation",

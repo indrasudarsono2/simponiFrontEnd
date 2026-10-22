@@ -12,11 +12,13 @@ const { token: authToken } = useAuth();
 const operationalGuide = useOperationalGuide();
 const training = useTrainingMode();
 const toast = useToast();
+const { apiFetch: submitApiFetch } = useApiFetch();
 const dashboardTokenInput = ref("");
 const isSubmittingDashboardToken = ref(false);
 const selectedApplicationDocId = ref<number>();
 
 interface DashboardApplicationDoc {
+  appRatings?: { controlHour: string | null }[];
   id?: number;
   number?: string;
   briefingDate?: string | null;
@@ -297,7 +299,7 @@ const briefingDateUTCText = computed(() => {
 });
 
 const isBriefingDateLocked = computed(() =>
-  Boolean(available2Data.value.briefingDate),
+  Boolean(available2Data.value.briefingDate) && !currentApplicationDocEntry.value?.document.appRatings?.some(r => r.controlHour == null || r.controlHour.trim() === ''),
 );
 
 const trainingBriefingFile = computed(() =>
@@ -331,8 +333,8 @@ async function submitDashboardToken() {
 
   isSubmittingDashboardToken.value = true;
   try {
-    const response = await $fetch<{ message?: string }>(
-      `${apiBaseUrl}/api/dashboardToken`,
+    const response = await submitApiFetch(
+      `/api/dashboardToken`,
       {
         method: "POST",
         headers: {
@@ -345,7 +347,14 @@ async function submitDashboardToken() {
       },
     );
 
-    const message = response?.message?.toLowerCase().trim();
+    const result = response as { message?: string; redirectTo?: string };
+    const message = result?.message?.toLowerCase().trim();
+    if (message === 'complete_hours') {
+      dashboardTokenInput.value = '';
+      toast.add({ title: 'Complete missing control hours', description: 'Save the hours for the highlighted ratings, then continue the normal workflow.', color: 'warning' });
+      await navigateTo(`/applicationDoc/complete-hours?applicationDocId=${available2Data.value.applicationDocId}`);
+      return;
+    }
 
     if (message === "ok") {
       toast.add({
@@ -370,7 +379,7 @@ async function submitDashboardToken() {
 
     toast.add({
       title: "Error",
-      description: response?.message || "Failed to submit token",
+      description: result?.message || "Failed to submit token",
       color: "error",
     });
   } catch (error: any) {

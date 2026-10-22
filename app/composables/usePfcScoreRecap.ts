@@ -1,3 +1,4 @@
+import { csrfFetch } from "~/utils/csrfFetch";
 import type { CalendarDate } from '@internationalized/date'
 import { DateFormatter, parseDate } from '@internationalized/date'
 import type { ScoreRecapRow, RelatedDocuments, EvidenceItem, ScoreRecapResponse, ProfessionOption, ScoreRecapEvent } from '~/types/pfcScoreRecap'
@@ -184,7 +185,7 @@ export async function usePfcScoreRecap() {
     evidenceItems.value = []
     isEvidenceModalOpen.value = true
     try {
-      const response = await $fetch<EvidenceItem[] | EvidenceItem>(
+      const response = await csrfFetch<EvidenceItem[] | EvidenceItem>(
         `${apiBaseUrl}/api/scoreCheckerEvidance`,
         {
           method: 'POST',
@@ -214,7 +215,7 @@ export async function usePfcScoreRecap() {
     isTheoryReviewModalOpen.value = true
     theoryReviewLoadingId.value = appRatingId
     try {
-      theoryReview.value = await $fetch<CheckerTheoryReview>(`${apiBaseUrl}/api/scoreChecker/theory-review/${appRatingId}`, {
+      theoryReview.value = await csrfFetch<CheckerTheoryReview>(`${apiBaseUrl}/api/scoreChecker/theory-review/${appRatingId}`, {
         credentials: 'include',
         headers: { Authorization: token.value ? `Bearer ${token.value}` : '' },
         query: { finalScoreId: row.id }
@@ -232,7 +233,7 @@ export async function usePfcScoreRecap() {
     if (!row.appRatingId || evidenceDownloadLoadingId.value !== null) return
     evidenceDownloadLoadingId.value = row.appRatingId
     try {
-      const archive = await $fetch<Blob>(`${apiBaseUrl}/api/scoreChecker/evidence-download/${row.appRatingId}`, {
+      const archive = await csrfFetch<Blob>(`${apiBaseUrl}/api/scoreChecker/evidence-download/${row.appRatingId}`, {
         credentials: 'include',
         headers: { Authorization: token.value ? `Bearer ${token.value}` : '' },
         query: { finalScoreId: row.id },
@@ -290,7 +291,7 @@ export async function usePfcScoreRecap() {
     selectedRating.value = ALL_FACET_VALUES
     selectedStatus.value = null
     try {
-      data.value = await $fetch<ScoreRecapResponse>(
+      data.value = await csrfFetch<ScoreRecapResponse>(
         `${apiBaseUrl}/api/pfcScore/scoreRecap`,
         {
           credentials: 'include',
@@ -333,7 +334,7 @@ export async function usePfcScoreRecap() {
     eventsLoading.value = true
     reportError.value = ''
     try {
-      const response = await $fetch<ScoreRecapResponse>(
+      const response = await csrfFetch<ScoreRecapResponse>(
         `${apiBaseUrl}/api/pfcScore/scoreRecap`,
         {
           credentials: 'include',
@@ -367,7 +368,7 @@ export async function usePfcScoreRecap() {
     professionsLoading.value = true
     reportError.value = ''
     try {
-      const response = await $fetch<ScoreRecapResponse>(
+      const response = await csrfFetch<ScoreRecapResponse>(
         `${apiBaseUrl}/api/pfcScore/scoreRecap`,
         {
           credentials: 'include',

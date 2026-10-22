@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface MandatoryItem {
@@ -105,7 +107,7 @@ async function deleteSingleMandatoryRating(
 
   try {
     deletingMandatoryRatingId.value = mandatoryRatingId;
-    const response = await $fetch<{ message?: string }>(
+    const response = await csrfFetch<{ message?: string }>(
       `${apiBaseUrl}/api/mandatoryRating/${mandatoryRatingId}`,
       {
         method: "DELETE",

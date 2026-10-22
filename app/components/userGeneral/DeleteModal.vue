@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 defineOptions({
@@ -34,7 +36,7 @@ async function onDelete() {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/userGeneral/${props.user.nik}`, {
+    await csrfFetch(`${apiBaseUrl}/api/userGeneral/${props.user.nik}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -53,6 +53,7 @@ export type ModuleKey =
   | "applicationDoc"
   | "ojtiRequests"
   | "proposalLetters"
+  | "applicationCorrections"
   | "medicalTest"
   | "mandatoryQuestion"
   ///////////////////////////////////////////////
@@ -470,6 +471,16 @@ export const MODULE_TO_ITEM: Record<ModuleKey, NavigationMenuItem> = {
     icon: "i-lucide-mail-check",
     to: "/proposalLetters",
   },
+  applicationCorrections: {
+    label: "Application Corrections",
+    icon: "i-lucide-file-pen-line",
+    to: "/applicationCorrections",
+    type: "trigger",
+    children: [
+      { label: "Rating Corrections", to: "/applicationCorrections/ratings" },
+      { label: "Document Corrections", to: "/applicationCorrections/documents" },
+    ],
+  },
   examination: {
     label: "Examination",
     icon: "i-lucide-book-open-check",
@@ -640,6 +651,7 @@ export function isPathAllowedForModules(
   const normalizedModules = new Set(
     assignedModules.map((module) => module.trim().toLowerCase()),
   );
+  if (requestedPath === '/applicationDoc/complete-hours' && normalizedModules.has('dashboardoperational') && assignedRoles.some(role => role.trim().toUpperCase() === 'OPERATIONAL')) return true;
 
   if (/^\/proposalLetters\/\d+$/.test(requestedPath) && (normalizedModules.has("applicationdoc") || normalizedModules.has("ojtirequests"))) {
     return true;

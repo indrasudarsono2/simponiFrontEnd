@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -92,7 +94,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/cwps/${props.cwp.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/cwps/${props.cwp.id}`, {
       method: "PUT",
       body: {
         cwp: event.data.cwp,

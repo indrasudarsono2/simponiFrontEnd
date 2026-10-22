@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 import * as z from "zod"
 import type { FormSubmitEvent } from "@nuxt/ui"
 
@@ -30,7 +32,7 @@ async function resetPassword(event: FormSubmitEvent<Schema>) {
   loading.value = true
   errorMessage.value = ""
   try {
-    await $fetch(`${apiBaseUrl}/api/auth/reset-password`, {
+    await csrfFetch(`${apiBaseUrl}/api/auth/reset-password`, {
       method: "POST",
       credentials: "include",
       body: { token: token.value, ...event.data }

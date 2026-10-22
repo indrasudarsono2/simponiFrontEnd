@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
@@ -47,7 +49,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete branch unit
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/branchUnits/${props.branchUnit.id}`,
       {
         method: "DELETE",

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -99,7 +101,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     }
 
     // Call API to create essay
-    await $fetch(`${apiBaseUrl}/api/essays`, {
+    await csrfFetch(`${apiBaseUrl}/api/essays`, {
       method: "POST",
       body: formData,
       headers: {

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface License {
@@ -46,7 +48,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete license
-    await $fetch(`${apiBaseUrl}/api/licenseUser/${props.license.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/licenseUser/${props.license.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

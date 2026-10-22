@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 defineOptions({
@@ -55,7 +57,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete IELP
-    await $fetch(`${apiBaseUrl}/api/ielpUser/${props.ielpUser.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/ielpUser/${props.ielpUser.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

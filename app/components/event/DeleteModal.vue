@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface Event {
@@ -64,7 +66,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete event
-    await $fetch(`${apiBaseUrl}/api/events/${props.event.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/events/${props.event.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

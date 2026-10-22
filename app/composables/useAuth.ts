@@ -1,3 +1,4 @@
+import { csrfFetch } from "~/utils/csrfFetch";
 type RoleMenu = {
   menu: {
     menu: string;
@@ -155,7 +156,7 @@ export const useAuth = (): UseAuthReturn => {
   };
 
   const loginWithApi = async (nik: string, password: string) => {
-    const response = await $fetch<LoginSuccessResponse>(
+    const response = await csrfFetch<LoginSuccessResponse>(
       `${apiBaseUrl}/api/auth/login`,
       {
         method: "POST",
@@ -179,7 +180,7 @@ export const useAuth = (): UseAuthReturn => {
     const csrfToken = useCookie<string | null>("csrf_token");
     const selectedRole = useState<string>("selectedRole", () => "");
 
-    await $fetch(`${apiBaseUrl}/api/auth/logout`, {
+    await csrfFetch(`${apiBaseUrl}/api/auth/logout`, {
       method: "POST",
       credentials: "include",
       headers: csrfToken.value

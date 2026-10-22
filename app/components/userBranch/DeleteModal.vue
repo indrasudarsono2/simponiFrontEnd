@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 defineOptions({
   name: "UserBranchDeleteModal",
 });
@@ -49,7 +51,7 @@ async function handleDelete() {
 
   try {
     // Submit to API - remove user's professionInBranch assignment
-    await $fetch(`/api/userBranch/${props.user.nik}`, {
+    await csrfFetch(`/api/userBranch/${props.user.nik}`, {
       method: "delete",
     });
 

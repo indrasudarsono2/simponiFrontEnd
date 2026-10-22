@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl();
 import {
   CalendarDate,
@@ -343,7 +345,7 @@ async function handleSubmit() {
   try {
     submitLoading.value = true;
 
-    const response = await $fetch<CheckerStatisticAnsweredResponse>(
+    const response = await csrfFetch<CheckerStatisticAnsweredResponse>(
       `${apiBaseUrl}/api/checkerStatistic`,
       {
         method: "POST",

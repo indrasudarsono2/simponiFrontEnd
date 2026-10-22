@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 import { CalendarDate, DateFormatter, getLocalTimeZone, parseDate } from "@internationalized/date";
 
 const apiBaseUrl = useApiBaseUrl();
@@ -81,7 +83,7 @@ async function loadPerformance() {
   }
   try {
     loading.value = true;
-    result.value = await $fetch<PerformanceResponse>(`${apiBaseUrl}/api/pfcScore/branchUnit`, {
+    result.value = await csrfFetch<PerformanceResponse>(`${apiBaseUrl}/api/pfcScore/branchUnit`, {
       method: "POST",
       credentials: "include",
       headers: {

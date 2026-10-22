@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface Supervisor {
@@ -33,7 +35,7 @@ async function handleDelete() {
   loading.value = true;
 
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/cwpSupervisors/${props.supervisorData.id}`,
       {
         method: "DELETE",

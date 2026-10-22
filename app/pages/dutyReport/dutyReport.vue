@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftDetail {
@@ -422,7 +424,7 @@ function formatLhdTime(value: string | null) {
 
 async function loadLhdBooks() {
   try {
-    lhdBooks.value = await $fetch<LhdBook[]>(
+    lhdBooks.value = await csrfFetch<LhdBook[]>(
       `${apiBaseUrl}/api/lhdBooks`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
@@ -445,7 +447,7 @@ async function loadLhdReports() {
 
   lhdLoading.value = true;
   try {
-    lhdReports.value = await $fetch<LhdReport[]>(
+    lhdReports.value = await csrfFetch<LhdReport[]>(
       `${apiBaseUrl}/api/dutyReports/${selectedLhdDutyReportId.value}/lhdReports`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
@@ -470,7 +472,7 @@ async function loadOtherReports() {
 
   otherReportLoading.value = true;
   try {
-    otherReports.value = await $fetch<OtherReport[]>(
+    otherReports.value = await csrfFetch<OtherReport[]>(
       `${apiBaseUrl}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports`,
       {
         headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
@@ -505,7 +507,7 @@ async function saveLhdReport() {
   lhdSaving.value = true;
   try {
     const baseUrl = `${apiBaseUrl}/api/dutyReports/${selectedLhdDutyReportId.value}/lhdReports`;
-    await $fetch(
+    await csrfFetch(
       editingLhdReportId.value
         ? `${baseUrl}/${editingLhdReportId.value}`
         : baseUrl,
@@ -557,7 +559,7 @@ async function saveOtherReport() {
   otherReportSaving.value = true;
   try {
     const baseUrl = `${apiBaseUrl}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports`;
-    await $fetch(
+    await csrfFetch(
       editingOtherReportId.value
         ? `${baseUrl}/${editingOtherReportId.value}`
         : baseUrl,
@@ -610,7 +612,7 @@ async function deleteLhdReport() {
 
   lhdActionKey.value = `delete-${report.id}`;
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/dutyReports/${selectedLhdDutyReportId.value}/lhdReports/${report.id}`,
       {
         method: "DELETE",
@@ -638,7 +640,7 @@ async function deleteOtherReport() {
 
   otherReportSaving.value = true;
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/dutyReports/${selectedOtherReportDutyReportId.value}/otherReports/${report.id}`,
       {
         method: "DELETE",
@@ -664,7 +666,7 @@ async function loadDutyReportTableData() {
   if (!dutyReportUrl.value) return;
 
   try {
-    dutyReports.value = await $fetch<DutyReport[]>(dutyReportUrl.value, {
+    dutyReports.value = await csrfFetch<DutyReport[]>(dutyReportUrl.value, {
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
       },
@@ -763,7 +765,7 @@ function getEscalationDeliverySummary(item: EscalationScheduleItem) {
 async function loadOnGoingIssues() {
   issueLoading.value = true;
   try {
-    const response = await $fetch<OnGoingIssueResponse>(
+    const response = await csrfFetch<OnGoingIssueResponse>(
       `${apiBaseUrl}/api/onGoingIssues`,
       {
         headers: {
@@ -789,7 +791,7 @@ async function attachExistingIssue() {
 
   issueActionKey.value = "attach";
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/dutyReports/${selectedIssueDutyReportId.value}/issues`,
       {
         method: "POST",
@@ -830,7 +832,7 @@ async function createAndAttachIssue() {
 
   issueActionKey.value = "create";
   try {
-    await $fetch(`${apiBaseUrl}/api/onGoingIssues`, {
+    await csrfFetch(`${apiBaseUrl}/api/onGoingIssues`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -868,7 +870,7 @@ async function addIssueMessage(issue: OnGoingIssue) {
 
   issueActionKey.value = `message-${issue.id}`;
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/onGoingIssues/${issue.id}/messages`,
       {
         method: "POST",
@@ -896,7 +898,7 @@ async function closeIssue(issue: OnGoingIssue) {
 
   issueActionKey.value = `close-${issue.id}`;
   try {
-    await $fetch(`${apiBaseUrl}/api/onGoingIssues/${issue.id}/close`, {
+    await csrfFetch(`${apiBaseUrl}/api/onGoingIssues/${issue.id}/close`, {
       method: "PATCH",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -938,7 +940,7 @@ async function confirmCancelEscalation() {
       ? `${apiBaseUrl}/api/onGoingIssues/${issue.id}/escalations/${escalationLevelToCancel.value.escalationLevelId}/cancel`
       : `${apiBaseUrl}/api/onGoingIssues/${issue.id}/escalation/cancel`;
 
-    await $fetch(endpoint, {
+    await csrfFetch(endpoint, {
       method: "PATCH",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -972,7 +974,7 @@ async function detachIssue(issue: OnGoingIssue) {
 
   issueActionKey.value = `detach-${issue.id}`;
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/dutyReports/${selectedIssueDutyReportId.value}/issues/${issue.id}`,
       {
         method: "DELETE",
@@ -1000,7 +1002,7 @@ async function openDeleteConfirmation(dutyReportId: number) {
   deleteModalOpen.value = true;
 
   try {
-    deleteSummary.value = await $fetch<DutyReportDeletionSummary>(
+    deleteSummary.value = await csrfFetch<DutyReportDeletionSummary>(
       `${apiBaseUrl}/api/dutyReports/${dutyReportId}/deletion-summary`,
       {
         headers: {
@@ -1028,7 +1030,7 @@ async function confirmDeleteDutyReport() {
 
   deleteLoading.value = true;
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/dutyReports/${deleteSummary.value.dutyReport.id}`,
       {
         method: "DELETE",
@@ -1101,7 +1103,7 @@ async function loadDutyReports() {
 
   loadDutyReportLoading.value = true;
   try {
-    const reports = await $fetch<DutyReport[]>(
+    const reports = await csrfFetch<DutyReport[]>(
       `${apiBaseUrl}/api/dutyReports?date=${requestedReport.date}`,
       {
         headers: {
@@ -1148,7 +1150,7 @@ async function confirmCreateDutyReport() {
   createDutyReportLoading.value = true;
 
   try {
-    const response = await $fetch<{ alreadyExists?: boolean }>(
+    const response = await csrfFetch<{ alreadyExists?: boolean }>(
       `${apiBaseUrl}/api/dutyReports/supervisor`,
       {
         method: "POST",

@@ -31,7 +31,6 @@ const schema = z.object({
   expired: z.string().optional(),
   rater: z.string().min(2, "Rater must be at least 2 characters"),
   file: z.instanceof(File).optional(),
-  requestedCheckerNik: z.string().min(1, "Verification checker is required"),
 });
 
 const open = ref(false);
@@ -57,18 +56,9 @@ const state = reactive<Partial<Schema>>({
   expired: undefined,
   rater: undefined,
   file: undefined,
-  requestedCheckerNik: undefined,
 });
-const checkerOptions = ref<Array<{ label: string; value: string }>>([]);
+const selfDeclared = ref(false);
 
-async function loadCheckers() {
-  if (checkerOptions.value.length) return;
-  const checkers = await apiFetch("/api/credentialVerification/checkers") as Array<{ nik: string; name?: string; ratings?: string[] }>;
-  checkerOptions.value = checkers.map((checker) => ({
-    value: checker.nik,
-    label: `${checker.name || checker.nik}${checker.ratings?.length ? ` [${checker.ratings.join(", ")}]` : ""}`,
-  }));
-}
 
 // Watch for ielpUser prop changes to populate form
 watch(
@@ -83,8 +73,6 @@ watch(
           ? undefined
           : toDateInputValue(newIELPUser.expired);
       state.rater = newIELPUser.rater;
-      state.requestedCheckerNik = newIELPUser.requestedChecker?.nik || newIELPUser.verifiedBy?.nik || undefined;
-      loadCheckers().catch(() => undefined);
       open.value = true;
     }
   },
@@ -94,13 +82,13 @@ watch(
 // Reset form when modal closes
 watch(open, (isOpen) => {
   if (!isOpen) {
+    selfDeclared.value = false;
     state.institution = undefined;
     state.level = undefined;
     state.released = undefined;
     state.expired = undefined;
     state.rater = undefined;
     state.file = undefined;
-    state.requestedCheckerNik = undefined;
     emit("close");
   }
 });
@@ -136,17 +124,21 @@ function triggerFileInput() {
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!props.ielpUser) return;
 
+  if (!selfDeclared.value) {
+    toast.add({ title: "Confirm accuracy", description: "Confirm the accuracy of this manual entry before saving.", color: "error" });
+    return;
+  }
   loading.value = true;
 
   try {
     const body = new FormData();
+    body.append("selfDeclared", String(selfDeclared.value));
     body.append("institution", event.data.institution);
     body.append("level", event.data.level);
     body.append("released", event.data.released);
     body.append("rater", event.data.rater);
     if (event.data.expired) body.append("expired", event.data.expired);
     if (event.data.file) body.append("file", event.data.file);
-    body.append("requestedCheckerNik", event.data.requestedCheckerNik);
 
     // Call API to update IELPUser
     await apiFetch(`/api/ielpUser/${props.ielpUser.id}`, {
@@ -166,7 +158,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     emit("ielpUserUpdated");
   } catch (error: any) {
     const errorMessage =
-      error?.data?.statusMessage ||
+      error?.data?.message || error?.data?.statusMessage ||
       error?.message ||
       "Failed to update IELP record. Please try again.";
     toast.add({
@@ -192,6 +184,7 @@ const emit = defineEmits<{
     description="Edit the IELP record information"
   >
     <template #body>
+      <UAlert class="mb-4" color="warning" title="Manual entry — self-declared" description="Only records not used by an application may be revised. e-Chain is the primary source; manual entry is a fallback without checker approval." />
       <UForm
         :schema="schema"
         :state="state"
@@ -285,17 +278,7 @@ const emit = defineEmits<{
           </div>
         </UFormField>
 
-        <UFormField label="Verification Checker" name="requestedCheckerNik" required>
-          <USelect
-            v-model="state.requestedCheckerNik"
-            :items="checkerOptions"
-            value-key="value"
-            label-key="label"
-            class="w-full"
-            placeholder="Select checker for this revision"
-          />
-          <p class="mt-1 text-xs text-muted">The approved version remains active until this revision is approved.</p>
-        </UFormField>
+          <UCheckbox v-model="selfDeclared" label="I confirm that this information and supporting document are accurate. I accept responsibility for this manual entry. This is not verification by a checker, AirNav, or e-Chain." />
 
         <div class="flex justify-end gap-2 pt-4">
           <UButton

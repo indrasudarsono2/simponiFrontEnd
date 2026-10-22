@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -135,7 +137,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       formData.append("image", state.image || "");
     }
 
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/multipleChoices/${props.question.id}`,
       {
         method: "PUT",

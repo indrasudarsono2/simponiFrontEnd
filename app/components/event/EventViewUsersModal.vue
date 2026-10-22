@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
+const { getRoleNames } = useAuth();
+const canExtend = computed(() => getRoleNames().includes('CHECKER ADMIN'));
+const extensionUserId = ref<number | null>(null);
 
 interface User {
   nik: string;
@@ -9,6 +14,7 @@ interface User {
 }
 
 interface AssignedUser {
+  applicationDocs?: Array<{ appRatings: Array<{ rating: { rating: string }; examAccessExtensions: Array<{ accessUntil: string }> }> }>;
   id: number;
   user: User;
 }
@@ -65,7 +71,7 @@ watch(open, (isOpen) => {
 async function fetchAssignedUsers(eventId: number) {
   dataLoading.value = true;
   try {
-    const response = await $fetch<AssignedUser[]>(
+    const response = await csrfFetch<AssignedUser[]>(
       `${apiBaseUrl}/api/eventsGetEventUser/${eventId}`,
       {
         headers: {
@@ -106,7 +112,7 @@ async function deleteSelectedUsers() {
 
   try {
     // Send array of IDs to delete in a single POST request
-    await $fetch(`${apiBaseUrl}/api/eventsDeleteEventUser`, {
+    await csrfFetch(`${apiBaseUrl}/api/eventsDeleteEventUser`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -204,7 +210,7 @@ function selectVisibleUsers() {
           <!-- User List with Checkboxes -->
           <div class="grid min-h-80 max-h-[60vh] grid-cols-1 overflow-y-auto rounded-lg border border-default md:grid-cols-2">
             <p v-if="!filteredUsers.length" class="p-4 text-sm text-muted">No assigned users match your search.</p>
-            <label
+            <div
               v-for="assignedUser in filteredUsers"
               :key="assignedUser.id"
               class="flex cursor-pointer items-center gap-3 border-b border-default p-3 transition-colors hover:bg-elevated/50"
@@ -219,6 +225,12 @@ function selectVisibleUsers() {
                 <div class="text-sm text-muted">
                   NIK: {{ assignedUser.user.nik }}
                 </div>
+                <template v-for="(doc, di) in assignedUser.applicationDocs || []" :key="di">
+                  <p v-for="(r, ri) in doc.appRatings.filter(r => r.examAccessExtensions.length)" :key="ri" class="text-xs text-primary">
+                    {{ r.rating.rating }} · {{ new Date(r.examAccessExtensions[0]!.accessUntil).getTime() > Date.now() ? 'Extended Access' : 'Extension expired' }} · {{ new Date(r.examAccessExtensions[0]!.accessUntil).toISOString().replace('T', ' ').replace('.000Z', ' UTC') }}
+                  </p>
+                </template>
+                <UButton v-if="canExtend" class="mt-2" size="xs" variant="outline" label="Extend Exam Access" @click.stop="extensionUserId = assignedUser.id" />
               </div>
               <UBadge
                 v-if="isUserSelected(assignedUser.id)"
@@ -228,7 +240,7 @@ function selectVisibleUsers() {
               >
                 Selected
               </UBadge>
-            </label>
+            </div>
           </div>
 
           <!-- Selection Summary -->
@@ -253,4 +265,5 @@ function selectVisibleUsers() {
       </div>
     </template>
   </UModal>
+  <EventExtendExamAccessModal v-if="eventId && extensionUserId" :event-id="eventId" :event-user-id="extensionUserId" @close="extensionUserId = null" @saved="fetchAssignedUsers(eventId!)" />
 </template>

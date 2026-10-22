@@ -1,5 +1,7 @@
 <script setup lang="ts">
 const apiBaseUrl = useApiBaseUrl()
+const selectedSidebarRole = useState<string>('selectedRole');
+const essayScope = computed(() => selectedSidebarRole.value?.trim().toUpperCase() === 'CHECKER ADMIN' ? 'admin' : 'checker');
 import EssayCorrectionModal from "../../components/performanceCheck/EssayCorrectionModal.vue";
 import EssayCorrectionHistoryModal from "../../components/performanceCheck/EssayCorrectionHistoryModal.vue";
 
@@ -123,7 +125,7 @@ const selectedHistoryEssayCorrections = ref<
   }>
 >([]);
 const selectedEventFilter = ref<number | undefined>(undefined);
-interface ResetRating { id: number; rating: string | null; status: string | null; canReset: boolean; reason: string | null; attemptNumber: number; priorFailures: number }
+interface ResetRating { id: number; rating: string | null; status: string | null; canReset: boolean; canResetMultipleChoice: boolean; reason: string | null; attemptNumber: number; priorFailures: number }
 interface ResetOptions { member: { id: number; name: string; event: string | null }; ratings: ResetRating[]; resets: Array<{ id: number; appRatingId: number; checkerNik: string; reason: string; attemptNumber: number; createdAt: string }> }
 const resetOpen = ref(false);
 const resetLoading = ref(false);
@@ -133,6 +135,21 @@ const resetError = ref("");
 const resetRatingId = ref<number | null>(null);
 const resetReason = ref("");
 const resetConfirmed = ref(false);
+const resetPart = ref('MULTIPLE_CHOICE');
+const resetEligible = (rating: ResetRating) => resetPart.value === 'MULTIPLE_CHOICE' ? rating.canResetMultipleChoice : rating.canReset;
+const resetBlockedReason = computed(() => {
+  if (resetLoading.value) return 'Loading reset options…';
+  if (!resetData.value) return 'Load a member’s reset options first.';
+  if (!resetData.value.ratings.length) return essayScope.value === 'admin'
+    ? 'This member has no application ratings for this event. There is no examination attempt to reset.'
+    : 'No application ratings within your checker assignment were found for this member and event.';
+  if (!resetData.value.ratings.some(resetEligible)) return 'There is no eligible attempt for the selected reset option. Review the explanation beside each rating.';
+  if (!resetRatingId.value || !resetData.value.ratings.some(rating => rating.id === resetRatingId.value && resetEligible(rating))) return 'Select an eligible rating.';
+  if (resetReason.value.trim().length < 10) return 'Enter a reset reason of at least 10 characters.';
+  if (!resetConfirmed.value) return 'Tick the permanent-deletion confirmation before resetting.';
+  return '';
+});
+watch(resetPart, () => { resetRatingId.value = resetData.value?.ratings.find(resetEligible)?.id ?? null; resetConfirmed.value = false; });
 const resetToast = useToast();
 
 async function openReset(member: GroupMemberItem) {
@@ -144,9 +161,10 @@ async function openReset(member: GroupMemberItem) {
   resetReason.value = "";
   resetConfirmed.value = false;
   try {
-    const result = await apiFetch(`/api/performanceCheck/reset-options/${member.id}`) as ResetOptions;
+    const result = await apiFetch(`/api/performanceCheck/reset-options/${member.id}?scope=${essayScope.value}`) as ResetOptions;
     resetData.value = result;
-    resetRatingId.value = result.ratings.find((rating) => rating.canReset)?.id ?? null;
+    resetPart.value = result.ratings.some(rating => rating.canResetMultipleChoice) ? 'MULTIPLE_CHOICE' : 'ALL';
+    resetRatingId.value = result.ratings.find(resetEligible)?.id ?? null;
   } catch (error: any) {
     resetError.value = error?.data?.message || "Unable to load reset options.";
   } finally {
@@ -162,10 +180,10 @@ async function submitReset() {
     await apiFetch(`/api/performanceCheck/reset-attempt`, {
       method: "POST",
       body: { groupMemberId: resetData.value.member.id, appRatingId: resetRatingId.value,
-        reason: resetReason.value.trim(), confirmation: "RESET CURRENT ATTEMPT" },
+        reason: resetReason.value.trim(), confirmation: "RESET CURRENT ATTEMPT", resetPart: resetPart.value, scope: essayScope.value },
     });
     resetOpen.value = false;
-    resetToast.add({ title: "Examination reset", description: "The user can restart this attempt from Essay.", color: "success" });
+    resetToast.add({ title: "Examination reset", description: resetPart.value === 'MULTIPLE_CHOICE' ? 'Essay score preserved. The user can restart Multiple Choice.' : 'The user can restart this attempt from Essay.', color: "success" });
     await refresh();
   } catch (error: any) {
     resetError.value = error?.data?.message || "Unable to reset examination.";
@@ -176,7 +194,7 @@ async function submitReset() {
 
 const { data: availableEvents, status: optionsStatus, error: optionsError, refresh: refreshOptions } =
   await useFetch<EventOptionsResponse>(`${apiBaseUrl}/api/performanceCheck`, {
-    query: { mode: "options" },
+    query: { mode: "options", scope: essayScope },
     headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
   });
 const data = ref<PerformanceCheckResponse | null>(null);
@@ -190,7 +208,7 @@ async function refresh() {
   detailsLoading.value = true;
   detailsError.value = "";
   try {
-    const response = await apiFetch(`/api/performanceCheck?eventId=${eventId}`) as PerformanceCheckResponse;
+    const response = await apiFetch(`/api/performanceCheck?eventId=${eventId}&scope=${essayScope.value}`) as PerformanceCheckResponse;
     if (requestId === requestSequence) data.value = response;
   } catch (error: any) {
     if (requestId === requestSequence) detailsError.value = error?.data?.message || "Failed to load performance check data.";
@@ -199,6 +217,11 @@ async function refresh() {
   }
 }
 watch(selectedEventFilter, () => {
+  requestSequence++;
+  data.value = null;
+  if (selectedEventFilter.value) void refresh();
+});
+watch(essayScope, () => {
   requestSequence++;
   data.value = null;
   if (selectedEventFilter.value) void refresh();
@@ -243,7 +266,7 @@ const tableRows = computed<TableRowItem[]>(() => {
       groupMembers: group.groupMembers || [],
       groupEssayCorrections: group.essayCorrections || [],
     }));
-  });
+  }).map((row, index) => ({ ...row, no: index + 1 }));
 });
 
 const eventFilterOptions = computed(() => {
@@ -421,7 +444,7 @@ const errorMessage = computed(() => {
                         <UIcon
                           v-if="hasFinalScore(member)"
                           name="i-lucide-eye"
-                          class="size-4 text-primary cursor-pointer"
+                          class="size-4 text-blue-600 dark:text-blue-400 cursor-pointer"
                           @click="
                             openEssayCorrectionModal(member, row.persentage)
                           "
@@ -472,7 +495,7 @@ const errorMessage = computed(() => {
   />
 
   <UModal v-model:open="resetOpen" title="Reset interrupted Mode 1 examination"
-    description="Only the assigned checker may restart the current attempt. Earlier failed results remain recorded."
+    description="The assigned Checker or a Checker Admin in the same branch unit may reset an eligible attempt. Permanent deletion requires a reason and explicit confirmation."
     :ui="{ content: 'max-w-2xl w-full' }">
     <template #body>
       <div class="space-y-4">
@@ -480,27 +503,30 @@ const errorMessage = computed(() => {
         <p v-if="resetError" class="rounded border border-error/30 bg-error/5 p-3 text-sm text-error">{{ resetError }}</p>
         <template v-if="resetData">
           <p class="text-sm font-medium">{{ resetData.member.name }} · {{ resetData.member.event }}</p>
-          <p class="text-sm text-muted">Choose the rating whose current attempt should restart from Essay:</p>
+          <UFormField label="Reset option"><USelect v-model="resetPart" :items="[{ label: 'Multiple Choice only — preserve scored essay', value: 'MULTIPLE_CHOICE' }, { label: 'Full attempt — restart from Essay', value: 'ALL' }]" value-key="value" class="w-full" /></UFormField>
+          <p class="text-sm text-muted">{{ resetPart === 'MULTIPLE_CHOICE' ? 'Select an expired Multiple Choice attempt. Essay answers and checker scores will be kept.' : 'Choose the rating whose current attempt should restart from Essay.' }}</p>
           <div v-for="rating in resetData.ratings" :key="rating.id"
             class="rounded-lg border p-3 text-sm" :class="resetRatingId === rating.id ? 'border-primary' : ''">
-            <label class="flex items-start gap-3" :class="rating.canReset ? 'cursor-pointer' : 'opacity-60'">
-              <input v-model="resetRatingId" type="radio" :value="rating.id" :disabled="!rating.canReset" class="mt-1" />
+            <label class="flex items-start gap-3" :class="resetEligible(rating) ? 'cursor-pointer' : 'opacity-60'">
+              <input v-model="resetRatingId" type="radio" :value="rating.id" :disabled="!resetEligible(rating)" class="mt-1" />
               <span><strong>{{ rating.rating || 'Rating' }}</strong> · Attempt {{ rating.attemptNumber }} · {{ rating.status || 'Unknown' }}
                 <span v-if="rating.priorFailures" class="block text-muted">{{ rating.priorFailures }} earlier failed result(s) will remain recorded.</span>
-                <span v-if="rating.reason" class="block text-muted">{{ rating.reason }}</span>
+                <span v-if="resetPart === 'ALL' && rating.reason" class="block text-muted">{{ rating.reason }}</span>
+                <span v-if="resetPart === 'MULTIPLE_CHOICE' && !rating.canResetMultipleChoice" class="block text-muted">Requires a scored essay and an expired Multiple Choice attempt.</span>
               </span>
             </label>
           </div>
-          <p v-if="resetData.ratings.length === 0" class="text-sm text-muted">No assigned ratings were found.</p>
+          <p v-if="resetData.ratings.length === 0" class="rounded border border-warning/30 bg-warning/5 p-3 text-sm">{{ resetBlockedReason }}</p>
           <label class="block text-sm font-medium" for="reset-reason">Reason for reset (required)</label>
           <UTextarea id="reset-reason" v-model="resetReason" class="w-full" :rows="3" placeholder="Describe the interruption or issue..." />
           <label class="flex items-start gap-2 text-sm"><input v-model="resetConfirmed" type="checkbox" class="mt-1" />
-            <span>I understand that current draft answers and time will be cleared, and this same attempt will restart from Essay.</span></label>
+            <span>{{ resetPart === 'MULTIPLE_CHOICE' ? 'I confirm permanently deleting this attempt’s Multiple Choice question assignments, answers and draft. This cannot be undone. The scored essay and earlier attempts remain unchanged.' : 'I confirm permanently deleting this current attempt’s Essay and Multiple Choice question assignments, answers and drafts. This cannot be undone. Earlier attempts remain unchanged; this attempt restarts from Essay.' }}</span></label>
           <div class="flex justify-end gap-2">
             <UButton label="Cancel" color="neutral" variant="outline" @click="resetOpen = false" />
             <UButton label="Reset current attempt" color="warning" :loading="resetSaving"
-              :disabled="!resetRatingId || resetReason.trim().length < 10 || !resetConfirmed" @click="submitReset" />
+              :disabled="Boolean(resetBlockedReason)" @click="submitReset" />
           </div>
+          <p v-if="resetBlockedReason && resetData.ratings.length" class="text-sm text-warning" role="status">{{ resetBlockedReason }}</p>
           <div v-if="resetData.resets.length" class="border-t pt-3 text-sm">
             <h3 class="font-medium">Recent reset history</h3>
             <p v-for="item in resetData.resets" :key="item.id" class="mt-2 text-muted">

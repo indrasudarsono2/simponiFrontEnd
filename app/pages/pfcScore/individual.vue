@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl();
 import {
   CalendarDate,
@@ -151,7 +153,7 @@ watch(selectedBranchId, async (branchId) => {
   if (!branchId) return;
   usersLoading.value = true;
   try {
-    const response = await $fetch<IndividualOptionsResponse>(
+    const response = await csrfFetch<IndividualOptionsResponse>(
       `${apiBaseUrl}/api/pfcScore/individual`,
       {
         credentials: "include",
@@ -398,7 +400,7 @@ async function handleSubmit() {
   try {
     submitLoading.value = true;
 
-    const response = await $fetch<CheckerStatisticAnsweredResponse>(
+    const response = await csrfFetch<CheckerStatisticAnsweredResponse>(
       `${apiBaseUrl}/api/pfcScore/individual`,
       {
         method: "POST",

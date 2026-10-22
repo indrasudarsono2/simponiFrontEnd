@@ -21,7 +21,6 @@ const schema = z.object({
   echainFileUrlExpiresAt: z.string().nullable().optional(),
   echainFileMimeType: z.string().nullable().optional(),
   echainFileSizeBytes: z.number().nullable().optional(),
-  requestedCheckerNik: z.string().optional(),
   syncReceipt: z.string().nullable().optional(),
   expirySource: z.enum(['ECHAIN', 'PERFORMA']).optional(),
   echainExpired: z.string().nullable().optional(),
@@ -29,7 +28,7 @@ const schema = z.object({
 });
 
 const open = ref(false);
-const syncMode = ref(false);
+const syncMode = ref(canSyncEchain.value);
 const syncLoading = ref(false);
 const institutionMissing = ref(false);
 const syncReceipts = ref<Partial<Record<'ECHAIN' | 'PERFORMA', string>>>({});
@@ -48,7 +47,6 @@ const state = reactive<Partial<Schema>>({
   echainFileUrlExpiresAt: null,
   echainFileMimeType: null,
   echainFileSizeBytes: null,
-  requestedCheckerNik: undefined,
   syncReceipt: null,
 });
 
@@ -63,7 +61,7 @@ function chooseExpiry(source: 'ECHAIN' | 'PERFORMA') {
 const loading = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const { apiFetch } = useApiFetch();
-const checkerOptions = ref<Array<{ label: string; value: string }>>([]);
+const selfDeclared = ref(false);
 const levelOptions = ["4", "5", "6"];
 
 function calculateIelpExpiry(level?: string, released?: string) {
@@ -78,18 +76,6 @@ watch([() => state.level, () => state.released, syncMode], ([level, released, sy
   if (!synced) state.expired = calculateIelpExpiry(level, released);
 });
 
-watch(open, async (isOpen) => {
-  if (!isOpen || checkerOptions.value.length) return;
-  try {
-    const checkers = await apiFetch("/api/credentialVerification/checkers") as Array<{ nik: string; name?: string; ratings?: string[] }>;
-    checkerOptions.value = checkers.map((checker) => ({
-      value: checker.nik,
-      label: `${checker.name || checker.nik}${checker.ratings?.length ? ` [${checker.ratings.join(", ")}]` : ""}`,
-    }));
-  } catch (error: any) {
-    toast.add({ title: "Unable to load checkers", description: error?.data?.message || error?.message, color: "error" });
-  }
-});
 
 interface IelpUserSyncResponse {
   success: boolean;
@@ -142,6 +128,7 @@ function toggleSyncMode() {
     state.expired = undefined;
     state.rater = undefined;
     state.file = undefined;
+    selfDeclared.value = false;
     state.echainFileName = null;
     state.echainFileUrl = null;
     state.echainFileUrlExpiresAt = null;
@@ -170,6 +157,7 @@ async function syncFromSystem() {
     state.calculatedExpired = response.data.calculatedExpired;
     state.rater = response.data.rater ?? undefined;
     state.file = undefined;
+    selfDeclared.value = false;
     state.echainFileName = response.data.fileName ?? null;
     state.echainFileUrl = response.data.fileUrl ?? null;
     state.echainFileUrlExpiresAt = response.data.fileUrlExpiresAt ?? null;
@@ -187,7 +175,7 @@ async function syncFromSystem() {
   } catch (error: any) {
     const errorMessage =
       error?.data?.message ||
-      error?.data?.statusMessage ||
+      error?.data?.message || error?.data?.statusMessage ||
       error?.message ||
       "Failed to sync IELP data. Please try again.";
     toast.add({
@@ -205,14 +193,15 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     toast.add({ title: 'Choose expiry', description: 'Review both dates and choose the correct expiry before saving.', color: 'error' });
     return;
   }
-  if (!syncMode.value && !event.data.requestedCheckerNik) {
-    toast.add({ title: "Checker required", description: "Please select who will verify this manual IELP.", color: "error" });
+  if (!syncMode.value && (!selfDeclared.value || !(event.data.file instanceof File))) {
+    toast.add({ title: "Manual declaration required", description: "Attach the supporting file and confirm its accuracy before saving.", color: "error" });
     return;
   }
   loading.value = true;
 
   try {
     const formData = new FormData();
+    formData.append("selfDeclared", String(selfDeclared.value));
 
     formData.append("institution", event.data.institution);
     formData.append("level", event.data.level);
@@ -227,7 +216,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       formData.append('echainExpired', state.echainExpired || '');
       formData.append('calculatedExpired', state.calculatedExpired || '');
     }
-    if (!syncMode.value && event.data.requestedCheckerNik) formData.append("requestedCheckerNik", event.data.requestedCheckerNik);
 
     if (event.data.file instanceof File) {
       formData.append("file", event.data.file);
@@ -274,12 +262,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.expired = undefined;
     state.rater = undefined;
     state.file = undefined;
+    selfDeclared.value = false;
     state.echainFileName = null;
     state.echainFileUrl = null;
     state.echainFileUrlExpiresAt = null;
     state.echainFileMimeType = null;
     state.echainFileSizeBytes = null;
-    state.requestedCheckerNik = undefined;
     state.syncReceipt = null;
     syncReceipts.value = {};
     state.expirySource = undefined;
@@ -290,7 +278,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     emit("ielpUserAdded");
   } catch (error: any) {
     const errorMessage =
-      error?.data?.statusMessage ||
+      error?.data?.message || error?.data?.statusMessage ||
       error?.message ||
       "Failed to create IELP record. Please try again.";
     toast.add({
@@ -403,6 +391,7 @@ const emit = defineEmits<{
 
           <!-- Manual Mode: File Upload -->
           <div v-else class="space-y-4">
+            <UAlert color="warning" title="Manual entry — self-declared" description="e-Chain synchronization is the primary source. Manual entry is a fallback and does not require checker approval. Valid records are immediately available for application documents." />
             <UFormField label="IELP File" name="file">
               <div class="flex items-center gap-2">
                 <input
@@ -433,16 +422,7 @@ const emit = defineEmits<{
                 <span v-else class="text-sm text-muted">No file selected</span>
               </div>
             </UFormField>
-            <UFormField label="Verification Checker" name="requestedCheckerNik" required>
-              <USelect
-                v-model="state.requestedCheckerNik"
-                :items="checkerOptions"
-                value-key="value"
-                placeholder="Select checker"
-                class="w-full"
-              />
-              <p class="mt-1 text-xs text-muted">The manual record remains pending until this checker approves it.</p>
-            </UFormField>
+              <UCheckbox v-if="!syncMode" v-model="selfDeclared" label="I confirm that this information and supporting document are accurate. I accept responsibility for this manual entry. This is not verification by a checker, AirNav, or e-Chain." />
           </div>
 
           <!-- Form Fields -->

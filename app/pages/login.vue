@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { getDashboardRoute } from '~/utils/dashboardRoute'
+import { loginErrorMessage } from '~/utils/loginError'
 
 definePageMeta({
   layout: false
@@ -34,18 +35,6 @@ const startAirnavLogin = () => {
 
 const validateNik = (nik: string) => /^[A-Za-z0-9]{8}$/.test(nik.trim())
 
-function getErrorMessage(error: unknown): string {
-  if (error && typeof error === 'object') {
-    const requestError = error as {
-      message?: string
-      data?: { message?: string }
-    }
-    return requestError.data?.message
-      || requestError.message
-      || 'Please check your credentials and try again.'
-  }
-  return 'Please check your credentials and try again.'
-}
 
 const handleLogin = async () => {
   if (!validateNik(form.nik)) {
@@ -57,10 +46,11 @@ const handleLogin = async () => {
     return
   }
 
-  if (!form.password || form.password.length < 6) {
+  const minimumLoginLength = import.meta.dev ? 3 : 6
+  if (!form.password || form.password.length < minimumLoginLength) {
     toast.add({
       title: 'Invalid password',
-      description: 'Password must contain at least 6 characters.',
+      description: `Password must contain at least ${minimumLoginLength} characters.`,
       color: 'error'
     })
     return
@@ -81,7 +71,7 @@ const handleLogin = async () => {
   } catch (error: unknown) {
     toast.add({
       title: 'Login failed',
-      description: getErrorMessage(error),
+      description: loginErrorMessage(error),
       color: 'error'
     })
   } finally {

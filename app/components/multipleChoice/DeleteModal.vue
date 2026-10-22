@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface MultipleChoice {
@@ -50,7 +52,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/multipleChoices/${props.question.id}`,
       {
         method: "DELETE",

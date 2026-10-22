@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface Rating {
@@ -43,7 +45,7 @@ async function onDelete() {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/cwps/${props.cwp.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/cwps/${props.cwp.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

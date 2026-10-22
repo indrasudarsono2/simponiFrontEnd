@@ -10,7 +10,7 @@ const schema = z.object({
     start: z.string().optional(),
     end: z.string().optional(),
   }),
-  file: z.instanceof(File).optional(),
+  file: z.instanceof(File).refine(file => file.size <= 4 * 1024 * 1024, "Maximum logbook file size is 4 MB.").optional(),
 });
 
 const open = ref(false);
@@ -34,6 +34,12 @@ const fileInput = ref<HTMLInputElement | null>(null);
 function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files[0]) {
+    if (target.files[0].size > 4 * 1024 * 1024) {
+      state.file = undefined;
+      target.value = "";
+      toast.add({ title: "Logbook file is too large", description: "Maximum file size is 4 MB. Please choose a smaller file.", color: "error" });
+      return;
+    }
     state.file = target.files[0];
   }
 }
@@ -178,7 +184,7 @@ const emit = defineEmits<{
 
         <!-- Upload File Option -->
         <div v-if="createMethod === 'upload'" class="space-y-4">
-          <UFormField label="Logbook File" name="file">
+          <UFormField label="Logbook File (maximum 4 MB)" name="file">
             <div class="flex items-center gap-2">
               <input
                 ref="fileInput"

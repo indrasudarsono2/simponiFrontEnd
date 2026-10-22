@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface Rating {
@@ -89,7 +91,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/cwpSupervisors`, {
+    await csrfFetch(`${apiBaseUrl}/api/cwpSupervisors`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

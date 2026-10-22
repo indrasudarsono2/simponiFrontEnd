@@ -7,10 +7,10 @@ interface StatisticItem {
   total: number
 }
 
-defineProps<{
+withDefaults(defineProps<{
   ratings: Array<{ rating: string, statistic: StatisticItem[] }>
   showRating?: boolean
-}>()
+}>(), { showRating: true })
 
 function point(value: number, index: number, total: number, radius = 96) {
   const angle = -Math.PI / 2 + (2 * Math.PI * index) / total

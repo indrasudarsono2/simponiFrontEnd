@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 defineOptions({
@@ -87,7 +89,7 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/professionInBranch/${props.professionInBranch.id}`,
       {
         method: "PUT",

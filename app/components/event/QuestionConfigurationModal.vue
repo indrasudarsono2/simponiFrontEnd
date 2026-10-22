@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 interface Setting { kindOfQuestionId: number; quantity: number | null; persentage: number | null; minutes: number | null }
 interface Group { id: number; group: string | null; quantity: number | null; kindOfQuestionId: number }
 interface Rating { id: number; rating: { rating: string }; questionGroups: Group[] }
@@ -41,7 +43,7 @@ watch(() => props.eventId, async id => {
     response.value = null;
   error.value = '';
   try {
-    const result = await $fetch<ConfigurationResponse>(`${apiBaseUrl}/api/events/${id}/question-configuration`, { headers: { Authorization: `Bearer ${token.value}` } });
+    const result = await csrfFetch<ConfigurationResponse>(`${apiBaseUrl}/api/events/${id}/question-configuration`, { headers: { Authorization: `Bearer ${token.value}` } });
     if (version !== requestVersion) return;
     response.value = result;
     selectedVersion.value = result.versions[0]?.id || null;
@@ -62,9 +64,9 @@ async function finalize() {
   const eventId = props.eventId;
   saving.value = true;
   try {
-    await $fetch(`${apiBaseUrl}/api/events/${eventId}/question-configuration/finalize`, { method: 'POST', headers: { Authorization: `Bearer ${token.value}` }, body: { reason: reason.value } });
+    await csrfFetch(`${apiBaseUrl}/api/events/${eventId}/question-configuration/finalize`, { method: 'POST', headers: { Authorization: `Bearer ${token.value}` }, body: { reason: reason.value } });
     if (props.eventId !== eventId) return;
-    response.value = await $fetch<ConfigurationResponse>(`${apiBaseUrl}/api/events/${eventId}/question-configuration`, { headers: { Authorization: `Bearer ${token.value}` } });
+    response.value = await csrfFetch<ConfigurationResponse>(`${apiBaseUrl}/api/events/${eventId}/question-configuration`, { headers: { Authorization: `Bearer ${token.value}` } });
     selectedVersion.value = response.value.versions[0]?.id || null;
     reason.value = '';
     toast.add({ title: 'Configuration finalized', description: 'A new audit version has been saved.', color: 'success' });

@@ -1,3 +1,4 @@
+import { csrfFetch } from "~/utils/csrfFetch";
 import type { CheckerHistoryAppRatingItem, CheckerHistoryAuthority, CheckerHistoryRemarkItem, CheckerHistoryResultItem, CheckerHistoryRow, CheckerHistorySearchResponse } from '~/types/checkerHistory'
 import { formatScore, formatPracticalType, getAuthorityCwps, getFinalScoreAt, getRatingRemark, getRatingRowCount, getApplicationDocRowCount, getItemRowCount } from '~/utils/checkerHistory'
 
@@ -194,7 +195,7 @@ export async function useCheckerHistory() {
 
     try {
       resultLoading.value = true
-      const response = await $fetch<
+      const response = await csrfFetch<
       CheckerHistorySearchResponse | CheckerHistorySearchResponse[]
       >(`${apiBaseUrl}/api/checkerHistory`, {
         method: 'POST',

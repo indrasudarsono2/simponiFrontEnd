@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftDetail {
@@ -330,7 +332,7 @@ async function saveFrequencyRow(row: DutyReportFrequencyRow) {
   savingFrequencyIds.value = [...savingFrequencyIds.value, row.cwpFrequencyId];
 
   try {
-    const response = await $fetch<{
+    const response = await csrfFetch<{
       statusFrequency?: StatusFrequency;
     }>(
       `${apiBaseUrl}/api/dutyReports/${loadedDutyReport.value.id}/frequencies/${row.cwpFrequencyId}`,

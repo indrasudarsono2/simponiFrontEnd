@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
@@ -41,7 +43,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete region
-    await $fetch(`${apiBaseUrl}/api/regions/${props.region.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/regions/${props.region.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

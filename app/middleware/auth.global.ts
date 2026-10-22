@@ -10,6 +10,10 @@ export default defineNuxtRouteMiddleware((to) => {
 
   const { isAuthenticated, getRoleNames, getAllModules } = useAuth();
 
+  if (to.path === "/") {
+    return navigateTo(isAuthenticated.value ? getDashboardRoute(getRoleNames()) : "/login", { replace: true });
+  }
+
   if (to.path === "/login" && isAuthenticated.value) {
     return navigateTo(getDashboardRoute(getRoleNames()));
   }

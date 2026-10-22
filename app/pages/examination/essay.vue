@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const apiBaseUrl = useApiBaseUrl()
+const { apiFetch } = useApiFetch()
 import { useScreenMonitoring } from "../../composables/useScreenMonitoring";
+import { resolveSignedImage } from '../../utils/signedImage';
 
 interface EssayQuestionPayload {
   essay?: {
@@ -164,10 +166,7 @@ function hasImage(imagePath?: string | null): boolean {
 }
 
 function resolveImageUrl(imagePath?: string | null): string {
-  const trimmed = (imagePath || "").trim();
-  if (!trimmed) return "";
-  if (/^(data|blob):/i.test(trimmed)) return trimmed;
-  return `/api/essay/image?image=${encodeURIComponent(trimmed)}`;
+  return resolveSignedImage(imagePath, apiBaseUrl);
 }
 
 const answeredCount = computed(() => {
@@ -502,7 +501,7 @@ async function postMonitoringSnapshot(
   }
 
   try {
-    await $fetch(`${apiBaseUrl}/api/preview`, {
+    await apiFetch('/api/preview', {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -620,7 +619,7 @@ async function postMonitorTime(payload: ExaminationEssayResponse, isInitial = fa
   if (!eventQuestionId || !Number.isFinite(currentAppRatingId)) return false;
 
   try {
-    const clock = await $fetch<{ deadlineAt?: string | null }>(`${apiBaseUrl}/api/postTime`, {
+    const clock = await apiFetch<{ deadlineAt?: string | null }>('/api/postTime', {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -659,7 +658,7 @@ async function saveDraft() {
   draftSaveRunning = true;
   const revision = answerRevision;
   try {
-    const saved = await $fetch<{ savedAt?: string }>(`${apiBaseUrl}/api/examinationDraft`, {
+    const saved = await apiFetch<{ savedAt?: string }>('/api/examinationDraft', {
       method: "POST",
       headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
       body: { kind: "ESSAY", eventId: payload.eventId, appRatingId: payload.appRatingId,
@@ -739,8 +738,8 @@ async function submitAnswers(isAutoSubmit = false) {
 
   try {
     isSubmittingAnswers.value = true;
-    const submitResponse = await $fetch<{ message?: string }>(
-      `${apiBaseUrl}/api/examinationAnswer`,
+    const submitResponse = await apiFetch<{ message?: string }>(
+      '/api/examinationAnswer',
       {
         method: "POST",
         headers: {
@@ -861,8 +860,8 @@ async function loadEssayData() {
       return;
     }
 
-    const payload = await $fetch<ExaminationEssayResponse>(
-        `${apiBaseUrl}/api/examinationEssay`,
+    const payload = await apiFetch<ExaminationEssayResponse>(
+        '/api/examinationEssay',
         {
           method: "POST",
           headers: {

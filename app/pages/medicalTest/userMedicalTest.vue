@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
@@ -137,7 +139,7 @@ async function submitMedicalCheck() {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/medicalCheck`, {
+    await csrfFetch(`${apiBaseUrl}/api/medicalCheck`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -92,7 +94,7 @@ watch(open, (isOpen) => {
 async function fetchEventData(eventId: number) {
   dataLoading.value = true;
   try {
-    const response = await $fetch<EventResponse>(
+    const response = await csrfFetch<EventResponse>(
       `${apiBaseUrl}/api/eventsGetUser/${eventId}`,
       {
         headers: {
@@ -118,7 +120,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/eventsPostUser`, {
+    await csrfFetch(`${apiBaseUrl}/api/eventsPostUser`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

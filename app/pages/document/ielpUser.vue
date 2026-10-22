@@ -19,6 +19,7 @@ interface IELPUser {
   source: "ECHAIN" | "MANUAL" | "LEGACY";
   verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
   verificationNote?: string | null;
+  isApplicationLinked?: boolean;
   requestedChecker?: { nik: string; name?: string | null } | null;
   verifiedBy?: { nik: string; name?: string | null } | null;
 }
@@ -259,9 +260,9 @@ const columns = computed((): TableColumn<IELPUser>[] => [
     accessorKey: "verificationStatus",
     header: "Source / Verification",
     cell: ({ row }) => h("div", {}, [
-      h("div", { class: "font-medium" }, row.original.source),
-      h("div", { class: row.original.verificationStatus === "APPROVED" ? "text-success" : row.original.verificationStatus === "REJECTED" ? "text-error" : "text-warning" }, row.original.verificationStatus),
-      h("div", { class: "text-xs text-muted" }, row.original.verificationStatus === "PENDING" ? `Checker: ${row.original.requestedChecker?.name || row.original.requestedChecker?.nik || "-"}` : row.original.source === "MANUAL" ? `Verified by: ${row.original.verifiedBy?.name || row.original.verifiedBy?.nik || "-"}` : ""),
+      h("div", { class: "font-medium" }, row.original.source === "ECHAIN" ? "Synced from e-Chain" : row.original.source === "MANUAL" ? "Manually entered" : "Legacy record"),
+      h("div", { class: row.original.verificationStatus === "APPROVED" ? "text-success" : row.original.verificationStatus === "REJECTED" ? "text-error" : "text-warning" }, row.original.source === "MANUAL" && row.original.verificationStatus === "APPROVED" && !row.original.verifiedBy ? "Self-declared — no checker approval" : row.original.verificationStatus),
+      h("div", { class: "text-xs text-muted" }, row.original.verificationStatus === "PENDING" ? `Checker: ${row.original.requestedChecker?.name || row.original.requestedChecker?.nik || "-"}` : row.original.source === "MANUAL" && row.original.verifiedBy ? `Verified by: ${row.original.verifiedBy?.name || row.original.verifiedBy?.nik || "-"}` : ""),
     ]),
   },
   {
@@ -313,6 +314,8 @@ const columns = computed((): TableColumn<IELPUser>[] => [
           color: "primary",
           variant: "soft",
           size: "sm",
+          disabled: row.original.isApplicationLinked || row.original.source === "ECHAIN",
+          title: row.original.isApplicationLinked ? "Used by an application — add a new record instead" : row.original.source === "ECHAIN" ? "Sync a new record instead" : "Edit unlinked record",
           onClick: () => handleEdit(row.original),
         }),
         h(UButton, {
@@ -320,6 +323,8 @@ const columns = computed((): TableColumn<IELPUser>[] => [
           color: "error",
           variant: "soft",
           size: "sm",
+          disabled: row.original.isApplicationLinked,
+          title: row.original.isApplicationLinked ? "Application evidence cannot be deleted" : "Delete unlinked record",
           onClick: () => handleDelete(row.original),
         }),
       ]);

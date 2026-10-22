@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftName {
@@ -37,7 +39,7 @@ async function onDelete() {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/shifts/${props.shiftName.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/shifts/${props.shiftName.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

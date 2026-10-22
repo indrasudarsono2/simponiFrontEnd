@@ -2,6 +2,7 @@
 const apiBaseUrl = useApiBaseUrl()
 
 interface AppRatingItem {
+  examAccessExtensions?: Array<{ accessUntil: string }>;
   id: number;
   statusId?: number;
   rating?: {
@@ -156,6 +157,7 @@ interface ExaminationSubmitResponse {
 }
 
 interface TableRow {
+  accessUntil?: string | null;
   no: number;
   appRatingId: number;
   statusId: number;
@@ -422,6 +424,7 @@ const roomRangeMessage = computed(() => {
 });
 
 const hasShownOutOfRangeToast = ref(false);
+const hasAnyExtendedAccess = computed(() => appRatings.value.some(r => r.examAccessExtensions?.[0]?.accessUntil && new Date(r.examAccessExtensions[0].accessUntil).getTime() >= Date.now()));
 
 watch(
   () => [
@@ -434,6 +437,7 @@ watch(
     if (fetchStatus !== "success") return;
     if (eventData.value?.theoryMode === 'MODE_2') return;
     if (missingEventQuestions.value) return;
+    if (hasAnyExtendedAccess.value) return;
     if (examinationStatus === "COMPLETED" || examinationStatus === "NOT_ASSIGNED") {
       hasShownOutOfRangeToast.value = false;
       return;
@@ -458,6 +462,9 @@ function toPercentageText(value: number): string {
   return `${(value * 100).toFixed(0)}%`;
 }
 
+function rowHasExtension(row: TableRow) {
+  return Boolean(row.accessUntil && new Date(row.accessUntil).getTime() >= Date.now());
+}
 function getRowsForQuestion(question: EventQuestionItem): TableRow[] {
   return appRatings.value.map((item, index) => ({
     no: index + 1,
@@ -474,11 +481,12 @@ function getRowsForQuestion(question: EventQuestionItem): TableRow[] {
       item.examinationStatus?.message || "Examination status is unavailable.",
     completedAt: item.examinationStatus?.completedAt || null,
     canStart: Boolean(item.examinationStatus?.canStart),
+    accessUntil: item.examAccessExtensions?.[0]?.accessUntil || null,
   }));
 }
 
 async function handleAction(row: TableRow, question: EventQuestionItem) {
-  if (!roomTimeWindow.value.hasValidRange || !roomTimeWindow.value.isInRange) {
+  if (!roomTimeWindow.value.hasValidRange || (!roomTimeWindow.value.isInRange && !rowHasExtension(row))) {
     toast.add({
       title: "Examination Not Available",
       description: roomRangeMessage.value,
@@ -511,8 +519,8 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
 
     if (isMultipleChoiceQuestion(question)) {
       const multipleChoicePayload =
-        await $fetch<ExaminationMultipleChoiceResponse>(
-          `${apiBaseUrl}/api/examinationMultipleChoice`,
+        await apiFetch(
+          '/api/examinationMultipleChoice',
           {
             method: "POST",
             credentials: "include",
@@ -524,7 +532,7 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
               appRatingId: row.appRatingId,
             },
           },
-        );
+        ) as ExaminationMultipleChoiceResponse;
 
       examinationMultipleChoiceResponse.value = multipleChoicePayload;
       examinationMultipleChoiceMeta.value = {
@@ -542,8 +550,8 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
       return;
     }
 
-    const essayPayload = await $fetch<ExaminationEssayResponse>(
-      `${apiBaseUrl}/api/examinationEssay`,
+    const essayPayload = await apiFetch(
+      '/api/examinationEssay',
       {
         method: "POST",
         credentials: "include",
@@ -555,7 +563,7 @@ async function handleAction(row: TableRow, question: EventQuestionItem) {
           appRatingId: row.appRatingId,
         },
       },
-    );
+    ) as ExaminationEssayResponse;
 
     examinationEssayResponse.value = essayPayload;
     examinationEssayMeta.value = {
@@ -734,6 +742,7 @@ onBeforeUnmount(() => {
             v-if="
               overallExaminationStatus !== 'COMPLETED' &&
               !missingEventQuestions &&
+              !hasAnyExtendedAccess &&
               (!roomTimeWindow.hasValidRange || !roomTimeWindow.isInRange)
             "
             class="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
@@ -816,6 +825,7 @@ onBeforeUnmount(() => {
                         <p v-if="row.completedAt" class="text-xs text-muted">
                           {{ formatDateTime(row.completedAt) }} UTC
                         </p>
+                        <p v-if="row.accessUntil" class="text-xs text-primary">{{ rowHasExtension(row) ? 'Extended Access' : 'Extension expired' }} · {{ formatDateTime(row.accessUntil) }} UTC</p>
                       </div>
                     </td>
                     <td class="px-3 py-2">
@@ -833,7 +843,7 @@ onBeforeUnmount(() => {
                         :disabled="
                           isActionSubmitting ||
                           !roomTimeWindow.hasValidRange ||
-                          !roomTimeWindow.isInRange
+                          (!roomTimeWindow.isInRange && !rowHasExtension(row))
                         "
                         @click="handleAction(row, question)"
                       />

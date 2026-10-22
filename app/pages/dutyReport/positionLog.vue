@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface ShiftDetail {
@@ -793,7 +795,7 @@ async function savePositionLogs(options: { auto?: boolean } = {}) {
   }
 
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/positionLogs/${selectedDutyReportId.value}`,
       {
         method: "POST",

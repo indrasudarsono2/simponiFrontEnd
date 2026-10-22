@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import { useApplicationDocStore } from "../../stores/applicationDoc";
 import ApplicationDocModal from "../../components/verification/ApplicationDocModal.vue";
 import VerificationModal from "../../components/verification/VerificationModal.vue";
 import VerificationDetailModal from "../../components/verification/VerificationDetailModal.vue";
+import { verificationState } from '~/utils/verificationState';
 
 const { token } = useAuth();
 const store = useApplicationDocStore();
@@ -155,7 +158,7 @@ async function handleSearch() {
 
   searchLoading.value = true;
   try {
-    const response = await $fetch<VerificationItem[]>(
+    const response = await csrfFetch<VerificationItem[]>(
       `${apiBaseUrl}/api/verification`,
       {
         method: "POST",
@@ -350,7 +353,7 @@ async function fetchVerificationItem(doc: any) {
   isVerificationItemModalOpen.value = true;
 
   try {
-    const response = await $fetch<any>(
+    const response = await csrfFetch<any>(
       `${apiBaseUrl}/api/verificationItem`,
       {
         method: "POST",
@@ -405,7 +408,7 @@ async function fetchVerificationItemAndOpenModal(doc: any) {
   verificationItemError.value = null;
 
   try {
-    const response = await $fetch<any>(
+    const response = await csrfFetch<any>(
       `${apiBaseUrl}/api/verificationItem`,
       {
         method: "POST",
@@ -644,9 +647,11 @@ function closeVerificationDetailModal() {
                           v-if="hasVerificationData(member)"
                           type="button"
                           size="lg"
-                          color="success"
+                          :color="verificationState(member.verification) === 'verified' ? 'success' : 'warning'"
                           variant="soft"
-                          icon="i-lucide-clipboard-check"
+                          :icon="verificationState(member.verification) === 'verified' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard-clock'"
+                          :label="verificationState(member.verification) === 'verified' ? 'Verified' : 'Review required'"
+                          :aria-label="verificationState(member.verification) === 'verified' ? 'Currently verified — view history' : 'Previous verification history — review required'"
                           class="ml-1"
                           @click.stop="
                             viewVerification(member.verification, member)

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 const { token } = useAuth();
@@ -109,7 +111,7 @@ async function onSubmit() {
     const formData = new FormData();
     formData.append("csv", selectedFile.value);
 
-    const response = await $fetch<{
+    const response = await csrfFetch<{
       imported: number;
       created: number;
       updated: number;

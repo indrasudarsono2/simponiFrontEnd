@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -113,7 +115,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Submit to API - update user's professionInBranch and branchUnit
-    await $fetch(`${apiBaseUrl}/api/userBranch/${props.user.nik}`, {
+    await csrfFetch(`${apiBaseUrl}/api/userBranch/${props.user.nik}`, {
       method: "put",
       body: {
         professionInBranchId: event.data.professionInBranchId,

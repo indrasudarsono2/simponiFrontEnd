@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const apiBaseUrl = useApiBaseUrl()
+const { apiFetch } = useApiFetch()
 import { useScreenMonitoring } from "../../composables/useScreenMonitoring";
 
 interface MultipleChoiceItem {
@@ -709,7 +710,7 @@ async function postMonitoringSnapshot(
   }
 
   try {
-    await $fetch(`${apiBaseUrl}/api/preview`, {
+    await apiFetch('/api/preview', {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -833,7 +834,7 @@ async function postMonitorTime(payload: ExaminationMultipleChoiceResponse, isIni
   if (!eventQuestionId || !Number.isFinite(currentAppRatingId)) return false;
 
   try {
-    const clock = await $fetch<{ deadlineAt?: string | null }>(`${apiBaseUrl}/api/postTime`, {
+    const clock = await apiFetch<{ deadlineAt?: string | null }>('/api/postTime', {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -860,7 +861,7 @@ async function saveDraft() {
   try {
     const ids = payload.multipleChoice?.flatMap((group) => group.multipleChoice || [])
       .map((item) => item.multipleChoice?.id).filter((id): id is number => Number.isInteger(id)) || [];
-    const saved = await $fetch<{ savedAt?: string }>(`${apiBaseUrl}/api/examinationDraft`, {
+    const saved = await apiFetch<{ savedAt?: string }>('/api/examinationDraft', {
       method: "POST", headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
       body: { kind: "MULTIPLE_CHOICE", eventId: payload.eventId, appRatingId: payload.appRatingId,
         answers: Object.fromEntries(ids.map((id) => [id, answers[id] || ""])) },
@@ -961,8 +962,8 @@ async function submitAnswers(isAutoSubmit = false) {
 
   try {
     isSubmittingAnswers.value = true;
-    const submitPayload = await $fetch<ExaminationSubmitResponse>(
-      `${apiBaseUrl}/api/examinationMultipleChoiceAnswer`,
+    const submitPayload = await apiFetch<ExaminationSubmitResponse>(
+      '/api/examinationMultipleChoiceAnswer',
       {
         method: "POST",
         headers: {
@@ -1078,8 +1079,8 @@ async function loadMultipleChoiceData() {
       return;
     }
 
-    const payload = await $fetch<ExaminationMultipleChoiceResponse>(
-        `${apiBaseUrl}/api/examinationMultipleChoice`,
+    const payload = await apiFetch<ExaminationMultipleChoiceResponse>(
+        '/api/examinationMultipleChoice',
         {
           method: "POST",
           headers: {

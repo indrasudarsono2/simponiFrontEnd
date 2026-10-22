@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -103,7 +105,7 @@ async function submitVerification() {
     // console.log("[VERIFICATION SUBMIT] Data:", submitData);
 
     // Send to API
-    const response = await $fetch("/api/verification", {
+    const response = await csrfFetch("/api/verification", {
       method: "POST",
       body: submitData,
     });

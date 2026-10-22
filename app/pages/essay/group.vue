@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { escapeHtml } from '../../utils/escapeHtml';
 const apiBaseUrl = useApiBaseUrl()
 import type { TableColumn } from "@nuxt/ui";
 import { getPaginationRowModel } from "@tanstack/table-core";
@@ -476,8 +477,8 @@ function getGroupsForEssaySector(essayId: number, sectorName: string): string {
       const ratingName = m.questionGroup?.subBranchUnitRating?.rating?.rating;
       if (!groupName) return null;
 
-      const ratingText = ratingName ? ` (${ratingName})` : "";
-      return `<li>${groupName}${ratingText}</li>`;
+      const ratingText = ratingName ? ` (${escapeHtml(ratingName)})` : "";
+      return `<li>${escapeHtml(groupName)}${ratingText}</li>`;
     })
     .filter((item): item is string => item !== null)
     .join("");

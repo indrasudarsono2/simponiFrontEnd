@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 
@@ -19,6 +21,10 @@ interface CheckerAdminEvent {
   }>;
 }
 interface CheckerAdminDashboard {
+  examinationActivity?: {
+    checkedAt: string; mode1Count: number; mode2Count: number; overdueMode1Count: number; total: number; truncated: boolean;
+    attempts: Array<{ id: string; mode: string; nik: string; name: string; event: string; rating: string; section: string; deadline: string | null; status: string }>;
+  };
   missingRoomCount: number;
   ratingCount: number;
   sectors: Array<{ id: number; sector: string | null; ratings: string[] }>;
@@ -37,14 +43,14 @@ async function inspectMissingRooms() {
   roomRecoveryOpen.value = true;
   roomRecoveryBusy.value = true;
   roomRecoveryError.value = '';
-  try { roomRecoveryData.value = await $fetch(`${apiBaseUrl}/api/room/missing-assignments`, { headers: { Authorization: `Bearer ${token.value}` } }); }
+  try { roomRecoveryData.value = await csrfFetch(`${apiBaseUrl}/api/room/missing-assignments`, { headers: { Authorization: `Bearer ${token.value}` } }); }
   catch (error: any) { roomRecoveryError.value = error?.data?.message || 'Unable to load missing room assignments.'; }
   finally { roomRecoveryBusy.value = false; }
 }
 async function repairMissingRooms() {
   roomRecoveryBusy.value = true;
   try {
-    await $fetch(`${apiBaseUrl}/api/room/default-assignments`, { method: 'POST', headers: { Authorization: `Bearer ${token.value}` }, body: { eventUserIds: roomRecoveryData.value?.participants.map(item => item.id) } });
+    await csrfFetch(`${apiBaseUrl}/api/room/default-assignments`, { method: 'POST', headers: { Authorization: `Bearer ${token.value}` }, body: { eventUserIds: roomRecoveryData.value?.participants.map(item => item.id) } });
     await refreshCheckerAdmin();
     await inspectMissingRooms();
   } catch (error: any) { roomRecoveryError.value = error?.data?.message || 'Unable to assign default rooms.'; }
@@ -257,6 +263,32 @@ function openFilePreview(contents?: ContentOfBriefing[]) {
       />
 
       <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+        <UCard>
+          <template #header>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <h2 class="font-semibold">Examinations in progress — your branch unit</h2>
+              <UButton label="Refresh examination status" :loading="checkerAdminStatus === 'pending'" @click="refreshCheckerAdmin()" />
+            </div>
+          </template>
+          <p v-if="checkerAdminError" class="text-error">Unable to refresh examination status. Do not treat old counts as current.</p>
+          <template v-if="checkerAdminData?.examinationActivity">
+            <p>Unfinished attempts: {{ checkerAdminData.examinationActivity.total }} · Mode 1: {{ checkerAdminData.examinationActivity.mode1Count }} · Mode 2: {{ checkerAdminData.examinationActivity.mode2Count }} · Overdue Mode 1: {{ checkerAdminData.examinationActivity.overdueMode1Count }}</p>
+            <p class="text-sm text-muted my-2">Last checked: {{ new Date(checkerAdminData.examinationActivity.checkedAt).toLocaleString() }}. Unfinished does not prove the user is online. Overdue attempts await finalization; paused sessions are not finished. Refresh before planning maintenance.</p>
+            <div class="overflow-x-auto max-h-96">
+              <table class="w-full text-sm text-left">
+                <thead><tr><th>Participant / NIK</th><th>Event</th><th>Rating / Section</th><th>Mode</th><th>Deadline (local time)</th><th>Status</th></tr></thead>
+                <tbody><tr v-for="attempt in checkerAdminData.examinationActivity.attempts" :key="attempt.id" class="border-t">
+                  <td class="py-2">{{ attempt.name }}<br>{{ attempt.nik }}</td><td>{{ attempt.event }}</td>
+                  <td>{{ attempt.rating }} / {{ attempt.section }}</td><td>{{ attempt.mode }}</td>
+                  <td>{{ attempt.deadline ? new Date(attempt.deadline).toLocaleString() : 'Paused / awaiting finalization' }}</td>
+                  <td>{{ attempt.status.replaceAll('_', ' ') }}</td>
+                </tr></tbody>
+              </table>
+            </div>
+            <p v-if="!checkerAdminData.examinationActivity.total" class="mt-2">No unfinished examination attempts found in your branch unit at the last check.</p>
+            <p v-if="checkerAdminData.examinationActivity.truncated" class="text-warning">Showing up to 200 attempts per mode; summary counts include all matching attempts.</p>
+          </template>
+        </UCard>
         <UCard>
           <div class="flex items-center justify-between gap-3">
             <p>Verified Mode 1 participants without a room: {{ checkerAdminData?.missingRoomCount ?? 0 }}</p>

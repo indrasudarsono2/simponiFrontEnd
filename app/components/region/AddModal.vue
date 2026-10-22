@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -24,7 +26,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create region
-    await $fetch(`${apiBaseUrl}/api/regions`, {
+    await csrfFetch(`${apiBaseUrl}/api/regions`, {
       method: "POST",
       body: { region: event.data.region },
       headers: {

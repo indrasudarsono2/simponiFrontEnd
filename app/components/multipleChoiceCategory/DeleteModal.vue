@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface QuestionGroup {
@@ -80,7 +82,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete question group
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/questionGroupsMultipleChoice/${props.questionGroup.id}`,
       {
         method: "DELETE",

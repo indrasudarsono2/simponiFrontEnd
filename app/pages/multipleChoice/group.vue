@@ -571,6 +571,17 @@ const columns = computed<TableColumn<MultipleChoice>[]>(() => [
 ]);
 
 // Search filter
+const selectedGroupFilter = ref('__all__');
+const groupFilterOptions = computed(() => [
+  { label: 'All groups', value: '__all__' },
+  ...[...new Set(resolvedMultipleChoiceQuestionGroups.value.map(item => item.questionGroup?.group).filter((name): name is string => Boolean(name)))].sort().map(name => ({ label: name, value: name })),
+]);
+const groupFilteredQuestions = computed(() => {
+  if (selectedGroupFilter.value === '__all__') return resolvedMultipleChoices.value;
+  const ids = new Set(resolvedMultipleChoiceQuestionGroups.value.filter(item => item.questionGroup?.group === selectedGroupFilter.value).map(item => item.multipleChoiceId));
+  return resolvedMultipleChoices.value.filter(item => ids.has(item.id));
+});
+watch(selectedGroupFilter, () => { pagination.value.pageIndex = 0; });
 const searchQuery = computed({
   get: (): string => {
     return (
@@ -675,6 +686,7 @@ function getMonitorProgress(selected: number, quantity: number): number {
               icon="i-lucide-search"
               placeholder="Search questions..."
             />
+            <USelect v-model="selectedGroupFilter" :items="groupFilterOptions" value-key="value" class="w-full sm:w-80" aria-label="Filter by question group" />
 
             <div class="flex flex-wrap items-center gap-1.5">
               <USelect
@@ -703,7 +715,7 @@ function getMonitorProgress(selected: number, quantity: number): number {
               getPaginationRowModel: getPaginationRowModel(),
             }"
             class="shrink-0"
-            :data="resolvedMultipleChoices"
+            :data="groupFilteredQuestions"
             :columns="columns"
             :loading="status === 'pending'"
             :ui="{

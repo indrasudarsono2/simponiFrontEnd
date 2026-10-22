@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 defineOptions({
@@ -129,7 +131,7 @@ async function onSubmit() {
   try {
     loading.value = true;
 
-    await $fetch(`${apiBaseUrl}/api/checkerRating`, {
+    await csrfFetch(`${apiBaseUrl}/api/checkerRating`, {
       method: "POST",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

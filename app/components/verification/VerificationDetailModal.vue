@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface VerificationDataItem {
@@ -246,7 +248,7 @@ async function fetchVerificationDetail() {
   error.value = null;
 
   try {
-    const response = await $fetch(
+    const response = await csrfFetch(
       `${apiBaseUrl}/api/getVerificationDetail`,
       {
         method: "POST",

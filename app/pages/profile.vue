@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -117,7 +119,7 @@ async function changePassword(event: FormSubmitEvent<PasswordSchema>) {
   isChangingPassword.value = true;
   const csrfToken = useCookie<string | null>("csrf_token");
   try {
-    const response = await $fetch<{ message?: string }>(`${apiBaseUrl}/api/profile/change-password`, {
+    const response = await csrfFetch<{ message?: string }>(`${apiBaseUrl}/api/profile/change-password`, {
       method: "POST",
       credentials: "include",
       headers: csrfToken.value ? { "X-CSRF-Token": csrfToken.value } : undefined,
@@ -195,7 +197,7 @@ function openUpdateModal() {
 async function onManualSubmit(event: FormSubmitEvent<UpdateSchema>) {
   isUpdating.value = true;
   try {
-    await $fetch(`${apiBaseUrl}/api/profile/${profile.value?.nik}`, {
+    await csrfFetch(`${apiBaseUrl}/api/profile/${profile.value?.nik}`, {
       method: "PUT",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
@@ -238,7 +240,7 @@ async function syncFromExternalSystem() {
   isSyncing.value = true;
   try {
     const csrfToken = useCookie<string | null>("csrf_token");
-    const response = await $fetch<{success: boolean; message?: string; data: Partial<UpdateSchema> & {genderLabel?: string}}>(`${apiBaseUrl}/api/profile/sync-echain`, {
+    const response = await csrfFetch<{success: boolean; message?: string; data: Partial<UpdateSchema> & {genderLabel?: string}}>(`${apiBaseUrl}/api/profile/sync-echain`, {
       method: "POST", credentials: "include",
       headers: csrfToken.value ? {"X-CSRF-Token": csrfToken.value} : undefined,
     });

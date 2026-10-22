@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface MedicalUser {
@@ -142,7 +144,7 @@ async function saveEdit() {
 
   try {
     saving.value = true;
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/medicalCheck/history/${selectedRecord.value.id}`,
       {
         method: "PUT",

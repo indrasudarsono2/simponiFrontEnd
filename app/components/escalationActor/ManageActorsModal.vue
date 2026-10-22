@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -64,7 +66,7 @@ const userSelectItems = computed(() =>
 );
 
 async function loadUsers() {
-  userOptions.value = await $fetch<UserOption[]>(
+  userOptions.value = await csrfFetch<UserOption[]>(
     `${apiBaseUrl}/api/escalationActors/users`,
     {
       headers: {
@@ -118,7 +120,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true;
 
   try {
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/escalationActors/${props.escalationLevel.id}`,
       {
         method: "PUT",

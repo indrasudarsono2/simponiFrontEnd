@@ -11,6 +11,10 @@ const productionSecurityHeaders = import.meta.env.PROD
   : {};
 
 export default defineNuxtConfig({
+  nitro: {
+    // Real compatibility adapters live in secured middleware, not fixture files.
+    ignore: ['api/**'],
+  },
   modules: ["@nuxt/eslint", "@nuxt/ui", "@vueuse/nuxt", "@pinia/nuxt"],
 
   experimental: {
@@ -25,6 +29,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     apiOrigin: "http://127.0.0.1:44441",
+    securityOrigins: process.env.NODE_ENV === 'production'
+      ? 'https://performa.airnavindonesia.co.id'
+      : 'http://localhost:44440,http://127.0.0.1:44440',
     ipBackEnd: "localhost:44441",
     public: {
       apiBaseUrl: "/backend",
@@ -49,9 +56,6 @@ export default defineNuxtConfig({
   routeRules: {
     "/**": {
       headers: productionSecurityHeaders,
-    },
-    "/api/**": {
-      cors: true,
     },
   },
 

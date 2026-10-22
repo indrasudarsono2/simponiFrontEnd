@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface Session {
@@ -48,7 +50,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete session
-    await $fetch(`${apiBaseUrl}/api/sessions/${props.session.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/sessions/${props.session.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

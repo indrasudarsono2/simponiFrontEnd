@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 const { token } = useAuth();
 interface DefiningCheckerRow {
@@ -57,7 +59,7 @@ async function onSubmit() {
 
   try {
     // Call API to delete defining checker
-    await $fetch(
+    await csrfFetch(
       `${apiBaseUrl}/api/groups/${props.definingChecker.id}`,
       {
         method: "DELETE",

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface ScoreCheckerEventItem {
@@ -298,7 +300,7 @@ async function handleSearch() {
 
   try {
     resultLoading.value = true;
-    const response = await $fetch<
+    const response = await csrfFetch<
       ScoreCheckerResultItem[] | ScoreCheckerResultItem
     >(`${apiBaseUrl}/api/scoreCheckerPractical`, {
       method: "POST",
@@ -335,7 +337,7 @@ async function grantRecheck() {
   if (!recheckTarget.value?.appRatingId) return;
   try {
     recheckLoading.value = true;
-    await $fetch(`${apiBaseUrl}/api/scoreCheckerPractical/recheck`, {
+    await csrfFetch(`${apiBaseUrl}/api/scoreCheckerPractical/recheck`, {
       method: "POST",
       headers: { Authorization: token.value ? `Bearer ${token.value}` : "" },
       body: {

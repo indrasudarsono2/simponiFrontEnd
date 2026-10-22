@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
@@ -33,7 +35,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     // Call API to create session
-    await $fetch(`${apiBaseUrl}/api/sessions`, {
+    await csrfFetch(`${apiBaseUrl}/api/sessions`, {
       method: "POST",
       body: {
         session: event.data.session,

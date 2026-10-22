@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const apiBaseUrl = useApiBaseUrl()
+const showLegacyOperationalCards = ref(false)
 
 type DistributionItem = {
   users: number;
@@ -299,7 +300,7 @@ function escalationColor(
         </div> -->
 
         <div class="grid gap-4 xl:grid-cols-5">
-          <UCard class="xl:order-1 xl:col-span-3">
+          <UCard class="w-full min-w-0 xl:order-1 xl:col-span-5">
             <template #header>
               <div class="flex items-start justify-between gap-3">
                 <div>
@@ -395,7 +396,8 @@ function escalationColor(
             </div>
           </UCard>
 
-          <UCard class="xl:order-3 xl:col-span-3">
+          <DashboardAdminExaminationActivity scope="branch" class="xl:order-2 xl:col-span-5" />
+          <UCard v-if="showLegacyOperationalCards" class="xl:order-3 xl:col-span-3">
             <template #header>
               <div class="flex items-start justify-between gap-3">
                 <div>
@@ -550,7 +552,7 @@ function escalationColor(
             </div>
           </UCard>
 
-          <UCard class="xl:order-2 xl:col-span-2 xl:row-span-2">
+          <UCard v-if="showLegacyOperationalCards" class="xl:order-2 xl:col-span-2 xl:row-span-2">
             <template #header>
               <div class="flex items-start justify-between gap-3">
                 <div>

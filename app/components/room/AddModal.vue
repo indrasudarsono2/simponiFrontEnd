@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import {
   CalendarDate,
@@ -328,7 +330,7 @@ async function onSubmit() {
     payload.append("finishDate", formState.finishDate);
     payload.append("file", formState.file);
 
-    await $fetch(`${apiBaseUrl}/api/room`, {
+    await csrfFetch(`${apiBaseUrl}/api/room`, {
       method: "POST",
       headers: commonHeaders,
       body: payload,

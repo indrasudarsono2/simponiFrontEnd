@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import type { CalendarDate } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
@@ -150,7 +152,7 @@ const cwpSummary = computed(() => {
 async function loadBranches() {
   loadingBranches.value = true
   try {
-    const data = await $fetch<{ id: number, branch: string }[]>(
+    const data = await csrfFetch<{ id: number, branch: string }[]>(
       `${apiBaseUrl}/api/branches`, {
         headers: {
           Authorization: token.value ? `Bearer ${token.value}` : ''
@@ -178,7 +180,7 @@ async function loadUsersByBranch(branchId?: number) {
   }
   loadingUsers.value = true
   try {
-    const data = await $fetch<{ users: UserOption[] }>(
+    const data = await csrfFetch<{ users: UserOption[] }>(
       `${apiBaseUrl}/api/personalLogbookGa/users-by-branch/${branchId}`,
       {
         headers: {
@@ -216,7 +218,7 @@ async function loadPersonalLogbook() {
   selectedUser.value = null
 
   try {
-    const data = await $fetch<{ logBooks: LogBook[], user: UserOption }>(
+    const data = await csrfFetch<{ logBooks: LogBook[], user: UserOption }>(
       `${apiBaseUrl}/api/personalLogbookGa`, {
         method: 'POST',
         headers: {

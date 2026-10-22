@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 import { CalendarDate, DateFormatter, parseDate } from '@internationalized/date';
 const route = useRoute();
 const api = useApiBaseUrl();
@@ -40,7 +42,7 @@ const detailOpen = ref(false), detail = ref<any[]>([]), detailBusy = ref(false);
 const questionDetailOpen = ref(false), questionDetail = ref<any>(null), questionDetailBusy = ref(false), questionDetailError = ref('');
 async function viewQuestion(id: number) {
   questionDetailOpen.value = true; questionDetailBusy.value = true; questionDetail.value = null; questionDetailError.value = '';
-  try { questionDetail.value = await $fetch(`${api}/api/branchQuestionMonitor/load`, { method: 'POST', headers: headers.value, body: { ...payload(), view: 'QUESTION_DETAIL', questionId: id } }); }
+  try { questionDetail.value = await csrfFetch(`${api}/api/branchQuestionMonitor/load`, { method: 'POST', headers: headers.value, body: { ...payload(), view: 'QUESTION_DETAIL', questionId: id } }); }
   catch (e: any) { questionDetailError.value = e?.data?.message || 'Unable to load question details.'; }
   finally { questionDetailBusy.value = false; }
 }
@@ -70,13 +72,13 @@ watch([branchId, branchUnitId, sectorId, ratingId, type, attempt, startDate, end
 const payload = () => ({ branchId: branchId.value, branchUnitId: branchUnitId.value, sectorId: sectorId.value, ratingId: ratingId.value, type: page.value === 'questions' ? type.value : page.value === 'essay' ? 'ESSAY' : 'MULTIPLE_CHOICE', attempt: attempt.value, startDate: startDate.value, endDate: endDate.value });
 async function load() {
   busy.value = true; error.value = ''; result.value = null;
-  try { result.value = await $fetch(`${api}/api/branchQuestionMonitor/load`, { method: 'POST', headers: headers.value, body: { ...payload(), view: page.value === 'questions' ? 'MONITOR' : 'STATISTIC' } }); }
+  try { result.value = await csrfFetch(`${api}/api/branchQuestionMonitor/load`, { method: 'POST', headers: headers.value, body: { ...payload(), view: page.value === 'questions' ? 'MONITOR' : 'STATISTIC' } }); }
   catch (e:any) { error.value = e?.data?.message || 'Unable to load data.'; }
   finally { busy.value = false; }
 }
 async function viewGroup(id:number) {
   detailOpen.value = true; detailBusy.value = true; detail.value = [];
-  try { const response:any = await $fetch(`${api}/api/branchQuestionMonitor/load`, { method: 'POST', headers: headers.value, body: { ...payload(), view: 'DETAIL', groupId: id } }); detail.value = response.questions; }
+  try { const response:any = await csrfFetch(`${api}/api/branchQuestionMonitor/load`, { method: 'POST', headers: headers.value, body: { ...payload(), view: 'DETAIL', groupId: id } }); detail.value = response.questions; }
   catch (e:any) { error.value = e?.data?.message || 'Unable to load questions.'; }
   finally { detailBusy.value = false; }
 }

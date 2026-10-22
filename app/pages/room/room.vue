@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 import { h } from "vue";
 import type { TableColumn } from "@nuxt/ui";
@@ -344,7 +346,7 @@ async function deleteRoom() {
   try {
     isDeleting.value = true;
 
-    await $fetch(`${apiBaseUrl}/api/room/${roomToDelete.value.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/room/${roomToDelete.value.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { csrfFetch } from "~/utils/csrfFetch";
+
 const apiBaseUrl = useApiBaseUrl()
 
 interface Profession {
@@ -73,7 +75,7 @@ async function submit() {
   loading.value = true;
 
   try {
-    await $fetch(`${apiBaseUrl}/api/briefings/${props.briefing.id}`, {
+    await csrfFetch(`${apiBaseUrl}/api/briefings/${props.briefing.id}`, {
       method: "DELETE",
       headers: {
         Authorization: token.value ? `Bearer ${token.value}` : "",
