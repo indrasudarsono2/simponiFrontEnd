@@ -16,6 +16,9 @@ test('compiled frontend enforces security through actual HTTP middleware/proxy p
     requests.push({url:req.url,headers:req.headers,body:Buffer.concat(chunks).toString()});
     res.setHeader('Content-Type','application/json');
     if(!req.headers.cookie?.includes('auth_token=assessment'))res.statusCode=401;
+    if(req.url==='/api/auth/session' && res.statusCode!==401){
+      res.end(JSON.stringify({success:true,user:{nik:'isolated-user',name:'Verified Session User',email:'dummy@example.invalid',authenticationType:'LOCAL',roleNames:['OPERASIONAL'],menuNames:[],roleModules:{}}}));return;
+    }
     res.end(JSON.stringify({isolatedSecurityBackend:true}));
   });
   backend.listen(0,'127.0.0.1');await once(backend,'listening');
@@ -60,6 +63,13 @@ test('compiled frontend enforces security through actual HTTP middleware/proxy p
     assert.equal(upload.status,200);assert.match(requests.at(-1).headers['content-type'],/multipart\/form-data/);assert.match(requests.at(-1).body,/isolated-file/);
     assert.equal((await fetch(origin+'/backend/api/profile')).status,401);
     assert.equal((await fetch(origin+'/backend/api/auth/login',{method:'POST',headers:{Origin:'https://evil.example','Content-Type':'application/json'},body:'{}'})).status,403);
+    const refreshed=await fetch(origin+'/profile',{headers:{Cookie:'auth_token=assessment; csrf_token=original; auth_user=%7B%22name%22%3A%22ForgedCookieUser%22%7D'}});
+    assert.equal(refreshed.status,200);
+    const html=await refreshed.text();
+    assert.match(html,/Verified Session User/,'SSR refresh must restore the server-verified user');
+    assert.doesNotMatch(html,/ForgedCookieUser/,'Legacy cookie contents must not restore user identity');
+    assert.ok(requests.some(request=>request.url==='/api/auth/session' && request.headers.cookie.includes('auth_token=assessment')));
+    assert.doesNotMatch(refreshed.headers.get('set-cookie')||'',/auth_user=(?!;|,)(?:%7B|\{)/i);
   } finally {
     if(child.exitCode===null){child.kill('SIGTERM');await once(child,'exit');}
     backend.closeAllConnections();await new Promise(resolve=>backend.close(resolve));

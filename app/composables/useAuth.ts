@@ -65,7 +65,7 @@ export const useAuth = (): UseAuthReturn => {
     maxAge: 60 * 60 * 3, // 3 hours
   });
 
-  // User data cookie - expires in 3 hours
+  // Expire the legacy personal-data cookie; never read it into auth state.
   const userCookie = useCookie<AuthUser | null>("auth_user", {
     sameSite: "lax",
     secure: secureCookies,
@@ -84,40 +84,9 @@ export const useAuth = (): UseAuthReturn => {
   // State for reactive updates within the app
   const authUser = useState<AuthUser | null>(
     "auth-user",
-    () => userCookie.value,
+    () => null,
   );
-  if (import.meta.client && authUser.value && !authUser.value.roleModules) {
-    try {
-      const storedRoleModules = sessionStorage.getItem("performa_role_modules");
-      if (storedRoleModules) {
-        authUser.value = { ...authUser.value, roleModules: JSON.parse(storedRoleModules) };
-      }
-    } catch {
-      sessionStorage.removeItem("performa_role_modules");
-    }
-  }
-  // Sync cookie changes to state
-  watch(
-    () => userCookie.value,
-    (newValue) => {
-      if (!newValue) {
-        authUser.value = null;
-        return;
-      }
-      let roleModules = authUser.value?.roleModules;
-      if (import.meta.client && !roleModules) {
-        try {
-          const storedRoleModules = sessionStorage.getItem("performa_role_modules");
-          roleModules = storedRoleModules ? JSON.parse(storedRoleModules) : undefined;
-        } catch {
-          sessionStorage.removeItem("performa_role_modules");
-        }
-      }
-      authUser.value = roleModules ? { ...newValue, roleModules } : newValue;
-    },
-    { immediate: true },
-  );
-
+  userCookie.value = null;
   const isAuthenticated = computed(() => Boolean(authUser.value));
 
   const setAuthFromResponse = (payload: LoginSuccessResponse) => {
@@ -137,7 +106,7 @@ export const useAuth = (): UseAuthReturn => {
         ]))
       : payload.user.roleModules || {};
     const menuNames = [...new Set(Object.values(roleModules).flat())];
-    // Persist only the compact authorization projection. The backend reloads
+    // Keep only an in-memory authorization projection. The backend reloads
     // authoritative roles and menus from the database for every API request.
     const compactUser: AuthUser = {
       nik: payload.user.nik,
@@ -147,11 +116,9 @@ export const useAuth = (): UseAuthReturn => {
       roleNames,
       menuNames,
     };
-    userCookie.value = compactUser;
+    // Personal data stays in reactive memory, never in a browser cookie.
     authUser.value = { ...compactUser, roleModules };
-    if (import.meta.client) {
-      sessionStorage.setItem("performa_role_modules", JSON.stringify(roleModules));
-    }
+    if (import.meta.client) sessionStorage.removeItem("performa_role_modules");
     loginTimestamp.value = Date.now();
   };
 
